@@ -1,7 +1,6 @@
 return {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
-    -- test
     dependencies = {
         "bwpge/lualine-pretty-path",
     },
@@ -15,19 +14,51 @@ return {
             },
             sections = {
                 lualine_a = { "mode" },
-                lualine_b = { "branch", "diff", "diagnostics" },
+                lualine_b = {
+                    {
+                        "branch",
+                        icon = "󰘬",
+                    },
+                    {
+                        "diff",
+                        symbols = {
+                            added = " ",
+                            modified = " ",
+                            removed = " ",
+                        },
+                        source = function()
+                            local gitsigns = vim.b.gitsigns_status_dict
+                            if gitsigns then
+                                return {
+                                    added = gitsigns.added,
+                                    modified = gitsigns.changed,
+                                    removed = gitsigns.removed,
+                                }
+                            end
+                        end,
+                    },
+                    "diagnostics",
+                },
                 lualine_c = {
                     {
                         "pretty_path",
                         highlights = {
                             directory = "PrettyPathDir",
+                            filename = "PrettyPathFile",
                             modified = "PrettyPathModified",
                         },
                     },
                 },
                 lualine_x = { "encoding", "fileformat" },
-                lualine_y = { "progress" },
-                lualine_z = { "location" },
+                lualine_y = {
+                    { "progress", separator = " ", padding = { left = 1, right = 0 } },
+                    { "location", padding = { left = 0, right = 1 } },
+                },
+                lualine_z = {
+                    function()
+                        return " " .. os.date("%R")
+                    end,
+                },
             },
         })
     end,

@@ -12,7 +12,7 @@ return {
             { "<leader>u", group = "UI" },
             { "<leader>f", group = "File/Find" },
             { "<leader>g", group = "Git" },
-            { "<leader>h", group = "Harpoon" },
+            { "<leader>gh", group = "Hunks" },
             { "<leader>s", group = "Search" },
             { "<leader>w", group = "Window" },
             { "<leader>b", group = "Buffer" },

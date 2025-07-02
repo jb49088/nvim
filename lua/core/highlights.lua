@@ -1,7 +1,7 @@
 local hl = vim.api.nvim_set_hl
 local c = require("astrotheme.lib.util").set_palettes(require("astrotheme").config)
 
--- Title
+-- Titles
 hl(0, "FloatTitle", { fg = c.ui.blue, bg = c.ui.base })
 
 -- Floating windows
@@ -10,7 +10,7 @@ hl(0, "FloatBorder", { fg = c.ui.border, bg = c.ui.base })
 hl(0, "Pmenu", { fg = c.ui.text_active, bg = c.ui.base })
 
 -- Statusline
-hl(0, "StatusLine", { bg = c.ui.base })
+hl(0, "StatusLine", { bg = c.ui.statusline })
 
 -- Gutter
 hl(0, "EndOfBuffer", { fg = c.ui.base })
@@ -19,10 +19,6 @@ hl(0, "EndOfBuffer", { fg = c.ui.base })
 hl(0, "BlinkCmpMenuBorder", { fg = c.ui.border, bg = c.ui.base })
 hl(0, "BlinkCmpDocBorder", { fg = c.ui.border, bg = c.ui.base })
 hl(0, "BlinkCmpLabelMatch", { fg = c.ui.blue, bold = true })
-
--- Pretty-path
-hl(0, "PrettyPathDir", { fg = c.syntax.comment })
-hl(0, "PrettyPathModified", { fg = c.ui.yellow, bold = true })
 
 -- Snacks picker
 hl(0, "SnacksPickerDir", { fg = c.syntax.comment })
@@ -47,12 +43,17 @@ hl(0, "RainbowDelimiters5", { fg = c.ui.green })
 hl(0, "RainbowDelimiters6", { fg = c.ui.purple })
 hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 
+-- Pretty-path
+hl(0, "PrettyPathDir", { fg = c.syntax.comment })
+hl(0, "PrettyPathFile", { fg = c.syntax.text })
+hl(0, "PrettyPathModified", { fg = c.ui.orange, bold = true })
+
 -- Lualine
 LualineTheme = {
     normal = {
         a = { fg = c.ui.base, bg = c.syntax.blue, gui = "bold" },
-        b = { fg = c.ui.text_active, bg = c.ui.base },
-        c = { fg = c.ui.text_active, bg = c.ui.base },
+        b = { fg = c.ui.text_active, bg = c.ui.statusline },
+        c = { fg = c.ui.text_active, bg = c.ui.statusline },
     },
     insert = { a = { fg = c.ui.base, bg = c.ui.green, gui = "bold" } },
     visual = { a = { fg = c.ui.base, bg = c.ui.purple, gui = "bold" } },
@@ -60,8 +61,8 @@ LualineTheme = {
     command = { a = { fg = c.ui.base, bg = c.ui.yellow, gui = "bold" } },
     terminal = { a = { fg = c.ui.base, bg = c.ui.orange, gui = "bold" } },
     inactive = {
-        a = { fg = c.ui.text_inactive, bg = c.ui.base, gui = "bold" },
-        b = { fg = c.ui.text_inactive, bg = c.ui.base, gui = "bold" },
-        c = { fg = c.ui.text_inactive, bg = c.ui.base, gui = "bold" },
+        a = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
+        b = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
+        c = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
     },
 }

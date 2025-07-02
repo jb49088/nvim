@@ -44,9 +44,9 @@ return {
                     sort_lastused = false,
                     -- show correct icons in buffers source
                     -- format = function(item, picker)
-                    --     local ret = Snacks.picker.format.buffer(vim.tbl_extend("force", item, { buf = false }), picker)
-                    --     ret[1][1] = tostring(item.buf) .. "  "
-                    --     return ret
+                    --      local ret = Snacks.picker.format.buffer(vim.tbl_extend("force", item, { buf = false }), picker)
+                    --      ret[1][1] = tostring(item.buf) .. "  "
+                    --      return ret
                     -- end,
                 },
                 command_history = {
@@ -136,6 +136,7 @@ return {
                                     end
 
                                     local info = vim.fn.getbufinfo(buf)[1] or {} -- Ensure info is a table
+                                    local mark = vim.api.nvim_buf_get_mark(buf, '"') -- Use mark for cursor position
                                     local flags = {
                                         buf == current_buf and "%" or (buf == alternate_buf and "#" or ""),
                                         (info.hidden == 1 or not vim.api.nvim_buf_is_loaded(buf)) and "h"
@@ -144,11 +145,6 @@ return {
                                         vim.bo[buf].readonly and "=" or "",
                                         info.changed == 1 and "+" or "",
                                     }
-
-                                    -- Get cursor position for the buffer from the current window `win_id`
-                                    local pos = nil
-                                    local cursor_pos = vim.api.nvim_win_get_cursor(win_id)
-                                    pos = { cursor_pos[1], cursor_pos[2] + 1 } -- +1 for 1-based column
 
                                     -- Concatenate the buffer number and name for searching
                                     local item_searchable_text = tostring(buf) .. " " .. name
@@ -163,7 +159,7 @@ return {
                                         filetype = vim.bo[buf].filetype, -- Keep filetype for potential direct use or fallback
                                         tabpage_id = tabpage_id,
                                         is_current = (buf == current_buf and is_current_tab),
-                                        pos = pos,
+                                        pos = mark[1] ~= 0 and mark or { info.lnum, 0 }, -- Use mark as in the original buffers source
                                         win_id = win_id, -- Store window ID for confirming
                                     })
                                 end
@@ -268,185 +264,6 @@ return {
                         preset = "default",
                     },
                 },
-                windows = {
-                    name = "Windows",
-                    finder = function(opts, ctx)
-                        local items = {} ---@type snacks.picker.finder.Item[]
-                        local current_buf = vim.api.nvim_get_current_buf()
-                        local alternate_buf = vim.fn.bufnr("#")
-                        local current_win = vim.api.nvim_get_current_win()
-
-                        -- Get all windows in the current tabpage
-                        local windows = vim.api.nvim_tabpage_list_wins(vim.api.nvim_get_current_tabpage())
-
-                        -- Sort windows by their ID for consistent ordering
-                        table.sort(windows, function(a, b)
-                            return a < b
-                        end)
-
-                        for _, win_id in ipairs(windows) do
-                            local buf = vim.api.nvim_win_get_buf(win_id)
-                            local is_current_win = win_id == current_win
-
-                            -- Apply the same filtering logic as your tabs picker
-                            local keep = vim.api.nvim_buf_is_loaded(buf)
-                                and vim.bo[buf].buftype ~= "prompt" -- Still exclude prompt buffers (e.g., from `:!` commands)
-                                -- Allow terminal and help buffers now
-                                and (
-                                    vim.bo[buf].buflisted
-                                    or vim.bo[buf].buftype == "terminal"
-                                    or vim.bo[buf].buftype == "help"
-                                )
-
-                            if vim.bo[buf].buftype == "nofile" and opts.show_nofile_in_tabs then
-                                keep = true
-                            end
-
-                            -- Filter out specific nofile types but keep help and man pages
-                            if keep and vim.bo[buf].buftype == "nofile" then
-                                local filetype = vim.bo[buf].filetype
-                                if
-                                    filetype == "noice"
-                                    or filetype == "fidget"
-                                    or filetype == "qf"
-                                    -- Removed "help" and "man" from exclusion list
-                                then
-                                    keep = false
-                                end
-                            end
-
-                            if keep then
-                                local name = vim.api.nvim_buf_get_name(buf)
-                                if name == "" then
-                                    name = "[No Name]"
-                                    if vim.bo[buf].filetype ~= "" then
-                                        name = name .. " " .. vim.bo[buf].filetype
-                                    end
-                                end
-
-                                local info = vim.fn.getbufinfo(buf)[1] or {}
-                                local flags = {
-                                    buf == current_buf and "%" or (buf == alternate_buf and "#" or ""),
-                                    (info.hidden == 1 or not vim.api.nvim_buf_is_loaded(buf)) and "h"
-                                        or (#(info.windows or {}) > 0) and "a"
-                                        or "",
-                                    vim.bo[buf].readonly and "=" or "",
-                                    info.changed == 1 and "+" or "",
-                                }
-
-                                -- Get cursor position for the buffer from the window
-                                local pos = nil
-                                local cursor_pos = vim.api.nvim_win_get_cursor(win_id)
-                                pos = { cursor_pos[1], cursor_pos[2] + 1 } -- +1 for 1-based column
-
-                                -- Get window dimensions for display
-                                local win_config = vim.api.nvim_win_get_config(win_id)
-                                local win_width = vim.api.nvim_win_get_width(win_id)
-                                local win_height = vim.api.nvim_win_get_height(win_id)
-
-                                -- Concatenate window ID, buffer number and name for searching
-                                local item_searchable_text = "Win:"
-                                    .. tostring(win_id)
-                                    .. " Buf:"
-                                    .. tostring(buf)
-                                    .. " "
-                                    .. name
-
-                                table.insert(items, {
-                                    type = "window_entry",
-                                    flags = table.concat(flags),
-                                    buf = buf,
-                                    win_id = win_id,
-                                    file = name,
-                                    text = item_searchable_text,
-                                    info = info,
-                                    filetype = vim.bo[buf].filetype,
-                                    is_current = is_current_win,
-                                    pos = pos,
-                                    win_width = win_width,
-                                    win_height = win_height,
-                                    win_config = win_config,
-                                })
-                            end
-                        end
-
-                        -- Sort by window ID for consistent ordering
-                        table.sort(items, function(a, b)
-                            return a.win_id < b.win_id
-                        end)
-
-                        return ctx.filter:filter(items)
-                    end,
-
-                    format = function(item, picker)
-                        local ret = {}
-
-                        -- Basic icon lookup
-                        local icon, icon_hl = Snacks.util.icon(item.file, "file", {
-                            fallback = picker.opts.icons.files,
-                        })
-                        icon = Snacks.picker.util.align(icon, picker.opts.formatters.file.icon_width or 2)
-
-                        -- Window ID only
-                        ret[#ret + 1] = { Snacks.picker.util.align(tostring(item.win_id), 3), "SnacksPickerBufNr" }
-                        ret[#ret + 1] = { " " }
-
-                        -- Icon
-                        ret[#ret + 1] = { icon, icon_hl }
-
-                        -- File path
-                        local full_path = Snacks.picker.util.path(item) or item.file
-                        local truncated_path = Snacks.picker.util.truncpath(
-                            full_path,
-                            picker.opts.formatters.file.truncate or 40,
-                            { cwd = picker:cwd() }
-                        )
-
-                        local dir, base = truncated_path:match("^(.*)/(.+)$")
-                        if base and dir then
-                            ret[#ret + 1] = { dir .. "/", "SnacksPickerDir" }
-                            ret[#ret + 1] = { base, "SnacksPickerFile" }
-                        else
-                            ret[#ret + 1] = { truncated_path, "SnacksPickerFile" }
-                        end
-
-                        -- Cursor position
-                        if item.pos and item.pos[1] and item.pos[1] > 0 then
-                            ret[#ret + 1] = { ":", "SnacksPickerDelim" }
-                            ret[#ret + 1] = { tostring(item.pos[1]), "SnacksPickerRow" }
-                            if item.pos[2] and item.pos[2] > 0 then
-                                ret[#ret + 1] = { ":", "SnacksPickerDelim" }
-                                ret[#ret + 1] = { tostring(item.pos[2]), "SnacksPickerCol" }
-                            end
-                        end
-
-                        -- Window dimensions (optional info)
-                        ret[#ret + 1] = { " ", "SnacksPickerDelim" }
-                        ret[#ret + 1] =
-                            { "[" .. item.win_width .. "x" .. item.win_height .. "]", "SnacksPickerComment" }
-
-                        return ret
-                    end,
-
-                    confirm = function(picker, item)
-                        picker:close()
-                        if item.win_id and vim.api.nvim_win_is_valid(item.win_id) then
-                            vim.api.nvim_set_current_win(item.win_id)
-                        end
-                    end,
-
-                    actions = {},
-
-                    win = {
-                        input = {
-                            keys = {},
-                        },
-                    },
-
-                    layout = {
-                        preset = "select",
-                    },
-                },
             },
         },
 
@@ -458,7 +275,6 @@ return {
         -- Top Pickers & Explorer
         { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>.", function() Snacks.picker.pick("windows") end, desc = "Windows" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Search" }) end, desc = "Search Current Buffer"},
         { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
         { "<leader>t", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },

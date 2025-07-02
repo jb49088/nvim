@@ -12,7 +12,8 @@ return {
             },
         },
         config = function(_, opts)
-            require("illuminate").configure(opts)
+            local illuminate = require("illuminate")
+            illuminate.configure(opts)
 
             Snacks.toggle({
                 name = "Illuminate",
@@ -20,14 +21,26 @@ return {
                     return not require("illuminate.engine").is_paused()
                 end,
                 set = function(enabled)
-                    local m = require("illuminate")
                     if enabled then
-                        m.resume()
+                        illuminate.resume()
                     else
-                        m.pause()
+                        illuminate.pause()
                     end
                 end,
             }):map("<leader>ux")
+
+            -- turn off in inactive windows
+            vim.api.nvim_create_autocmd("WinLeave", {
+                callback = function()
+                    illuminate.pause()
+                end,
+            })
+
+            vim.api.nvim_create_autocmd("WinEnter", {
+                callback = function()
+                    illuminate.resume()
+                end,
+            })
         end,
     },
 }
