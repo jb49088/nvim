@@ -17,6 +17,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim)
 
 #### Project Structure
 
+```
 nvim
 ├── init.lua
 ├── lazy-lock.json
@@ -66,6 +67,7 @@ nvim
 │           ├── trouble.lua
 │           └── whichkey.lua
 └── README.md
+```
 
 #### Screenshots
 
