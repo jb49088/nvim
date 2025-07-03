@@ -14,6 +14,7 @@ return {
             { "<leader>g", group = "Git" },
             { "<leader>gh", group = "Hunks" },
             { "<leader>s", group = "Search" },
+            { "<leader>S", group = "Session" },
             { "<leader>w", group = "Window" },
             { "<leader>b", group = "Buffer" },
             { "<leader>x", group = "Diagnostics/Quickfix" },

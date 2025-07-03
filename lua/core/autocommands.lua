@@ -6,7 +6,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
     end,
 })
 
--- Restore terminal cursor on exit
+-- Restore terminal cursor on vim leave
 vim.api.nvim_create_autocmd("VimLeave", {
     group = vim.api.nvim_create_augroup("restore_cursor_shape_on_exit", { clear = true }),
     command = "set guicursor=a:ver25",

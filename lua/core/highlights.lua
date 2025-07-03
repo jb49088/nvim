@@ -26,8 +26,14 @@ hl(0, "SnacksPickerBufFlags", { fg = c.syntax.comment })
 hl(0, "SnacksPickerCol", { fg = c.syntax.comment })
 
 -- Noice
+hl(0, "NoiceCmdline", { fg = c.ui.yellow })
+hl(0, "NoiceCmdlinePopup", { fg = c.ui.yellow })
 hl(0, "NoiceCmdlineIcon", { fg = c.ui.yellow })
+hl(0, "NoiceCmdlinePrompt", { fg = c.ui.yellow })
 hl(0, "NoiceCmdlinePopupBorderCmdline", { fg = c.ui.yellow })
+hl(0, "NoiceCmdlinePopupTitle", { fg = c.ui.yellow })
+hl(0, "NoiceCmdlinePopupBorder", { fg = c.ui.yellow })
+hl(0, "NoiceCmdlinePopupPrompt", { fg = c.ui.yellow })
 
 -- Illuminate
 hl(0, "IlluminatedWordText", { underline = true })

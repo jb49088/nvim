@@ -42,12 +42,6 @@ return {
             sources = {
                 buffers = {
                     sort_lastused = false,
-                    -- show correct icons in buffers source
-                    -- format = function(item, picker)
-                    --      local ret = Snacks.picker.format.buffer(vim.tbl_extend("force", item, { buf = false }), picker)
-                    --      ret[1][1] = tostring(item.buf) .. "  "
-                    --      return ret
-                    -- end,
                 },
                 command_history = {
                     layout = { preset = "select" },
@@ -337,7 +331,7 @@ return {
         Snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>uL")
         Snacks.toggle.option("wrap", { name = "Line Wrapping" }):map("<leader>uw")
         Snacks.toggle.dim():map("<leader>uD")
-        Snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>us")
+        Snacks.toggle.option("spell", { name = "Spell Check" }):map("<leader>us")
         Snacks.toggle.treesitter():map("<leader>uT")
         Snacks.toggle.inlay_hints():map("<leader>uh")
         -- stylua: ignore end
