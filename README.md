@@ -70,5 +70,6 @@ nvim
 
 #### Screenshots
 
-![Screenshot 2025-07-02 161952](https://github.com/user-attachments/assets/a28dbcf4-3fbc-41e7-a3ea-992854801fc5)
-![Screenshot 2025-07-02 161902](https://github.com/user-attachments/assets/09d3ad66-133b-4835-8424-2f14dfe7db26)
+![Screenshot 2025-07-04 225148](https://github.com/user-attachments/assets/b935e399-46ae-4f75-ba88-212cb923c95b)
+![Screenshot 2025-07-04 225346](https://github.com/user-attachments/assets/8db5822a-d8d8-400e-b387-ce834b813502)
+
