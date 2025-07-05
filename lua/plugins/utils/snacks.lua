@@ -271,7 +271,7 @@ return {
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Search" }) end, desc = "Search Current Buffer"},
         { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
-        { "<leader>t", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
+        { "<leader><Tab>", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
         { "<leader>bo", function() Snacks.bufdelete.other() end, desc = "Close Other Buffers" },

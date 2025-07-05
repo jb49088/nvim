@@ -17,8 +17,8 @@ return {
             { "<leader>u", group = "UI" },
             { "<leader>w", group = "Window" },
             { "<leader>x", group = "Diagnostics/Quickfix" },
-            { "<leader><Tab>", group = "Tab" },
-            { "<leader>\\", group = "Terminal" },
+            { "<leader>t", group = "Tab" },
+            { "<leader>T", group = "Terminal" },
         },
     },
     config = function(_, opts)

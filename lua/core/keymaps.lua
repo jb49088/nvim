@@ -38,16 +38,16 @@ map("n", "<leader>wh", ":split<CR>", { desc = "Horizontal Split" })
 map("n", "<leader>wv", ":vsplit<CR>", { desc = "Vertical Split" })
 
 -- Tabs
-map("n", "<leader><tab>o", "<Cmd>tabonly<CR>", { desc = "Close Other Tabs" })
-map("n", "<leader><tab><tab>", "<Cmd>tabnew<CR>", { desc = "New Tab" })
-map("n", "<leader><tab>n", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
-map("n", "<leader><tab>c", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
-map("n", "<leader><tab>p", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
+map("n", "<leader>to", "<Cmd>tabonly<CR>", { desc = "Close Other Tabs" })
+map("n", "<leader>tt", "<Cmd>tabnew<CR>", { desc = "New Tab" })
+map("n", "<leader>tn", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
+map("n", "<leader>tc", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
+map("n", "<leader>tp", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
 
 -- Terminal
-map("n", "<leader>\\f", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
-map("n", "<leader>\\v", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
-map("n", "<leader>\\h", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
+map("n", "<leader>Tf", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
+map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
+map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
 
 -- Location list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
