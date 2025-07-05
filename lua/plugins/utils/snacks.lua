@@ -320,7 +320,7 @@ return {
     },
     config = function(_, opts)
         require("snacks").setup(opts)
-        vim.g.snacks_animate = false
+        -- vim.g.snacks_animate = false
 
         -- stylua: ignore start
         Snacks.toggle.animate():map("<leader>ua")

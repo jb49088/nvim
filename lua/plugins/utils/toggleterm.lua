@@ -11,6 +11,7 @@ return {
             float_opts = { border = "curved" },
             highlights = { FloatBorder = { link = "FloatBorder" } },
         })
+
         vim.keymap.set("n", "<leader>r", function()
             if vim.bo.buftype ~= "" then
                 return

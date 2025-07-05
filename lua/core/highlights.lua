@@ -10,7 +10,7 @@ hl(0, "FloatBorder", { fg = c.ui.border, bg = c.ui.base })
 hl(0, "Pmenu", { fg = c.ui.text_active, bg = c.ui.base })
 
 -- Statusline
-hl(0, "StatusLine", { bg = c.ui.statusline })
+-- hl(0, "StatusLine", { bg = c.ui.statusline })
 
 -- Gutter
 hl(0, "EndOfBuffer", { fg = c.ui.base })
@@ -25,15 +25,15 @@ hl(0, "SnacksPickerDir", { fg = c.syntax.comment })
 hl(0, "SnacksPickerBufFlags", { fg = c.syntax.comment })
 hl(0, "SnacksPickerCol", { fg = c.syntax.comment })
 
--- Noice
-hl(0, "NoiceCmdline", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePopup", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlineIcon", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePrompt", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePopupBorderCmdline", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePopupTitle", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePopupBorder", { fg = c.ui.yellow })
-hl(0, "NoiceCmdlinePopupPrompt", { fg = c.ui.yellow })
+-- -- Noice
+-- hl(0, "NoiceCmdline", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePopup", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlineIcon", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePrompt", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePopupBorderCmdline", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePopupTitle", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePopupBorder", { fg = c.ui.yellow })
+-- hl(0, "NoiceCmdlinePopupPrompt", { fg = c.ui.yellow })
 
 -- Illuminate
 hl(0, "IlluminatedWordText", { underline = true })
@@ -53,22 +53,3 @@ hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 hl(0, "PrettyPathDir", { fg = c.syntax.comment })
 hl(0, "PrettyPathFile", { fg = c.syntax.text })
 hl(0, "PrettyPathModified", { fg = c.ui.orange, bold = true })
-
--- Lualine
-LualineTheme = {
-    normal = {
-        a = { fg = c.ui.base, bg = c.syntax.blue, gui = "bold" },
-        b = { fg = c.ui.text_active, bg = c.ui.statusline },
-        c = { fg = c.ui.text_active, bg = c.ui.statusline },
-    },
-    insert = { a = { fg = c.ui.base, bg = c.ui.green, gui = "bold" } },
-    visual = { a = { fg = c.ui.base, bg = c.ui.purple, gui = "bold" } },
-    replace = { a = { fg = c.ui.base, bg = c.ui.red, gui = "bold" } },
-    command = { a = { fg = c.ui.base, bg = c.ui.yellow, gui = "bold" } },
-    terminal = { a = { fg = c.ui.base, bg = c.ui.orange, gui = "bold" } },
-    inactive = {
-        a = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
-        b = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
-        c = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
-    },
-}

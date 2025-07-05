@@ -2,20 +2,22 @@ local opt = vim.opt
 local g = vim.g
 local cmd = vim.cmd
 
--- General
-g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
-
 -- Interface / UI
-g.have_nerd_font = true -- Enable nerd font icons
+g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
+g.have_nerd_font = true -- Enable nerd font
+g.snacks_animate = false -- Disable snacks animations by default
 opt.number = true -- Show absolute line numbers
 opt.relativenumber = true -- Show relative line numbers
+opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom statuscolumn
+opt.numberwidth = 5 -- Set line number column width
 opt.mouse = "a" -- Enable mouse in all modes
+opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu
 opt.title = true -- Enable window title
 opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
-opt.showmode = true -- Enable mode display in status line
-opt.laststatus = 3 -- Hide status line (using lualine)
-opt.cmdheight = 0 -- Hide command line (using noice)
+opt.showmode = false -- Disable mode display in command line
+opt.laststatus = 3 -- Always show statusline
+opt.statusline = " " -- Show a blank statusline before lualine loads in
 opt.showtabline = 0 -- Hide tab line
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
@@ -24,6 +26,7 @@ opt.cursorline = true -- Highlight the current line...
 opt.wrap = false -- Disable line wrapping
 opt.scrolloff = 999 -- Vertical scroll offset (Keep cursor vertically centered)
 opt.sidescrolloff = 10 -- Horizontal scroll offset
+opt.winborder = "rounded" -- Rounded borders for lsp hover
 
 -- Behavior
 opt.swapfile = false -- Disable swap files
@@ -37,7 +40,7 @@ opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
-opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions" -- Recommended for auto-session
+-- opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions" -- Recommended for auto-session
 
 -- Indentation
 opt.shiftwidth = 4 -- Indent size
@@ -45,9 +48,6 @@ opt.tabstop = 4 -- Tab width
 opt.expandtab = true -- Convert tabs to spaces
 opt.autoindent = true -- Copy indent from current line when starting new one
 cmd("filetype plugin indent on") -- Enable filetype-specific indentation
-
--- Cursor
-opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles for modes
 
 -- Clipboard (from https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim)
 opt.clipboard = "unnamedplus"

@@ -2,8 +2,8 @@ return {
     "rmagatti/auto-session",
     lazy = false,
     keys = {
-        { "<leader>SS", "<cmd>SessionSearch<CR>", desc = "Select Session" },
         { "<leader>Sr", "<cmd>SessionRestore<CR>", desc = "Restore Session" },
+        { "<leader>SS", "<cmd>Autosession search<CR>", desc = "Search Session" },
         {
             "<leader>Ss",
             function()

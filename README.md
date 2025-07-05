@@ -1,11 +1,10 @@
 Based on [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)
 
-Inspired by [LazyVim](https://github.com/LazyVim/LazyVim)
+Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https://github.com/AstroNvim/AstroNvim)
 
 #### Features
 
 - Lazy loading with [lazy.nvim](https://github.com/folke/lazy.nvim)
-- [AstroNvim's](https://github.com/AstroNvim/AstroNvim) colorscheme [astrotheme](https://github.com/AstroNvim/astrotheme)
 - Custom [lualine](https://github.com/nvim-lualine/lualine.nvim) including [lualine-pretty-path](https://github.com/bwpge/lualine-pretty-path/)
 - Extensive use of [snacks.nvim](https://github.com/folke/snacks.nvim) including custom pickers
 - [oil.nvim](https://github.com/stevearc/oil.nvim)
@@ -47,26 +46,26 @@ nvim
 │       │   └── mason.lua
 │       ├── ui
 │       │   ├── colorscheme.lua
+│       │   ├── fidget.lua
 │       │   ├── illuminate.lua
+│       │   ├── line_number_change_mode.lua
 │       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
-│       │   └── noice.lua
+│       │   └── rainbow_delimiters.lua
 │       └── utils
 │           ├── auto_session.lua
 │           ├── flash.lua
-│           ├── fzf.lua
-│           ├── grug-far.lua
+│           ├── grug_far.lua
 │           ├── guess_indent.lua
 │           ├── oil.lua
-│           ├── rainbow_delimiters.lua
 │           ├── scrolleof.lua
 │           ├── snacks.lua
-│           ├── startuptime.lua
 │           ├── todo_comments.lua
 │           ├── toggleterm.lua
 │           ├── trouble.lua
 │           └── whichkey.lua
-└── README.md
+├── README.md
+└── .stylua.toml
 ```
 
 #### Screenshots
