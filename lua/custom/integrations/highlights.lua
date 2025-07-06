@@ -9,8 +9,8 @@ hl(0, "NormalFloat", { fg = c.ui.text_active, bg = c.ui.base })
 hl(0, "FloatBorder", { fg = c.ui.border, bg = c.ui.base })
 hl(0, "Pmenu", { fg = c.ui.text_active, bg = c.ui.base })
 
--- Statusline
--- hl(0, "StatusLine", { bg = c.ui.statusline })
+-- Mode message
+hl(0, "ModeMsg", { fg = c.ui.base })
 
 -- Gutter
 hl(0, "EndOfBuffer", { fg = c.ui.base })
@@ -49,7 +49,16 @@ hl(0, "RainbowDelimiters5", { fg = c.ui.green })
 hl(0, "RainbowDelimiters6", { fg = c.ui.purple })
 hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 
--- Pretty-path
-hl(0, "PrettyPathDir", { fg = c.syntax.comment })
-hl(0, "PrettyPathFile", { fg = c.syntax.text })
-hl(0, "PrettyPathModified", { fg = c.ui.orange, bold = true })
+-- Lualine path
+hl(0, "LualinePathDir", { fg = c.syntax.comment })
+hl(0, "LualinePathFile", { fg = c.syntax.text })
+hl(0, "LualinePathModified", { fg = c.ui.orange, bold = true })
+
+-- Mode line color
+hl(0, "ModeLineNormal", { fg = c.ui.blue, bold = true })
+hl(0, "ModeLineInsert", { fg = c.ui.green, bold = true })
+hl(0, "ModeLineVisual", { fg = c.ui.purple, bold = true })
+hl(0, "ModeLineVLine", { fg = c.ui.purple, bold = true })
+hl(0, "ModeLineCommand", { fg = c.ui.yellow, bold = true })
+hl(0, "ModeLineTerminal", { fg = c.ui.orange, bold = true })
+hl(0, "ModeLineReplace", { fg = c.ui.red, bold = true })

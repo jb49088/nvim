@@ -1,3 +1,5 @@
+local lualine_path = require("custom.integrations.lualine_path")
+
 return {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
@@ -60,16 +62,17 @@ return {
                     },
                     "diagnostics",
                 },
-                lualine_c = {
-                    {
-                        "pretty_path",
-                        highlights = {
-                            directory = "PrettyPathDir",
-                            filename = "PrettyPathFile",
-                            modified = "PrettyPathModified",
-                        },
-                    },
-                },
+                lualine_c = { { lualine_path.component } },
+                -- lualine_c = {
+                --     {
+                --         "pretty_path",
+                --         highlights = {
+                --             directory = "PrettyPathDir",
+                --             filename = "PrettyPathFile",
+                --             modified = "PrettyPathModified",
+                --         },
+                --     },
+                -- },
                 lualine_x = { "encoding", "fileformat" },
                 lualine_y = {
                     { "progress", separator = " ", padding = { left = 1, right = 0 } },

@@ -15,7 +15,7 @@ opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu
 opt.title = true -- Enable window title
 opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
-opt.showmode = false -- Disable mode display in command line
+-- opt.showmode = false -- Disable mode display in command line
 opt.laststatus = 3 -- Always show statusline
 opt.statusline = " " -- Show a blank statusline before lualine loads in
 opt.showtabline = 0 -- Hide tab line

@@ -5,8 +5,8 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 #### Features
 
 - Lazy loading with [lazy.nvim](https://github.com/folke/lazy.nvim)
-- Custom [lualine](https://github.com/nvim-lualine/lualine.nvim) including [lualine-pretty-path](https://github.com/bwpge/lualine-pretty-path/)
 - Extensive use of [snacks.nvim](https://github.com/folke/snacks.nvim) including custom pickers
+- [lualine](https://github.com/nvim-lualine/lualine.nvim) with custom components
 - [oil.nvim](https://github.com/stevearc/oil.nvim)
 - [flash.nvim](https://github.com/folke/flash.nvim)
 - [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim)
@@ -23,13 +23,19 @@ nvim
 ├── lua
 │   ├── core
 │   │   ├── autocommands.lua
-│   │   ├── custom_functions.lua
-│   │   ├── highlights.lua
 │   │   ├── init.lua
 │   │   ├── keymaps.lua
 │   │   ├── lazy.lua
 │   │   ├── lsp_diagnostic.lua
 │   │   └── options.lua
+│   ├── custom
+│   │   ├── integrations
+│   │   │   ├── highlights.lua
+│   │   │   ├── lualine_path.lua
+│   │   │   └── tabs_picker.lua
+│   │   └── standalone
+│   │       ├── init.lua
+│   │       └── mode_line_color.lua
 │   └── plugins
 │       ├── coding
 │       │   ├── autotag.lua
@@ -48,7 +54,6 @@ nvim
 │       │   ├── colorscheme.lua
 │       │   ├── fidget.lua
 │       │   ├── illuminate.lua
-│       │   ├── line_number_change_mode.lua
 │       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
 │       │   └── rainbow_delimiters.lua

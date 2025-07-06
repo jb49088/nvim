@@ -10,6 +10,6 @@ return {
             },
         })
         vim.cmd("colorscheme astrotheme")
-        require("core.highlights")
+        require("custom.integrations.highlights")
     end,
 }

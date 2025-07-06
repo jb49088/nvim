@@ -29,6 +29,13 @@ vim.api.nvim_create_autocmd("FileType", {
     end,
 })
 
+-- Set filetype for terminal buffers (for mini.icons)
+vim.api.nvim_create_autocmd("TermOpen", {
+    callback = function()
+        vim.bo.filetype = "terminal"
+    end,
+})
+
 -- Open terminals in terminal mode
 vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter" }, {
     pattern = "*",
