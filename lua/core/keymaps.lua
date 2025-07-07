@@ -7,7 +7,6 @@ vim.g.maplocalleader = " "
 -- Basic keymaps
 map("n", "<Esc>", "<cmd>nohlsearch<CR>")
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit Terminal Mode" })
-map("n", "<leader>R", "<Cmd>restart<CR>", { desc = "Restart Neovim" })
 map("n", "<leader>l", "<Cmd>Lazy<CR>", { desc = "Lazy" })
 map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })

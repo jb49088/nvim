@@ -53,6 +53,12 @@ hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 hl(0, "LualinePathDir", { fg = c.syntax.comment })
 hl(0, "LualinePathFile", { fg = c.syntax.text })
 hl(0, "LualinePathModified", { fg = c.ui.orange, bold = true })
+hl(0, "LualinePathOilDir", { fg = c.syntax.comment })
+hl(0, "LualinePathOilCurrent", { fg = c.syntax.text })
+hl(0, "LualinePathTerminal", { fg = c.syntax.text })
+hl(0, "LualinePathTerminalPID", { fg = c.syntax.comment })
+hl(0, "LualinePathLock", { fg = c.ui.orange })
+hl(0, "LualinePathHealth", { fg = c.syntax.text })
 
 -- Mode line color
 hl(0, "ModeLineNormal", { fg = c.ui.blue, bold = true })

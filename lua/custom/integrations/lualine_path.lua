@@ -1,148 +1,230 @@
 local M = {}
+
+-- Configuration
 local ellipsis = "…"
 local max_depth = 3
--- Icon padding for specific icons
-local icon_padding = {
-    [""] = 1,
-}
+local oil_max_depth = 4
+local path_sep = package.config:sub(1, 1)
+local icon_padding = { [""] = 1 }
 
--- Lualine highlight formatting (borrowed from pretty-path)
-local function lualine_format_hl(component, text, hl_group)
+-- Cache for highlight groups
+local hl_cache = {}
+
+-- Lualine highlight formatting
+local function format_hl(component, text, hl_group)
     if not hl_group or hl_group == "" or text == "" then
         return text
     end
-    component.hl_cache = component.hl_cache or {}
-    local lualine_hl_group = component.hl_cache[hl_group]
-    if not lualine_hl_group then
+
+    local cached_hl = hl_cache[hl_group]
+    if not cached_hl then
         local u = require("lualine.utils.utils")
-        local gui = vim.tbl_filter(function(x)
-            return x
-        end, {
-            u.extract_highlight_colors(hl_group, "bold") and "bold",
-            u.extract_highlight_colors(hl_group, "italic") and "italic",
-        })
-        lualine_hl_group = component:create_hl({
+        local gui_attrs = {}
+        if u.extract_highlight_colors(hl_group, "bold") then
+            table.insert(gui_attrs, "bold")
+        end
+        if u.extract_highlight_colors(hl_group, "italic") then
+            table.insert(gui_attrs, "italic")
+        end
+
+        cached_hl = component:create_hl({
             fg = u.extract_highlight_colors(hl_group, "fg"),
-            gui = #gui > 0 and table.concat(gui, ",") or nil,
+            gui = #gui_attrs > 0 and table.concat(gui_attrs, ",") or nil,
         }, hl_group)
-        component.hl_cache[hl_group] = lualine_hl_group
+        hl_cache[hl_group] = cached_hl
     end
-    return component:format_hl(lualine_hl_group) .. text .. component:get_default_hl()
+
+    return component:format_hl(cached_hl) .. text .. component:get_default_hl()
 end
 
-local function shorten_path(parts, depth, ellipsis_char)
+-- Shorten path by keeping first part, ellipsis, and last (depth-1) parts
+local function shorten_path(parts, depth)
     if #parts <= depth then
         return parts
     end
-    local shortened = {}
-    -- first part
-    table.insert(shortened, parts[1])
-    -- ellipsis
-    table.insert(shortened, ellipsis_char)
-    -- last (depth - 1) parts
+
+    local result = { parts[1], ellipsis }
     for i = #parts - (depth - 2), #parts do
-        table.insert(shortened, parts[i])
+        table.insert(result, parts[i])
     end
-    return shortened
+    return result
 end
 
--- Get icon using mini.icons directly
+-- Get icon using mini.icons
 local function get_icon(filename, filetype)
     local ok, mini_icons = pcall(require, "mini.icons")
     if not ok then
         return nil, nil
     end
-    -- Try to get icon by filename first
+
+    -- Try filename first, then filetype
     local icon, hl, is_default = mini_icons.get("file", filename)
     if not is_default then
         return icon, hl
     end
-    -- Fall back to filetype
+
     if filetype and filetype ~= "" then
         icon, hl, is_default = mini_icons.get("filetype", filetype)
         if not is_default then
             return icon, hl
         end
     end
+
     return icon, hl
 end
 
 -- Get icon for current buffer
 local function get_buffer_icon()
     local name = vim.fn.expand("%:t")
-    local ft = vim.bo.filetype
+    local ft = vim.bo.buftype == "terminal" and "terminal" or vim.bo.filetype
     return get_icon(name, ft)
 end
 
--- Format icon with padding (no color here)
-local function format_icon(icon, hl_group)
+-- Format icon with padding
+local function format_icon_with_padding(icon, hl_group)
     if not icon then
         return "", nil
     end
     local padding = icon_padding[icon] or 0
-    local formatted_icon = icon .. string.rep(" ", padding)
-    return formatted_icon, hl_group
+    return icon .. string.rep(" ", padding), hl_group
 end
 
--- Check if file is modified
-local function is_modified()
-    return vim.bo.modified
-end
+-- Combine icon and text with proper highlighting
+local function combine_icon_text(component, icon_str, icon_hl, text)
+    if icon_str == "" then
+        return text
+    end
 
--- Apply color to filename only based on file state
-local function colorize_filename(filename, component)
-    if is_modified() then
-        return lualine_format_hl(component, filename, "LualinePathModified")
+    if icon_hl then
+        local colored_icon = format_hl(component, icon_str, icon_hl)
+        return colored_icon .. " " .. text
     else
-        return lualine_format_hl(component, filename, "LualinePathFile")
+        return icon_str .. " " .. text
     end
 end
 
-function M.component(self)
-    local path = vim.fn.expand(vim.g.pretty_path_use_absolute and "%:p" or "%:~:.")
-    if path == "" then
-        return lualine_format_hl(self, "[No Name]", "LualinePathFile")
+-- Handle checkhealth buffer display
+local function handle_checkhealth(component)
+    -- Always use checkhealth filetype for consistent icon
+    local icon, hl = get_icon("", "checkhealth")
+    local icon_str, icon_hl = format_icon_with_padding(icon, hl)
+    local health_text = format_hl(component, "Health", "LualinePathHealth")
+    return combine_icon_text(component, icon_str, icon_hl, health_text)
+end
+
+-- Handle terminal buffer display
+local function handle_terminal(component)
+    local path = vim.fn.expand("%")
+
+    -- Extract terminal info (format: term://path//pid:shell)
+    local terminal_info = vim.split(path, "//")[3] or ""
+    local pid = terminal_info:match("^%d+")
+    local shell_path = pid and terminal_info:gsub("^%d+:", "") or terminal_info
+
+    -- Extract shell name and handle toggleterm format
+    local shell_name = shell_path:match("([^/]+)$") or shell_path
+    shell_name = shell_name:match("([^;]+)") or shell_name
+
+    -- Build display text
+    local display_name = shell_name ~= "" and shell_name or "Terminal"
+    local result = format_hl(component, display_name, "LualinePathTerminal")
+
+    if pid then
+        result = result .. format_hl(component, " " .. pid, "LualinePathTerminalPID")
     end
 
-    -- Get icon for the current buffer
-    local icon, hl_group = get_buffer_icon()
-    local icon_str, icon_hl = format_icon(icon, hl_group)
+    local icon_str, icon_hl = format_icon_with_padding(get_buffer_icon())
+    return combine_icon_text(component, icon_str, icon_hl, result)
+end
 
-    -- split path by OS path separator
-    local path_sep = package.config:sub(1, 1)
-    local parts = vim.split(path, path_sep, { trimempty = true })
-    local shortened_parts = shorten_path(parts, max_depth, ellipsis)
+-- Handle oil buffer display
+local function handle_oil(component)
+    local ok, oil = pcall(require, "oil")
+    if not ok then
+        return ""
+    end
 
-    -- Separate directory path from filename
-    local result = ""
+    local current_dir = oil.get_current_dir()
+    if not current_dir then
+        return ""
+    end
+
+    -- Process path
+    local cleaned_dir = current_dir:gsub(path_sep .. "$", "")
+    local parts = vim.split(cleaned_dir, path_sep, { trimempty = true })
+    local shortened_parts = shorten_path(parts, oil_max_depth)
+
+    -- Build colored path
+    local colored_path
     if #shortened_parts > 1 then
-        -- Join all parts except the last one (directory path)
         local dir_parts = {}
         for i = 1, #shortened_parts - 1 do
             table.insert(dir_parts, shortened_parts[i])
         end
         local dir_path = table.concat(dir_parts, path_sep) .. path_sep
+        local current_folder = shortened_parts[#shortened_parts]
 
-        -- Get the filename (last part)
-        local filename = shortened_parts[#shortened_parts]
-
-        -- Combine directory path (with LualinePathDir color) with colored filename
-        result = lualine_format_hl(self, dir_path, "LualinePathDir") .. colorize_filename(filename, self)
+        colored_path = format_hl(component, dir_path, "LualinePathOilDir")
+            .. format_hl(component, current_folder, "LualinePathOilCurrent")
     else
-        -- Only filename, no directory
-        result = colorize_filename(shortened_parts[1], self)
+        colored_path = format_hl(component, shortened_parts[1], "LualinePathOilCurrent")
     end
 
-    -- Combine icon and path with proper highlight handling
-    if icon_str ~= "" then
-        if icon_hl then
-            local colored_icon = lualine_format_hl(self, icon_str, icon_hl)
-            return colored_icon .. " " .. result
-        else
-            return icon_str .. " " .. result
+    local icon_str, icon_hl = format_icon_with_padding(get_buffer_icon())
+    return combine_icon_text(component, icon_str, icon_hl, colored_path)
+end
+
+-- Handle regular files
+local function handle_regular_file(component)
+    local path = vim.fn.expand(vim.g.pretty_path_use_absolute and "%:p" or "%:~:.")
+    if path == "" then
+        return ""
+    end
+
+    local parts = vim.split(path, path_sep, { trimempty = true })
+    local shortened_parts = shorten_path(parts, max_depth)
+
+    -- Build result
+    local result
+    if #shortened_parts > 1 then
+        local dir_parts = {}
+        for i = 1, #shortened_parts - 1 do
+            table.insert(dir_parts, shortened_parts[i])
         end
+        local dir_path = table.concat(dir_parts, path_sep) .. path_sep
+        local filename = shortened_parts[#shortened_parts]
+
+        -- Color filename based on modification state
+        local filename_hl = vim.bo.modified and "LualinePathModified" or "LualinePathFile"
+        result = format_hl(component, dir_path, "LualinePathDir") .. format_hl(component, filename, filename_hl)
     else
-        return result
+        local filename_hl = vim.bo.modified and "LualinePathModified" or "LualinePathFile"
+        result = format_hl(component, shortened_parts[1], filename_hl)
+    end
+
+    -- Add lock icon for non-modifiable buffers
+    if not vim.bo.modifiable then
+        result = result .. " " .. format_hl(component, "", "LualinePathLock")
+    end
+
+    local icon_str, icon_hl = format_icon_with_padding(get_buffer_icon())
+    return combine_icon_text(component, icon_str, icon_hl, result)
+end
+
+-- Main component function
+function M.component(self)
+    local buftype = vim.bo.buftype
+    local filetype = vim.bo.filetype
+    local bufname = vim.fn.expand("%")
+
+    if buftype == "terminal" then
+        return handle_terminal(self)
+    elseif filetype == "oil" then
+        return handle_oil(self)
+    elseif filetype == "checkhealth" or bufname:match("^health://") or bufname:match("checkhealth") then
+        return handle_checkhealth(self)
+    else
+        return handle_regular_file(self)
     end
 end
 

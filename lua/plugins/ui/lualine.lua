@@ -67,9 +67,9 @@ return {
                 --     {
                 --         "pretty_path",
                 --         highlights = {
-                --             directory = "PrettyPathDir",
-                --             filename = "PrettyPathFile",
-                --             modified = "PrettyPathModified",
+                --             directory = "LualinePathDir",
+                --             filename = "LualinePathFile",
+                --             modified = "LualinePathModified",
                 --         },
                 --     },
                 -- },
