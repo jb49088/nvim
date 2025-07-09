@@ -33,9 +33,10 @@ nvim
 │   │   │   ├── highlights.lua
 │   │   │   ├── lualine_path.lua
 │   │   │   └── tabs_picker.lua
-│   │   └── standalone
+│   │   └── modules
+│   │       ├── eof_padding.lua
 │   │       ├── init.lua
-│   │       └── mode_line_color.lua
+│   │       └── mode_number_color.lua
 │   └── plugins
 │       ├── coding
 │       │   ├── autotag.lua
@@ -52,10 +53,10 @@ nvim
 │       │   └── mason.lua
 │       ├── ui
 │       │   ├── colorscheme.lua
-│       │   ├── fidget.lua
 │       │   ├── illuminate.lua
 │       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
+│       │   ├── noice.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
 │           ├── auto_session.lua
@@ -63,7 +64,6 @@ nvim
 │           ├── grug_far.lua
 │           ├── guess_indent.lua
 │           ├── oil.lua
-│           ├── scrolleof.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── toggleterm.lua
