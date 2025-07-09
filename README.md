@@ -75,7 +75,5 @@ nvim
 
 #### Screenshots
 
-![Screenshot 2025-07-06 184724](https://github.com/user-attachments/assets/0242ddf4-d7aa-48aa-bba2-8300a1385ca1)
-![Screenshot 2025-07-06 184804](https://github.com/user-attachments/assets/b5e776fe-b037-43e5-b232-3bd6ec00fe46)
-
-
+![Screenshot 2025-07-08 162334](https://github.com/user-attachments/assets/3ad9d1e5-3e6b-4b5f-b8e9-cd6fbe5b5a82)
+![Screenshot 2025-07-08 162906](https://github.com/user-attachments/assets/cae67557-4721-4307-b786-e9b3a9b8be79)
