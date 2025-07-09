@@ -1,2 +1,2 @@
 require("core")
-require("custom.standalone.init")
+require("custom.modules.init")

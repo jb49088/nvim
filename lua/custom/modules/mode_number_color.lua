@@ -1,11 +1,11 @@
 local modes = {
-    n = "ModeLineNormal",
-    i = "ModeLineInsert",
-    v = "ModeLineVisual",
-    V = "ModeLineVLine",
-    c = "ModeLineCommand",
-    t = "ModeLineTerminal",
-    R = "ModeLineReplace",
+    n = "ModeNumberNormal",
+    i = "ModeNumberInsert",
+    v = "ModeNumberVisual",
+    V = "ModeNumberVLine",
+    c = "ModeNumberCommand",
+    t = "ModeNumberTerminal",
+    R = "ModeNumberReplace",
 }
 
 local function update_line_color(mode)

@@ -19,12 +19,15 @@ return {
     },
     opts = {
         keymap = {
-            preset = "enter",
+            preset = "super-tab",
         },
         appearance = {
             nerd_font_variant = "mono",
         },
         completion = {
+            ghost_text = {
+                enabled = false,
+            },
             menu = {
                 border = "rounded",
                 scrollbar = false,
@@ -43,48 +46,49 @@ return {
                 },
             },
         },
-        -- cmdline = {
-        --     keymap = {
-        --         preset = "inherit",
-        --     },
-        --     completion = {
-        --         menu = { auto_show = true },
-        --         list = {
-        --             selection = {
-        --                 preselect = false,
-        --                 auto_insert = true,
-        --             },
-        --         },
-        --     },
-        -- },
+        cmdline = {
+            keymap = {
+                preset = "inherit",
+            },
+            completion = {
+                menu = { auto_show = true },
+                ghost_text = { enabled = true },
+                list = {
+                    selection = {
+                        preselect = false,
+                        auto_insert = true,
+                    },
+                },
+            },
+        },
         sources = {
             default = { "lsp", "path", "snippets", "lazydev" },
             providers = {
                 lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
-                -- cmdline = {
-                --     -- ignores cmdline completions when executing shell commands (:! enumerates all executables in Windows path otherwise)
-                --     enabled = function()
-                --         local cmdtype = vim.fn.getcmdtype()
-                --         local cmdline = vim.fn.getcmdline()
-                --         if
-                --             cmdtype == ":"
-                --             and (
-                --                 cmdline:match("^%s*[%%0-9,'<>%-]*!%s*") -- :! or :%! etc.
-                --                 or cmdline:match("^%s*w!?%s+!%s*") -- :w ! or :w! !
-                --             )
-                --         then
-                --             return false
-                --         end
-                --         return true
-                --     end,
-                --     -- when typing a command, only show when the keyword is 3 characters or longer
-                --     min_keyword_length = function(ctx)
-                --         if ctx.mode == "cmdline" and string.find(ctx.line, " ") == nil then
-                --             return 3
-                --         end
-                --         return 0
-                --     end,
-                -- },
+                cmdline = {
+                    -- ignores cmdline completions when executing shell commands (:! enumerates all executables in Windows path otherwise)
+                    enabled = function()
+                        local cmdtype = vim.fn.getcmdtype()
+                        local cmdline = vim.fn.getcmdline()
+                        if
+                            cmdtype == ":"
+                            and (
+                                cmdline:match("^%s*[%%0-9,'<>%-]*!%s*") -- :! or :%! etc.
+                                or cmdline:match("^%s*w!?%s+!%s*") -- :w ! or :w! !
+                            )
+                        then
+                            return false
+                        end
+                        return true
+                    end,
+                    -- when typing a command, only show when the keyword is 4 characters or longer
+                    min_keyword_length = function(ctx)
+                        if ctx.mode == "cmdline" and string.find(ctx.line, " ") == nil then
+                            return 4
+                        end
+                        return 0
+                    end,
+                },
             },
         },
         snippets = { preset = "luasnip" },

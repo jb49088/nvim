@@ -5,6 +5,7 @@ return {
         require("astrotheme").setup({
             palette = "astrodark",
             style = {
+                transparent = true,
                 inactive = false,
                 italic_comments = false,
             },

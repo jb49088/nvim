@@ -31,7 +31,8 @@ map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Go to Upper Window from Termina
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
 map("n", "<leader>wo", "<C-w>o", { desc = "Close Other Windows" })
-map("n", "<leader>ww", "<C-w>w", { desc = "Switch Windows" })
+map("n", "<leader>wn", "<C-w>w", { desc = "Next Window" })
+map("n", "<leader>wp", "<C-w>p", { desc = "Previous Window" })
 map("n", "<leader>wt", "<C-w>T", { desc = "Break out into a new tab" })
 map("n", "<leader>wh", ":split<CR>", { desc = "Horizontal Split" })
 map("n", "<leader>wv", ":vsplit<CR>", { desc = "Vertical Split" })
@@ -84,7 +85,7 @@ map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", {
 
 -- Inspect position and syntax tree
 map("n", "<leader>ui", vim.show_pos, { desc = "Inspect Pos" })
-map("n", "<leader>uI", function()
-    vim.treesitter.inspect_tree()
-    vim.api.nvim_input("I")
-end, { desc = "Inspect Tree" })
+-- map("n", "<leader>uI", function()
+--     vim.treesitter.inspect_tree()
+--     vim.api.nvim_input("I")
+-- end, { desc = "Inspect Tree" })

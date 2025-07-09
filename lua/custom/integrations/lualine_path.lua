@@ -204,7 +204,7 @@ local function handle_regular_file(component)
 
     -- Add lock icon for non-modifiable buffers
     if not vim.bo.modifiable then
-        result = result .. " " .. format_hl(component, "", "LualinePathLock")
+        result = result .. " " .. format_hl(component, "", "LualinePathLock")
     end
 
     local icon_str, icon_hl = format_icon_with_padding(get_buffer_icon())

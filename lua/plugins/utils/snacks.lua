@@ -87,7 +87,7 @@ return {
         { "<leader>gd", function() Snacks.picker.git_diff() end, desc = "Git Diff (Hunks)" },
         { "<leader>gf", function() Snacks.picker.git_log_file() end, desc = "Git Log File" },
         -- Grep
-        { "<leader>sb", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
+        { "<leader>sB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
         { "<leader>sg", function() Snacks.picker.grep() end, desc = "Grep" },
         { "<leader>sw", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
         -- search
@@ -114,10 +114,13 @@ return {
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
         { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
+        -- other
+        { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
     },
     config = function(_, opts)
         require("snacks").setup(opts)
-        -- vim.g.snacks_animate = false
+
+        vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 
         -- stylua: ignore start
         Snacks.toggle.animate():map("<leader>ua")

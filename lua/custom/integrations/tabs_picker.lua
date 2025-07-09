@@ -135,9 +135,11 @@ return {
             end
 
             -- Get the icon using the corrected name and category
-            icon, icon_hl = Snacks.util.icon(name, cat, {
+            local new_icon, new_icon_hl = Snacks.util.icon(name, cat, {
                 fallback = picker.opts.icons.files,
             })
+            icon = new_icon or icon
+            icon_hl = new_icon_hl or icon_hl
 
             -- Optionally align the icon
             icon = Snacks.picker.util.align(icon, picker.opts.formatters.file.icon_width or 2)
@@ -186,6 +188,13 @@ return {
         if item.type == "tab_header" then
             if item.tabpage_id then
                 vim.api.nvim_set_current_tabpage(item.tabpage_id)
+
+                -- When selecting a tab, also restore cursor position for the current buffer
+                local current_buf = vim.api.nvim_get_current_buf()
+                local mark = vim.api.nvim_buf_get_mark(current_buf, '"')
+                if mark[1] > 0 then
+                    pcall(vim.api.nvim_win_set_cursor, 0, mark)
+                end
             end
         elseif item.type == "buffer_entry" then
             if item.tabpage_id then
@@ -195,8 +204,13 @@ return {
                 else
                     -- Fallback: if the specific window is no longer valid,
                     -- just set the buffer in the current window of that tab.
-                    -- This might change the window layout if the buffer wasn't displayed.
                     vim.api.nvim_set_current_buf(item.buf)
+                end
+
+                -- Set cursor position to match what's shown in the picker
+                if item.pos and item.pos[1] and item.pos[1] > 0 then
+                    -- Use pcall to safely set cursor position
+                    pcall(vim.api.nvim_win_set_cursor, 0, item.pos)
                 end
             end
         end

@@ -12,9 +12,9 @@ return {
 
         local LualineTheme = {
             normal = {
-                a = { fg = c.ui.base, bg = c.syntax.blue, gui = "bold" },
-                b = { fg = c.ui.text_active, bg = c.ui.statusline },
-                c = { fg = c.ui.text_active, bg = c.ui.statusline },
+                a = { fg = c.ui.base, bg = c.ui.blue, gui = "bold" },
+                b = { fg = c.ui.text_active, bg = nil },
+                c = { fg = c.ui.text_active, bg = nil },
             },
             insert = { a = { fg = c.ui.base, bg = c.ui.green, gui = "bold" } },
             visual = { a = { fg = c.ui.base, bg = c.ui.purple, gui = "bold" } },
@@ -22,9 +22,9 @@ return {
             command = { a = { fg = c.ui.base, bg = c.ui.yellow, gui = "bold" } },
             terminal = { a = { fg = c.ui.base, bg = c.ui.orange, gui = "bold" } },
             inactive = {
-                a = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
-                b = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
-                c = { fg = c.ui.text_inactive, bg = c.ui.statusline, gui = "bold" },
+                a = { fg = c.ui.text_inactive, bg = nil, gui = "bold" },
+                b = { fg = c.ui.text_inactive, bg = nil, gui = "bold" },
+                c = { fg = c.ui.text_inactive, bg = nil, gui = "bold" },
             },
         }
 
