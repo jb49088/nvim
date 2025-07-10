@@ -1,9 +1,12 @@
+-- local session_picker = require("custom.integrations.session_picker")
+
 return {
     "rmagatti/auto-session",
     lazy = false,
     keys = {
         { "<leader>Sr", "<cmd>SessionRestore<CR>", desc = "Restore Session" },
         { "<leader>SS", "<cmd>Autosession search<CR>", desc = "Search Session" },
+        -- { "<leader>Sz", session_picker, desc = "Test" },
         {
             "<leader>Ss",
             function()

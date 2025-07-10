@@ -1,3 +1,5 @@
+-- TODO: fix help page bugs on the picker
+
 return {
     name = "Tabs",
     finder = function(opts, ctx)

@@ -25,9 +25,10 @@ return {
             layouts = {
                 default = {
                     layout = {
-                        backdrop = false,
+                        -- backdrop = false,
                     },
                 },
+                select = {},
             },
             win = {
                 preview = {
@@ -120,8 +121,10 @@ return {
     config = function(_, opts)
         require("snacks").setup(opts)
 
-        vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
+        vim.g.snacks_animate = false -- Disable snacks animations by default
+        vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
 
+        -- toggles
         -- stylua: ignore start
         Snacks.toggle.animate():map("<leader>ua")
         Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map("<leader>uc")

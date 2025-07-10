@@ -7,8 +7,16 @@ return {
     lazy = false, -- Load immediately to reduce flickers
     opts = {
         lsp = {
+            documentation = {
+                opts = {
+                    scrollbar = true,
+                },
+            },
             signature = {
-                enabled = false,
+                enabled = true,
+            },
+            hover = {
+                enabled = true,
             },
             override = {
                 ["vim.lsp.util.convert_input_to_markdown_lines"] = true,

@@ -61,6 +61,9 @@ hl(0, "RainbowDelimiters5", { fg = c.ui.green })
 hl(0, "RainbowDelimiters6", { fg = c.ui.purple })
 hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 
+-- Venv select
+hl(0, "VenvSelectActive", { fg = c.ui.yellow })
+
 -- Lualine path
 hl(0, "LualinePathDir", { fg = c.syntax.comment })
 hl(0, "LualinePathFile", { fg = c.syntax.text })

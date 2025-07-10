@@ -5,7 +5,6 @@ local cmd = vim.cmd
 -- Interface / UI
 g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
 g.have_nerd_font = true -- Enable nerd font
-g.snacks_animate = false -- Disable snacks animations by default
 opt.number = true -- Show absolute line numbers
 opt.relativenumber = true -- Show relative line numbers
 opt.numberwidth = 5 -- Set line number column width

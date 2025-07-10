@@ -9,6 +9,7 @@ return {
                 "snacks_picker_preview",
                 "snacks_picker_input",
                 "oil",
+                "noice",
             },
         },
         config = function(_, opts)
