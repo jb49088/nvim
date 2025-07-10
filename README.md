@@ -32,9 +32,12 @@ nvim
 │   │   ├── integrations
 │   │   │   ├── highlights.lua
 │   │   │   ├── lualine_path.lua
-│   │   │   └── tabs_picker.lua
+│   │   │   ├── session_picker.lua
+│   │   │   ├── tabs_picker.lua
+│   │   │   └── venv_picker.lua
 │   │   └── modules
 │   │       ├── eof_padding.lua
+│   │       ├── float_cycle.lua
 │   │       ├── init.lua
 │   │       └── mode_number_color.lua
 │   └── plugins
@@ -68,6 +71,7 @@ nvim
 │           ├── todo_comments.lua
 │           ├── toggleterm.lua
 │           ├── trouble.lua
+│           ├── venv_selector.lua
 │           └── whichkey.lua
 ├── README.md
 └── .stylua.toml
