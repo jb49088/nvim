@@ -2,6 +2,8 @@ local opt = vim.opt
 local g = vim.g
 local cmd = vim.cmd
 
+-- vim.highlight.priorities.semantic_tokens = 95
+
 -- Interface / UI
 g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
 g.have_nerd_font = true -- Enable nerd font
@@ -15,17 +17,20 @@ opt.title = true -- Enable window title
 opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
 -- opt.showmode = false -- Disable mode display in command line
 opt.laststatus = 3 -- Always show statusline
+vim.opt.cmdheight = 0
 opt.statusline = " " -- Show a blank statusline before lualine loads in
+-- opt.winbar = " " -- Show a blank winbar before navic loads in
 opt.showtabline = 0 -- Hide tab line
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
 opt.cursorline = true -- Highlight the current line...
 -- opt.cursorlineopt = "number" -- ...but only highlight the line number
 opt.wrap = false -- Disable line wrapping
-opt.scrolloff = 999 -- Vertical scroll offset (Keep cursor vertically centered)
+opt.scrolloff = 999 -- Vertical scroll offset
 opt.sidescrolloff = 10 -- Horizontal scroll offset
 -- opt.winborder = "rounded" -- Rounded borders for lsp hover
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
+-- cmd("syntax on")
 
 -- Behavior
 opt.swapfile = false -- Disable swap files
@@ -71,3 +76,31 @@ if vim.fn.has("wsl") == 1 then
         cache_enabled = 0,
     }
 end
+
+-- vim.g.clipboard = {
+--     name = "WslClipboard",
+--     copy = {
+--         ["+"] = "clip.exe",
+--         ["*"] = "clip.exe",
+--     },
+--     paste = {
+--         ["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+--         ["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+--     },
+--     cache_enabled = 0,
+-- }
+
+-- if vim.fn.has("wsl") == 1 then
+--     vim.g.clipboard = {
+--         name = "wsl-clip",
+--         copy = {
+--             ["+"] = { "clip.exe" },
+--             ["*"] = { "clip.exe" },
+--         },
+--         paste = {
+--             ["+"] = { "powershell.exe", "-c", "Get-Clipboard" },
+--             ["*"] = { "powershell.exe", "-c", "Get-Clipboard" },
+--         },
+--         cache_enabled = 1,
+--     }
+-- end

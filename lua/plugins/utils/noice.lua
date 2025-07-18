@@ -4,7 +4,9 @@ return {
         "MunifTanjim/nui.nvim",
         "rcarriga/nvim-notify",
     },
-    lazy = false, -- Load immediately to reduce flickers
+    -- enabled = false,
+    -- event = "VeryLazy",
+    lazy = false,
     opts = {
         lsp = {
             documentation = {
@@ -25,6 +27,7 @@ return {
             },
         },
         cmdline = {
+            -- view = "cmdline",
             format = {
                 lua = false,
                 filter = false,
@@ -32,9 +35,10 @@ return {
             },
         },
         presets = {
-            lsp_doc_border = true,
-            bottom_search = true,
+            -- command_palette = true,
+            -- bottom_search = true,
             long_message_to_split = true,
+            lsp_doc_border = true,
         },
         routes = {
             {

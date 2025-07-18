@@ -11,7 +11,9 @@ vim.diagnostic.config({
         },
     } or {},
     virtual_text = {
+        prefix = "󰆢",
         source = "if_many",
         spacing = 2,
     },
+    -- update_in_insert = true,
 })

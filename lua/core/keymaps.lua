@@ -49,24 +49,25 @@ map("n", "<leader>Tf", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
 map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
 map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
 
--- Location list
+-- Consistent and flicker-free scrolling
+map("n", "<C-d>", function()
+    local original_cursorline = vim.o.cursorline
+    vim.o.cursorline = false
+    vim.cmd("normal! " .. vim.o.scroll .. "j")
+    vim.o.cursorline = original_cursorline
+end, { noremap = true, silent = true })
+
+map("n", "<C-u>", function()
+    local original_cursorline = vim.o.cursorline
+    vim.o.cursorline = false
+    vim.cmd("normal! " .. vim.o.scroll .. "k")
+    vim.o.cursorline = original_cursorline
+end, { noremap = true, silent = true })
+
+-- Quickfix list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
 
-map("n", "<leader>xl", function()
-    local success, err = pcall(function()
-        if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-            vim.cmd.lclose()
-        else
-            vim.cmd.lopen()
-        end
-    end)
-    if not success and err then
-        vim.notify(err, vim.log.levels.ERROR)
-    end
-end, { desc = "Location List" })
-
--- Quickfix list
 map("n", "<leader>xq", function()
     local success, err = pcall(function()
         if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
@@ -80,12 +81,26 @@ map("n", "<leader>xq", function()
     end
 end, { desc = "Quickfix list" })
 
+-- Location list
+map("n", "<leader>xl", function()
+    local success, err = pcall(function()
+        if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
+            vim.cmd.lclose()
+        else
+            vim.cmd.lopen()
+        end
+    end)
+    if not success and err then
+        vim.notify(err, vim.log.levels.ERROR)
+    end
+end, { desc = "Location List" })
+
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
 
 -- Inspect position and syntax tree
 map("n", "<leader>ui", vim.show_pos, { desc = "Inspect Pos" })
--- map("n", "<leader>uI", function()
---     vim.treesitter.inspect_tree()
---     vim.api.nvim_input("I")
--- end, { desc = "Inspect Tree" })
+map("n", "<leader>uI", function()
+    vim.treesitter.inspect_tree()
+    vim.api.nvim_input("I")
+end, { desc = "Inspect Tree" })

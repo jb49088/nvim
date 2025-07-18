@@ -1,31 +1,28 @@
 local mode_disabled = false
 local initial_scrolloff = vim.o.scrolloff
 local scrolloff = vim.o.scrolloff
+local opts = {
+    pattern = "*",
+    insert_mode = true,
+    floating = true,
+    disabled_filetypes = {},
+    disabled_modes = { "t", "nt" },
+}
 
--- Configuration - edit these directly
-local disabled_filetypes = { "terminal" }
-local disabled_modes = { "t", "nt" }
-
--- Convert arrays to hashmaps for faster lookup
-local disabled_filetypes_map = {}
-for _, ft in pairs(disabled_filetypes) do
-    disabled_filetypes_map[ft] = true
-end
-
-local disabled_modes_map = {}
-for _, mode in pairs(disabled_modes) do
-    disabled_modes_map[mode] = true
-end
-
--- Main EOF scrolling logic
 local function check_eof_scrolloff(ev)
-    -- Check if current filetype or mode is disabled
-    if disabled_filetypes_map[vim.o.filetype] or mode_disabled then
+    local filetype_disabled = opts.disabled_filetypes[vim.o.filetype] == true
+    if mode_disabled or filetype_disabled then
         return
     end
 
-    -- Handle WinScrolled event specifics - this prevents the locking issue
-    if ev and ev.event == "WinScrolled" then
+    if opts.floating == false then
+        local curr_win = vim.api.nvim_win_get_config(0)
+        if curr_win.relative ~= "" then
+            return
+        end
+    end
+
+    if ev.event == "WinScrolled" then
         local win_id = vim.api.nvim_get_current_win()
         local win_event = vim.v.event[tostring(win_id)]
         if win_event ~= nil and win_event.topline <= 0 then
@@ -33,12 +30,10 @@ local function check_eof_scrolloff(ev)
         end
     end
 
-    -- Calculate distances and adjust view if needed
     local win_height = vim.fn.winheight(0)
     local win_cur_line = vim.fn.winline()
     local visual_distance_to_eof = win_height - win_cur_line
 
-    -- If we're close to EOF, add padding by adjusting the view
     if visual_distance_to_eof < scrolloff then
         local win_view = vim.fn.winsaveview()
         vim.fn.winrestview({
@@ -48,8 +43,7 @@ local function check_eof_scrolloff(ev)
     end
 end
 
--- Handle window resize events
-local function on_vim_resized()
+local vim_resized_cb = function()
     local win_height = vim.fn.winheight(0)
     local half_win_height = math.floor(win_height / 2)
 
@@ -65,38 +59,46 @@ local function on_vim_resized()
     vim.o.scrolloff = win_height % 2 == 0 and scrolloff - 1 or scrolloff
 end
 
--- Initialize the module
-local group = vim.api.nvim_create_augroup("EOFPadding", { clear = true })
+-- Convert arrays to hashmaps for faster lookup
+local disabled_filetypes_hashmap = {}
+for _, val in pairs(opts.disabled_filetypes) do -- Fixed syntax error
+    disabled_filetypes_hashmap[val] = true
+end
+opts.disabled_filetypes = disabled_filetypes_hashmap
 
--- Defer all initialization until after Vim has fully started
-vim.api.nvim_create_autocmd("VimEnter", {
-    group = group,
+local disabled_modes_hashmap = {}
+for _, val in pairs(opts.disabled_modes) do -- Fixed syntax error
+    disabled_modes_hashmap[val] = true
+end
+opts.disabled_modes = disabled_modes_hashmap
+
+local autocmds = { "CursorMoved", "WinScrolled" }
+if opts.insert_mode then
+    table.insert(autocmds, "CursorMovedI")
+end
+
+local eof_padding = vim.api.nvim_create_augroup("eof_padding", { clear = true })
+
+vim.api.nvim_create_autocmd("ModeChanged", {
+    group = eof_padding,
+    pattern = opts.pattern,
     callback = function()
-        -- Track mode changes
-        vim.api.nvim_create_autocmd("ModeChanged", {
-            group = group,
-            pattern = "*",
-            callback = function()
-                mode_disabled = disabled_modes_map[vim.api.nvim_get_mode().mode] == true
-            end,
-        })
-
-        -- Handle window resize and buffer enter - key difference: pattern = "*"
-        vim.api.nvim_create_autocmd({ "VimResized", "BufEnter" }, {
-            group = group,
-            pattern = "*",
-            callback = on_vim_resized,
-        })
-
-        -- Main functionality - works in insert mode and all cursor movements
-        vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "WinScrolled" }, {
-            group = group,
-            pattern = "*",
-            callback = check_eof_scrolloff,
-        })
-
-        -- Initialize
-        on_vim_resized()
-        vim.defer_fn(on_vim_resized, 0)
+        local current_mode = vim.api.nvim_get_mode().mode
+        mode_disabled = opts.disabled_modes[current_mode] == true
     end,
 })
+
+vim.api.nvim_create_autocmd({ "VimResized", "BufEnter" }, {
+    group = eof_padding,
+    pattern = opts.pattern,
+    callback = vim_resized_cb,
+})
+
+vim.api.nvim_create_autocmd(autocmds, {
+    group = eof_padding,
+    pattern = opts.pattern,
+    callback = check_eof_scrolloff,
+})
+
+vim_resized_cb()
+vim.defer_fn(vim_resized_cb, 0)

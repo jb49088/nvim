@@ -6,11 +6,15 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 - Lazy loading with [lazy.nvim](https://github.com/folke/lazy.nvim)
 - Extensive use of [snacks.nvim](https://github.com/folke/snacks.nvim) including custom pickers
-- [lualine](https://github.com/nvim-lualine/lualine.nvim) with custom components
+- Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
+- Completions with [blink.cmp](https://github.com/Saghen/blink.cmp)
+- Extensive use of [mini.icons](https://github.com/echasnovski/mini.icons) throughout the config for a cohesive appearance 
+- Enhanced syntax highlighting with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) and semantic highlighting
+- [auto-session](https://github.com/rmagatti/auto-session) with a custom session picker
+- [venv-selector.nvim](https://github.com/linux-cultist/venv-selector.nvim) with a custom venv picker
 - [oil.nvim](https://github.com/stevearc/oil.nvim)
 - [flash.nvim](https://github.com/folke/flash.nvim)
 - [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim)
-- [auto-session](https://github.com/rmagatti/auto-session)
 - [trouble.nvim](https://github.com/folke/trouble.nvim)
 - And much more
 
@@ -30,12 +34,15 @@ nvim
 │   │   └── options.lua
 │   ├── custom
 │   │   ├── integrations
+│   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
 │   │   │   ├── lualine_path.lua
+│   │   │   ├── mode_heirline_color.lua
 │   │   │   ├── session_picker.lua
 │   │   │   ├── tabs_picker.lua
 │   │   │   └── venv_picker.lua
 │   │   └── modules
+│   │       ├── breadcrumbs.lua
 │   │       ├── eof_padding.lua
 │   │       ├── float_cycle.lua
 │   │       ├── init.lua
@@ -43,9 +50,11 @@ nvim
 │   └── plugins
 │       ├── coding
 │       │   ├── autotag.lua
+│       │   ├── dropbar.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── mini_pairs.lua
+│       │   ├── navic.lua
 │       │   ├── surround.lua
 │       │   └── treesitter.lua
 │       ├── lsp_completion
@@ -56,16 +65,18 @@ nvim
 │       │   └── mason.lua
 │       ├── ui
 │       │   ├── colorscheme.lua
+│       │   ├── devicons.lua
+│       │   ├── heirline.lua
 │       │   ├── illuminate.lua
 │       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
-│       │   ├── noice.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
 │           ├── auto_session.lua
 │           ├── flash.lua
 │           ├── grug_far.lua
 │           ├── guess_indent.lua
+│           ├── noice.lua
 │           ├── oil.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua

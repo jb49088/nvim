@@ -2,10 +2,10 @@ local lualine_path = require("custom.integrations.lualine_path")
 
 return {
     "nvim-lualine/lualine.nvim",
+    enabled = false,
     event = "VeryLazy",
-    dependencies = {
-        "bwpge/lualine-pretty-path",
-    },
+    lazy = false,
+    dependencies = {},
 
     config = function()
         local c = require("astrotheme.lib.util").set_palettes(require("astrotheme").config)

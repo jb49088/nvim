@@ -69,7 +69,6 @@ return {
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Search" }) end, desc = "Search Current Buffer"},
         { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
-        { "<leader><Tab>", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
         { "<leader>bo", function() Snacks.bufdelete.other() end, desc = "Close Other Buffers" },
@@ -115,6 +114,7 @@ return {
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
         { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
+        { "<leader>ts", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
         -- other
         { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
     },

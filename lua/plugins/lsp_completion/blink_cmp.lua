@@ -12,14 +12,21 @@ return {
                 end
                 return "make install_jsregexp"
             end)(),
-            dependencies = {},
-            opts = {},
+            dependencies = {
+                {
+                    "rafamadriz/friendly-snippets",
+                    config = function()
+                        require("luasnip.loaders.from_vscode").lazy_load()
+                    end,
+                },
+            },
         },
         "folke/lazydev.nvim",
     },
     opts = {
         keymap = {
-            preset = "super-tab",
+            preset = "enter",
+            ["<C-y>"] = { "select_and_accept" },
         },
         appearance = {
             nerd_font_variant = "mono",
@@ -31,10 +38,37 @@ return {
             menu = {
                 border = "rounded",
                 scrollbar = true,
+                draw = {
+                    columns = {
+                        { "kind_icon" },
+                        { "label", "label_description", "kind", gap = 3 },
+                    },
+                    components = {
+                        kind_icon = {
+                            text = function(ctx)
+                                local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
+                                return kind_icon .. " "
+                            end,
+                            highlight = function(ctx)
+                                local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+                                return hl
+                            end,
+                        },
+                        kind = {
+                            highlight = function(ctx)
+                                local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+                                return hl
+                            end,
+                        },
+                    },
+                    treesitter = {
+                        "lsp",
+                    },
+                },
             },
             documentation = {
                 auto_show = true,
-                auto_show_delay_ms = 0,
+                auto_show_delay_ms = 200,
                 window = {
                     border = "rounded",
                     scrollbar = true,
@@ -48,55 +82,20 @@ return {
             },
         },
         cmdline = {
-            keymap = {
-                preset = "inherit",
-            },
-            completion = {
-                menu = { auto_show = true },
-                ghost_text = { enabled = true },
-                list = {
-                    selection = {
-                        preselect = false,
-                        auto_insert = true,
-                    },
-                },
-            },
+            enabled = false,
         },
         sources = {
-            default = { "lsp", "path", "snippets", "lazydev" },
+            default = { "lsp", "path", "snippets", "buffer", "lazydev" },
             providers = {
                 lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
-                cmdline = {
-                    -- ignores cmdline completions when executing shell commands (:! enumerates all executables in Windows path otherwise)
-                    enabled = function()
-                        local cmdtype = vim.fn.getcmdtype()
-                        local cmdline = vim.fn.getcmdline()
-                        if
-                            cmdtype == ":"
-                            and (
-                                cmdline:match("^%s*[%%0-9,'<>%-]*!%s*") -- :! or :%! etc.
-                                or cmdline:match("^%s*w!?%s+!%s*") -- :w ! or :w! !
-                            )
-                        then
-                            return false
-                        end
-                        return true
-                    end,
-                    -- when typing a command, only show when the keyword is 4 characters or longer
-                    min_keyword_length = function(ctx)
-                        if ctx.mode == "cmdline" and string.find(ctx.line, " ") == nil then
-                            return 4
-                        end
-                        return 0
-                    end,
-                },
             },
         },
         snippets = { preset = "luasnip" },
         fuzzy = { implementation = "lua" },
         signature = {
-            enabled = false,
+            enabled = false, -- Using noice signatures
             window = {
+                show_documentation = true,
                 border = "rounded",
             },
         },

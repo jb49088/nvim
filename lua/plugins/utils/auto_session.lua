@@ -1,12 +1,12 @@
--- local session_picker = require("custom.integrations.session_picker")
+local session_picker = require("custom.integrations.session_picker")
 
 return {
     "rmagatti/auto-session",
     lazy = false,
     keys = {
         { "<leader>Sr", "<cmd>SessionRestore<CR>", desc = "Restore Session" },
-        { "<leader>SS", "<cmd>Autosession search<CR>", desc = "Search Session" },
-        -- { "<leader>Sz", session_picker, desc = "Test" },
+        -- { "<leader>SS", "<cmd>Autosession search<CR>", desc = "Search Session" },
+        { "<leader>SS", session_picker, desc = "Search Session" },
         {
             "<leader>Ss",
             function()
@@ -19,7 +19,12 @@ return {
             desc = "Save Session",
         },
     },
-    opts = function(_, opts)
+    opts = {
+        show_auto_restore_notif = true,
+    },
+    config = function(_, opts)
+        require("auto-session").setup(opts)
+
         Snacks.toggle({
             name = "Session Autosave",
             get = function()

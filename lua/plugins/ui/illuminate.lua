@@ -2,7 +2,7 @@ return {
     {
         "RRethy/vim-illuminate",
         opts = {
-            delay = 300,
+            delay = 200,
             providers = { "lsp", "treesitter", "regex" },
             filetypes_denylist = {
                 "snacks_picker_list",

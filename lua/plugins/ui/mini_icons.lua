@@ -1,5 +1,6 @@
 return {
     "echasnovski/mini.icons",
+    -- enabled = false,
     lazy = true,
     opts = {
         file = {
@@ -9,6 +10,9 @@ return {
         filetype = {
             terminal = { glyph = "", hl = "MiniIconsRed" },
             dotenv = { glyph = "", hl = "MiniIconsYellow" },
+        },
+        lsp = {
+            object = { glyph = "", hl = "MiniIconsOrange" },
         },
     },
     init = function()

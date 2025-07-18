@@ -22,8 +22,9 @@ return {
         auto_install = true,
         highlight = {
             enable = true,
+            -- For some languages, enable regex highlighting and disable indent to fix indent issues.
             additional_vim_regex_highlighting = { "ruby" },
         },
-        indent = { enable = true, disable = { "ruby", "python" } }, -- Treesitter mangles python indents
+        indent = { enable = true, disable = { "ruby", "python" } },
     },
 }
