@@ -90,5 +90,6 @@ nvim
 
 #### Screenshots
 
-![Screenshot 2025-07-08 162334](https://github.com/user-attachments/assets/3ad9d1e5-3e6b-4b5f-b8e9-cd6fbe5b5a82)
-![Screenshot 2025-07-08 162906](https://github.com/user-attachments/assets/cae67557-4721-4307-b786-e9b3a9b8be79)
+<img width="1558" height="867" alt="Screenshot 2025-07-17 233446" src="https://github.com/user-attachments/assets/7f86be83-d714-4b01-8ddf-d65b968cf374" />
+<img width="1558" height="867" alt="Screenshot 2025-07-17 233344" src="https://github.com/user-attachments/assets/d84666ed-0b35-4f9c-a05b-f7f94f957552" />
+
