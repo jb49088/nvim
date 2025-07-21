@@ -1,4 +1,6 @@
 -- TODO: fix help page bugs on the picker
+-- add keymap to delete tabs
+-- do something about preview window for tabs
 
 return {
     name = "Tabs",

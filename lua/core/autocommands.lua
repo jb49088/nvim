@@ -80,36 +80,3 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
         end
     end,
 })
-
----------
--- local entry_start = nil
---
--- vim.keymap.set("n", "i", function()
---     entry_start = vim.uv.hrtime()
---     vim.cmd("startinsert")
--- end)
---
--- vim.keymap.set("n", "a", function()
---     entry_start = vim.uv.hrtime()
---     vim.cmd("startinsert!")
--- end)
---
--- vim.keymap.set("n", "I", function()
---     entry_start = vim.uv.hrtime()
---     vim.cmd("normal! I")
--- end)
---
--- vim.keymap.set("n", "A", function()
---     entry_start = vim.uv.hrtime()
---     vim.cmd("normal! A")
--- end)
---
--- vim.api.nvim_create_autocmd("InsertEnter", {
---     callback = function()
---         if entry_start then
---             local duration = (vim.uv.hrtime() - entry_start) / 1000000
---             print(string.format("Insert entry took: %.2f ms", duration))
---             entry_start = nil
---         end
---     end,
--- })

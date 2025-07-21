@@ -44,7 +44,7 @@ return {
         })
 
         local servers = {
-            lua_ls = {
+            lua_ls = { -- lua lsp
                 settings = {
                     Lua = {
                         completion = {
@@ -66,7 +66,7 @@ return {
                     },
                 },
             },
-            pyright = {
+            pyright = { -- python lsp
                 settings = {
                     python = {
                         analysis = {
@@ -87,9 +87,10 @@ return {
 
         local ensure_installed = vim.tbl_keys(servers or {})
         vim.list_extend(ensure_installed, {
-            "stylua",
-            "black",
-            "pylint",
+            "luacheck", -- lua linter
+            "stylua", -- lua formatter
+            "ruff", -- python linter
+            "black", -- python formatter
         })
         require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 

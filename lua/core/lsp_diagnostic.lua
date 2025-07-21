@@ -1,6 +1,6 @@
 vim.diagnostic.config({
     severity_sort = true,
-    float = { border = "rounded", header = "", source = "if_many" },
+    float = { border = "rounded", header = "", source = true },
     underline = { severity = vim.diagnostic.severity.ERROR },
     signs = vim.g.have_nerd_font and {
         text = {
@@ -11,8 +11,8 @@ vim.diagnostic.config({
         },
     } or {},
     virtual_text = {
-        prefix = "󰆢",
-        source = "if_many",
+        prefix = "",
+        source = false,
         spacing = 2,
     },
     -- update_in_insert = true,

@@ -1,4 +1,5 @@
 -- TODO: add support for more filetypes like md
+-- figure out what to do with no name files
 
 -- breadcrumbs.lua - Enhanced with content modification handling and truncation
 

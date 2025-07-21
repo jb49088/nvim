@@ -1,3 +1,5 @@
+-- TODO: add eof padding to inactive but visible buffers
+
 local mode_disabled = false
 local initial_scrolloff = vim.o.scrolloff
 local scrolloff = vim.o.scrolloff

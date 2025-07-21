@@ -45,8 +45,10 @@ nvim
 │   │       ├── breadcrumbs.lua
 │   │       ├── eof_padding.lua
 │   │       ├── float_cycle.lua
+│   │       ├── floating_terminal.lua
 │   │       ├── init.lua
-│   │       └── mode_number_color.lua
+│   │       ├── mode_number_color.lua
+│   │       └── run.lua
 │   └── plugins
 │       ├── coding
 │       │   ├── autotag.lua
