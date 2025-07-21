@@ -43,7 +43,7 @@ opt.timeoutlen = 300 -- Timeout for mapped sequence to complete
 opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
-opt.textwidth = 70 -- Wrap width used by 'gqq' to format comments at 70 chars
+-- opt.textwidth = 70 -- Wrap width used by 'gqq' to format comments at 70 chars
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
 -- opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions" -- Recommended for auto-session
 
