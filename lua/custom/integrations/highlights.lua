@@ -15,6 +15,9 @@ hl(0, "CursorLine", { bg = nil })
 -- Statusline
 hl(0, "StatusLine", { fg = c.ui.text })
 
+-- Inlay hints
+hl(0, "LspInlayHint", { fg = c.syntax.comment })
+
 -- Window separator
 hl(0, "WinSeparator", { fg = c.ui.border })
 

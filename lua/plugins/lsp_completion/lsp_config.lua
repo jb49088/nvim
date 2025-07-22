@@ -66,17 +66,28 @@ return {
                     },
                 },
             },
-            pyright = { -- python lsp
+            basedpyright = { -- python lsp
                 settings = {
                     python = {
                         analysis = {
                             typeCheckingMode = "basic",
-                            autoSearchPaths = true,
-                            useLibraryCodeForTypes = true,
+                            extraPaths = { "." },
                         },
                     },
                 },
             },
+            -- pyright = { -- python lsp
+            --     settings = {
+            --         python = {
+            --             analysis = {
+            --                 typeCheckingMode = "basic",
+            --                 autoSearchPaths = true,
+            --                 useLibraryCodeForTypes = true,
+            --                 extraPaths = { "." },
+            --             },
+            --         },
+            --     },
+            -- },
         }
 
         ---@type MasonLspconfigSettings

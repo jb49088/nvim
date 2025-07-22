@@ -43,9 +43,11 @@ opt.timeoutlen = 300 -- Timeout for mapped sequence to complete
 opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
--- opt.textwidth = 70 -- Wrap width used by 'gqq' to format comments at 70 chars
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
 -- opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions" -- Recommended for auto-session
+opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
+cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
+cmd("set formatoptions+=l") -- Don't break existing long lines when entering insert mode
 
 -- Indentation
 opt.shiftwidth = 4 -- Indent size
@@ -76,31 +78,3 @@ if vim.fn.has("wsl") == 1 then
         cache_enabled = 0,
     }
 end
-
--- vim.g.clipboard = {
---     name = "WslClipboard",
---     copy = {
---         ["+"] = "clip.exe",
---         ["*"] = "clip.exe",
---     },
---     paste = {
---         ["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
---         ["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
---     },
---     cache_enabled = 0,
--- }
-
--- if vim.fn.has("wsl") == 1 then
---     vim.g.clipboard = {
---         name = "wsl-clip",
---         copy = {
---             ["+"] = { "clip.exe" },
---             ["*"] = { "clip.exe" },
---         },
---         paste = {
---             ["+"] = { "powershell.exe", "-c", "Get-Clipboard" },
---             ["*"] = { "powershell.exe", "-c", "Get-Clipboard" },
---         },
---         cache_enabled = 1,
---     }
--- end

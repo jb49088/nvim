@@ -71,7 +71,7 @@ return {
         { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
-        { "<leader>bo", function() Snacks.bufdelete.other() end, desc = "Close Other Buffers" },
+        { "<leader>bo", function() local visible_bufs = {} for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do local buf = vim.api.nvim_win_get_buf(win) visible_bufs[buf] = true end Snacks.bufdelete.delete({ filter = function(buf) return not visible_bufs[buf] end }) end, desc = "Close Other Buffers" },
         -- find
         { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config"), title = "Config Files" }) end, desc = "Find Config Files" },
         { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files" },

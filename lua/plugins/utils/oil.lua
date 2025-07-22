@@ -4,6 +4,7 @@ return {
         keymaps = {
             ["_"] = "actions.select",
             ["g_"] = "actions.open_cwd",
+            -- ["<C-v>"] = { "actions.select", opts = { vertical = true } },
         },
         delete_to_trash = true,
         skip_confirm_for_simple_edits = true,
@@ -23,7 +24,7 @@ return {
                 if vim.bo.filetype == "oil" then
                     vim.cmd("close")
                 else
-                    require("oil").open_float()
+                    vim.cmd("Oil --float")
                 end
             end,
             desc = "Oil",
