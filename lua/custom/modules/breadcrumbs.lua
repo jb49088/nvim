@@ -1,5 +1,6 @@
 -- TODO: add support for more filetypes like md
 -- figure out what to do with no name files
+-- check if the lock shit actually works properly
 
 -- breadcrumbs.lua - Enhanced with content modification handling and truncation
 

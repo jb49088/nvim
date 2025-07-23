@@ -1,13 +1,18 @@
--- TODO: add support for more modes
-
 local modes = {
     n = "ModeColorNormal",
     i = "ModeColorInsert",
     v = "ModeColorVisual",
     V = "ModeColorVisual",
+    ["\22"] = "ModeColorVisual",
     c = "ModeColorCommand",
     t = "ModeColorTerminal",
     R = "ModeColorReplace",
+    Rc = "ModeColorReplace",
+    Rx = "ModeColorReplace",
+    Rv = "ModeColorReplace",
+    Rvc = "ModeColorReplace",
+    Rvx = "ModeColorReplace",
+    r = "ModeColorReplace",
 }
 
 local function update_line_color(mode)

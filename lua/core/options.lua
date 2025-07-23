@@ -75,6 +75,6 @@ if vim.fn.has("wsl") == 1 then
             ["+"] = { win32yank, "-o", "--lf" },
             ["*"] = { win32yank, "-o", "--lf" },
         },
-        cache_enabled = 0,
+        cache_enabled = 1, -- cache fixes del lag
     }
 end

@@ -76,7 +76,7 @@ return {
         snippets = { preset = "luasnip" },
         fuzzy = { implementation = "lua" },
         signature = {
-            enabled = false, -- Using noice signatures
+            enabled = true,
             window = {
                 show_documentation = true,
                 border = "rounded",

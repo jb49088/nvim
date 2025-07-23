@@ -15,7 +15,7 @@ return {
                 },
             },
             signature = {
-                enabled = true,
+                enabled = false, -- using blinkcmp signatures
             },
             hover = {
                 enabled = true,

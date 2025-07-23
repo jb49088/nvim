@@ -68,7 +68,7 @@ return {
             },
             basedpyright = { -- python lsp
                 settings = {
-                    python = {
+                    basedpyright = {
                         analysis = {
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
@@ -80,7 +80,7 @@ return {
             --     settings = {
             --         python = {
             --             analysis = {
-            --                 typeCheckingMode = "basic",
+            --                 typeCheckingMode = "standard",
             --                 autoSearchPaths = true,
             --                 useLibraryCodeForTypes = true,
             --                 extraPaths = { "." },
