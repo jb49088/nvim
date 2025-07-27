@@ -1,4 +1,5 @@
-local heirline_path = require("custom.integrations.heirline_path")
+local path = require("custom.integrations.heirline_path")
+local breadcrumbs = require("custom.integrations.heirline_breadcrumbs")
 
 return {
     "rebelot/heirline.nvim",
@@ -74,14 +75,6 @@ return {
             return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
         end
 
-        local mode_update = {
-            "ModeChanged",
-            pattern = "*:*",
-            callback = vim.schedule_wrap(function()
-                vim.cmd("redrawstatus")
-            end),
-        }
-
         -- Helper functions to create conditional components with space
         local function with_trailing_space(component)
             return {
@@ -116,7 +109,6 @@ return {
                     return { fg = get_mode_color() }
                 end,
             },
-            update = mode_update,
         }
 
         local FileEncoding = {
@@ -333,7 +325,7 @@ return {
             },
         }
 
-        local LineRow = {
+        local LineColumn = {
             condition = function()
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
@@ -406,23 +398,104 @@ return {
         )
 
         -- Statusline layout using the helper functions consistently
-        local global_statusline = {
+        local statusline = {
             with_trailing_space(ViMode),
             with_trailing_space(GitBranch),
             with_trailing_space(GitDiffs),
-            with_trailing_space(heirline_path.component),
+            with_trailing_space(path.component),
             with_trailing_space(Diagnostics),
             { provider = "%=" },
             with_leading_space(LSPActive),
             with_leading_space(FileEncoding),
             with_leading_space(FileFormat),
-            with_leading_space(LineRow),
+            with_leading_space(LineColumn),
             with_leading_space(FilePercent),
             with_leading_space(Clock),
         }
 
+        -- Breadcrumbs component for tabline
+        local Breadcrumbs = {
+            -- New condition to hide if there's no content
+            condition = function()
+                local display_string = breadcrumbs.get_filename_display()
+                -- Check if the string is empty or only contains whitespace characters
+                return vim.trim(display_string) ~= ""
+            end,
+            provider = function()
+                return breadcrumbs.get_filename_display()
+            end,
+            hl = "TabLine",
+            -- Add updates to redraw the tabline when breadcrumbs content might change
+            -- These should ideally align with when `breadcrumbs.lua` refreshes its symbols
+            update = { "LspAttach", "LspDetach", "BufEnter", "CursorMoved", "CursorMovedI", "DiagnosticChanged" },
+        }
+
+        -- Function to get Neovim version
+        local function get_nvim_version()
+            local version = vim.version()
+            return string.format("v%d.%d.%d", version.major, version.minor, version.patch)
+        end
+
+        -- Modified Neovim component to include version
+        local Neovim = {
+            -- The main colored block for the left side
+            {
+                provider = function()
+                    return "  " .. get_nvim_version() .. " " -- Added Neovim version here
+                end,
+                hl = function()
+                    return {
+                        bg = get_mode_color(),
+                        fg = "black", -- Text color on the colored background
+                        bold = true,
+                    }
+                end,
+            },
+            -- The right-pointing arrow for TablineLeft, similar to Clock
+            {
+                provider = "", -- Right-pointing triangle
+                hl = function()
+                    return { fg = get_mode_color() } -- Foreground is mode color, background is inherited
+                end,
+            },
+            -- update = mode_update, -- Important for color changes for both parts
+        }
+
+        -- Simplified TablineRight
+        local MemUsage = {
+            -- The left-pointing arrow
+            {
+                provider = "",
+                hl = function()
+                    return { fg = get_mode_color() }
+                end,
+            },
+            -- Memory usage display
+            {
+                provider = function()
+                    local lua_mb = collectgarbage("count") / 1024
+                    return string.format(" 󰍛 %.1fMB ", lua_mb)
+                end,
+                hl = function()
+                    return {
+                        bg = get_mode_color(),
+                        fg = "black",
+                        bold = true,
+                    }
+                end,
+            },
+        }
+
+        local tabline = {
+            with_trailing_space(Neovim),
+            with_trailing_space(Breadcrumbs),
+            { provider = "%=" },
+            with_leading_space(MemUsage),
+        }
+
         heirline.setup({
-            statusline = global_statusline,
+            statusline = statusline,
+            tabline = tabline,
         })
     end,
 }

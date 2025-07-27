@@ -12,6 +12,9 @@ hl(0, "Pmenu", { fg = c.ui.text_active })
 -- Cursorline
 hl(0, "CursorLine", { bg = nil })
 
+-- Tabline
+hl(0, "TablineFill", { bg = nil })
+
 -- Statusline
 hl(0, "StatusLine", { fg = c.ui.text })
 
