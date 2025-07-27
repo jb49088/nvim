@@ -34,6 +34,7 @@ nvim
 │   │   └── options.lua
 │   ├── custom
 │   │   ├── integrations
+│   │   │   ├── heirline_breadcrumbs.lua
 │   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
 │   │   │   ├── lualine_path.lua
@@ -42,7 +43,6 @@ nvim
 │   │   │   ├── tabs_picker.lua
 │   │   │   └── venv_picker.lua
 │   │   └── modules
-│   │       ├── breadcrumbs.lua
 │   │       ├── eof_padding.lua
 │   │       ├── float_cycle.lua
 │   │       ├── floating_terminal.lua
@@ -64,7 +64,10 @@ nvim
 │       │   ├── conform.lua
 │       │   ├── lazydev.lua
 │       │   ├── lsp_config.lua
-│       │   └── mason.lua
+│       │   ├── luasnip.lua
+│       │   ├── mason.lua
+│       │   └── snippets
+│       │       └── python.lua
 │       ├── ui
 │       │   ├── colorscheme.lua
 │       │   ├── devicons.lua
@@ -82,7 +85,6 @@ nvim
 │           ├── oil.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua
-│           ├── toggleterm.lua
 │           ├── trouble.lua
 │           ├── venv_selector.lua
 │           └── whichkey.lua
