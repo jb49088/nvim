@@ -33,6 +33,8 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
     callback = function()
         if vim.bo.filetype == "help" then
             vim.cmd("wincmd L")
+            -- Recalculate scrolloff based on the new window size
+            vim.opt_local.scrolloff = 999
         end
     end,
 })

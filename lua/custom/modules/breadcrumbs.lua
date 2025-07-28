@@ -34,8 +34,7 @@ local config = {
         enabled = true, -- Enable truncation
         separator = "  ", -- Separator between breadcrumb parts
         extends_symbol = "…", -- Symbol to show when truncated
-        min_symbol_width = 8, -- Minimum width for each symbol when truncated (increased for tabline)
-        tabline_reserved_width = 20, -- Reserve space for tabline corners and other elements
+        min_symbol_width = 1, -- Minimum width for each symbol when truncated
     },
 }
 
@@ -182,70 +181,200 @@ end
 local function build_breadcrumb_parts(filepath, symbols)
     local parts = {}
 
-    -- This entire section, which previously added the filename, has been commented out.
-    -- If you ever want the filename back, you can uncomment this block.
-    --[[
     if filepath == "" then
-        table.insert(parts, {
-            text = "[No Name]",
-            highlight = nil,
-            icon = nil,
-            icon_highlight = nil,
-        })
-    else
-        local filename = vim.fn.fnamemodify(filepath, ":t")
-        if filename == "" then
-            table.insert(parts, {
-                text = "[No Name]",
-                highlight = nil,
-                icon = nil,
-                icon_highlight = nil,
-            })
-        else
-            local filetype = vim.bo.filetype
-            local icon, hl_group = get_file_icon(filename, filetype)
+        return parts -- Return empty parts array to show nothing
+    end
 
-            if icon and hl_group then
+    local sep = package.config:sub(1, 1) -- path separator
+    local ok, mini_icons = pcall(require, "mini.icons")
+
+    -- Handle terminal buffers specially
+    if vim.bo.buftype == "terminal" then
+        -- Terminal names are like "term://~/path//pid:shell"
+        -- Extract just the shell part (e.g., "/usr/bin/bash")
+        local pid, shell_path = filepath:match("//(%d+):(.+)$")
+        if pid and shell_path then
+            -- Remove leading slash if present
+            if shell_path:sub(1, 1) == sep then
+                shell_path = shell_path:sub(2)
+            end
+
+            local shell_parts = vim.split(shell_path, sep, { plain = true })
+
+            -- Filter out empty parts
+            local filtered_parts = {}
+            for _, part in ipairs(shell_parts) do
+                if part ~= "" then
+                    table.insert(filtered_parts, part)
+                end
+            end
+
+            -- Process filtered shell parts with proper icons
+            for i, part in ipairs(filtered_parts) do
+                local icon, hl_group = nil, nil
+
+                if ok then
+                    if i < #filtered_parts then
+                        -- Directory parts
+                        icon, hl_group = mini_icons.get("directory", part)
+                    else
+                        -- Last part (executable) - use terminal filetype icon
+                        icon, hl_group = mini_icons.get("filetype", "terminal")
+                    end
+                end
+
                 table.insert(parts, {
-                    text = filename,
-                    highlight = nil, -- Use default tabline color for text
+                    text = part,
+                    highlight = nil,
                     icon = icon,
                     icon_highlight = hl_group,
                 })
-            else
+            end
+            return parts
+        end
+    end
+
+    -- Handle Oil.nvim buffers specially
+    if vim.bo.filetype == "oil" then
+        -- Oil buffer names are like "oil:///path/to/directory/"
+        local oil_path = filepath:match("^oil://(.+)$")
+        if oil_path then
+            -- Remove trailing slash if present to avoid empty parts at the end
+            if oil_path:sub(-1) == sep then
+                oil_path = oil_path:sub(1, -2)
+            end
+
+            -- Split the path into parts
+            local oil_parts = vim.split(oil_path, sep, { plain = true })
+
+            -- Filter out empty parts to avoid phantom directory icons
+            local filtered_parts = {}
+            for _, part in ipairs(oil_parts) do
+                if part ~= "" then
+                    table.insert(filtered_parts, part)
+                end
+            end
+
+            -- Process all parts as directories (since Oil shows directory contents)
+            for _, part in ipairs(filtered_parts) do
+                local icon, hl_group = nil, nil
+
+                if ok then
+                    -- All parts in oil are directories
+                    icon, hl_group = mini_icons.get("directory", part)
+                end
+
                 table.insert(parts, {
-                    text = filename,
+                    text = part,
                     highlight = nil,
-                    icon = nil,
-                    icon_highlight = nil,
+                    icon = icon,
+                    icon_highlight = hl_group,
                 })
+            end
+            return parts
+        end
+    end
+
+    -- Handle checkhealth buffers specially
+    if vim.bo.filetype == "checkhealth" or filepath:match("^health://") or filepath:match("checkhealth") then
+        local icon, hl_group = nil, nil
+        if ok then
+            icon, hl_group = mini_icons.get("filetype", "checkhealth")
+        end
+
+        table.insert(parts, {
+            text = "Health",
+            highlight = nil,
+            icon = icon,
+            icon_highlight = hl_group,
+        })
+        return parts
+    end
+
+    -- Normalize full path
+    filepath = vim.fs.normalize(filepath)
+
+    -- Get current working directory
+    local cwd = vim.fn.getcwd()
+    cwd = vim.fs.normalize(cwd)
+
+    local relpath
+
+    -- Check if the file is under the current working directory
+    if filepath:sub(1, #cwd) == cwd then
+        -- File is under CWD, make it relative to CWD
+        relpath = filepath:sub(#cwd + 1)
+        -- Remove leading separator if present
+        if relpath:sub(1, 1) == sep then
+            relpath = relpath:sub(2)
+        end
+        -- If relpath is empty (file is exactly at CWD), use filename
+        if relpath == "" then
+            relpath = vim.fn.fnamemodify(filepath, ":t")
+        end
+    else
+        -- File is outside CWD, try to make it relative to HOME for better display
+        local home = vim.env.HOME or vim.fn.expand("$HOME")
+        home = vim.fs.normalize(home)
+
+        if filepath:sub(1, #home) == home then
+            relpath = filepath:sub(#home + 1)
+            -- Remove leading separator if present
+            if relpath:sub(1, 1) == sep then
+                relpath = relpath:sub(2)
+            end
+        else
+            -- File is outside both CWD and HOME, use full path
+            relpath = filepath
+            -- Remove leading separator if present for full paths
+            if relpath:sub(1, 1) == sep then
+                relpath = relpath:sub(2)
             end
         end
     end
-    --]]
 
-    -- Add symbol parts
+    -- Split the relative path into parts
+    local path_parts = vim.split(relpath, sep, { plain = true })
+
+    -- Filter out empty parts to avoid phantom directory icons
+    local filtered_parts = {}
+    for _, part in ipairs(path_parts) do
+        if part ~= "" then
+            table.insert(filtered_parts, part)
+        end
+    end
+
+    for i, part in ipairs(filtered_parts) do
+        local icon, hl_group = nil, nil
+
+        if i < #filtered_parts and ok then
+            icon, hl_group = mini_icons.get("directory", part)
+        elseif i == #filtered_parts then
+            local filename = part
+            local filetype = vim.bo.filetype
+            icon, hl_group = get_file_icon(filename, filetype)
+        end
+
+        table.insert(parts, {
+            text = part,
+            highlight = nil,
+            icon = icon,
+            icon_highlight = hl_group,
+        })
+    end
+
+    -- Add symbols
     if symbols and #symbols > 0 then
         for _, symbol in ipairs(symbols) do
-            -- Skip symbols with no meaningful name (anonymous functions, etc.)
             if symbol.name and symbol.name ~= "" and not symbol.name:match("^%s*$") then
                 local kind_icon, kind_hl = get_lsp_kind_icon(symbol.kind)
 
-                if kind_icon and kind_hl then
-                    table.insert(parts, {
-                        text = symbol.name,
-                        highlight = nil, -- Use default tabline color for text
-                        icon = kind_icon,
-                        icon_highlight = kind_hl,
-                    })
-                else
-                    table.insert(parts, {
-                        text = symbol.name,
-                        highlight = nil,
-                        icon = nil,
-                        icon_highlight = nil,
-                    })
-                end
+                table.insert(parts, {
+                    text = symbol.name,
+                    highlight = nil,
+                    icon = kind_icon,
+                    icon_highlight = kind_hl,
+                })
             end
         end
     end
@@ -253,7 +382,7 @@ local function build_breadcrumb_parts(filepath, symbols)
     return parts
 end
 
---- Apply truncation logic optimized for tabline display
+--- Apply truncation logic to breadcrumb parts following dropbar approach
 ---@param parts table Array of breadcrumb parts with {text, highlight, icon, icon_highlight} structure
 ---@param available_width number Available width for the breadcrumb
 ---@return table Truncated breadcrumb parts
@@ -265,11 +394,6 @@ local function apply_truncation(parts, available_width)
     local separator = config.truncation.separator
     local extends_symbol = config.truncation.extends_symbol
     local min_width = config.truncation.min_symbol_width
-    -- Removed local padding = config.truncation.padding
-
-    -- Removed total padding calculation and adjustment to available_width
-    -- local total_padding = padding.left + padding.right
-    -- available_width = available_width - total_padding
 
     -- Helper function to get display width of a part (including icon if present)
     local function get_part_display_width(part)
@@ -318,91 +442,83 @@ local function apply_truncation(parts, available_width)
         return truncated_parts
     end
 
-    -- Tabline-optimized truncation strategy:
-    -- Since the filename is removed, we'll keep the outermost symbol (first part)
-    -- and the innermost symbol (last part) if possible.
+    -- Phase 1: Truncate individual parts by shortening their text (keep icons)
+    for _, part in ipairs(truncated_parts) do
+        if delta <= 0 then
+            break
+        end
 
-    if #truncated_parts > 2 then
-        -- Phase 1: Remove middle parts, keeping first and last
-        local first_part = truncated_parts[1]
-        local last_part = truncated_parts[#truncated_parts]
+        local text_len = vim.fn.strdisplaywidth(part.text)
+        local extends_width = vim.fn.strdisplaywidth(extends_symbol)
+        local min_len = extends_width + part.min_width
+
+        if text_len > min_len then
+            -- Calculate how much we can truncate from this part's text
+            local max_reduction = text_len - min_len
+            local reduction = math.min(delta, max_reduction)
+
+            -- Truncate the text part only
+            local new_len = text_len - reduction
+            local truncated_chars = math.max(part.min_width, new_len - extends_width)
+            part.text = vim.fn.strcharpart(part.text, 0, truncated_chars) .. extends_symbol
+
+            -- Update delta
+            delta = delta - reduction
+        end
+    end
+
+    -- Phase 2: If still too long, remove parts from the beginning
+    if delta > 0 and #truncated_parts > 1 then
         local sep_width = vim.fn.strdisplaywidth(separator)
+
+        -- Create extends part to replace removed parts
+        local extends_part = {
+            text = extends_symbol,
+            highlight = nil,
+            icon = nil,
+            icon_highlight = nil,
+        }
+
+        local first_part = truncated_parts[1]
+        local first_width = get_part_display_width(first_part)
+        local extends_part_width = get_part_display_width(extends_part)
+
+        -- Check if replacing first part with extends helps
+        local width_diff = extends_part_width - first_width
+
+        if width_diff < 0 then -- extends is smaller than first part
+            -- Replace first part with extends
+            truncated_parts[1] = extends_part
+            delta = delta + width_diff
+
+            -- Keep removing parts from position 2 until we fit
+            while delta > 0 and #truncated_parts > 1 do
+                local part_to_remove = truncated_parts[2]
+                local part_width = get_part_display_width(part_to_remove)
+
+                table.remove(truncated_parts, 2)
+                delta = delta - part_width - sep_width
+            end
+        end
+    end
+
+    -- Phase 3: Final fallback - if still doesn't fit, keep only the last part
+    if delta > 0 and #truncated_parts > 1 then
+        local last_part = truncated_parts[#truncated_parts]
+        local last_width = get_part_display_width(last_part)
         local extends_width = vim.fn.strdisplaywidth(extends_symbol)
 
-        -- Calculate width of first + extends + last
-        local essential_width = get_part_display_width(first_part)
-            + extends_width
-            + get_part_display_width(last_part)
-            + (2 * sep_width) -- two separators
-
-        if essential_width <= available_width then
+        -- If last part + extends symbol fits, use that
+        if last_width + extends_width <= available_width then
             truncated_parts = {
-                first_part,
                 { text = extends_symbol, highlight = nil, icon = nil, icon_highlight = nil },
                 last_part,
             }
-            current_width = essential_width
-            delta = current_width - available_width
-        end
-    end
-
-    -- Phase 2: If still too long, truncate individual parts
-    if delta > 0 then
-        for i, part in ipairs(truncated_parts) do
-            if delta <= 0 then
-                break
-            end
-
-            -- Don't truncate extends symbols
-            if part.text == extends_symbol then
-                goto continue
-            end
-
-            local text_len = vim.fn.strdisplaywidth(part.text)
-            local extends_width = vim.fn.strdisplaywidth(extends_symbol)
-            local min_len = math.max(extends_width + part.min_width, 6) -- Minimum 6 chars for readability
-
-            if text_len > min_len then
-                -- Calculate how much we can truncate from this part's text
-                local max_reduction = text_len - min_len
-                local reduction = math.min(delta, max_reduction)
-
-                -- Truncate the text part only
-                local new_len = text_len - reduction
-                local truncated_chars = math.max(part.min_width, new_len - extends_width)
-                part.text = vim.fn.strcharpart(part.text, 0, truncated_chars) .. extends_symbol
-
-                -- Update delta
-                delta = delta - reduction
-            end
-
-            ::continue::
-        end
-    end
-
-    -- Phase 3: Final fallback - if still doesn't fit, show only the first (outermost) symbol or extends symbol
-    if delta > 0 and #truncated_parts > 0 then
-        local first_part = truncated_parts[1]
-        local first_width = get_part_display_width(first_part)
-
-        if first_width <= available_width then
-            truncated_parts = { first_part }
         else
-            -- Even the first symbol is too long, truncate it
-            local text_len = vim.fn.strdisplaywidth(first_part.text)
-            local extends_width = vim.fn.strdisplaywidth(extends_symbol)
-            local icon_width = first_part.icon and (vim.fn.strdisplaywidth(first_part.icon) + 1) or 0
-            local max_text_width = available_width - icon_width - extends_width
-
-            if max_text_width > 3 then -- Minimum meaningful text length
-                local truncated_chars = math.max(3, max_text_width)
-                first_part.text = vim.fn.strcharpart(first_part.text, 0, truncated_chars) .. extends_symbol
-            else
-                -- Last resort: just show extends symbol
-                truncated_parts = {
-                    { text = extends_symbol, highlight = nil, icon = nil, icon_highlight = nil },
-                }
-            end
+            -- Otherwise, just use extends symbol
+            truncated_parts = {
+                { text = extends_symbol, highlight = nil, icon = nil, icon_highlight = nil },
+            }
         end
     end
 
@@ -423,17 +539,14 @@ local function parts_to_display_string(parts)
     end
 
     local separator = config.truncation.separator
-    -- Removed local padding = config.truncation.padding
     local result_parts = {}
 
-    -- Removed left padding logic
-    -- if padding.left > 0 then
-    --     table.insert(result_parts, string.rep(" ", padding.left))
-    -- end
+    -- Add left padding
+    table.insert(result_parts, " ")
 
     -- Add parts with separators
     for i, part in ipairs(parts) do
-        -- Add icon with its highlight if present
+        -- Add icon with its highlight if present (keep icon highlights unchanged)
         if part.icon and part.icon_highlight then
             table.insert(result_parts, "%#" .. part.icon_highlight .. "#" .. part.icon .. "%*")
             table.insert(result_parts, " ") -- Space between icon and text
@@ -441,23 +554,17 @@ local function parts_to_display_string(parts)
             table.insert(result_parts, part.icon .. " ")
         end
 
-        -- Add text with its highlight (or default tabline color)
-        if part.highlight then
-            table.insert(result_parts, "%#" .. part.highlight .. "#" .. part.text .. "%*")
-        else
-            table.insert(result_parts, part.text) -- Uses default tabline color
-        end
+        -- Add text with TabLine highlight (force TabLine for all text)
+        table.insert(result_parts, "%#TabLine#" .. part.text .. "%*")
 
-        -- Add separator between parts
+        -- Add separator between parts with TabLine highlight
         if i < #parts then
-            table.insert(result_parts, separator)
+            table.insert(result_parts, "%#TabLine#" .. separator .. "%*")
         end
     end
 
-    -- Removed right padding logic
-    -- if padding.right > 0 then
-    --     table.insert(result_parts, string.rep(" ", padding.right))
-    -- end
+    -- Add right padding
+    table.insert(result_parts, " ")
 
     return table.concat(result_parts, "")
 end
@@ -468,11 +575,11 @@ function M.get_filename_display()
     local bufnr = vim.api.nvim_get_current_buf()
     local symbols = find_symbols_at_cursor(bufnr)
 
-    -- Build breadcrumb parts (filename is now excluded here)
+    -- Build breadcrumb parts
     local parts = build_breadcrumb_parts(filepath, symbols)
 
-    -- Get available width for tabline (use full screen width minus reserved space for corners)
-    local available_width = vim.o.columns - config.truncation.tabline_reserved_width
+    -- Use almost all available terminal width for breadcrumbs
+    local available_width = vim.o.columns - 2 -- Small buffer for safety
 
     -- Apply truncation if enabled
     if config.truncation.enabled then
@@ -799,8 +906,8 @@ function M.setup(opts)
     -- Setup terminal resize autocmds for tabline truncation
     setup_terminal_resize_autocmds()
 
-    -- Remove winbar setup since we're now using tabline
-    -- vim.o.winbar = "%{%v:lua.require'custom.modules.breadcrumbs'.get_filename_display()%}"
+    -- Set up the tabline directly (standalone mode)
+    vim.o.tabline = "%{%v:lua.require'custom.modules.breadcrumbs'.get_filename_display()%}"
 end
 
 -- Function to disable breadcrumbs
@@ -809,6 +916,9 @@ function M.disable()
     for bufnr, _ in pairs(debounce_timers) do
         cancel_debounce_timer(bufnr)
     end
+
+    -- Clear the tabline
+    vim.o.tabline = ""
 
     -- Clear specific autocmds created by breadcrumbs, using an augroup for precision
     vim.api.nvim_clear_autocmds({ group = "breadcrumbs_lsp_autocmds" })

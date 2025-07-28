@@ -1,5 +1,4 @@
--- TODO: make lock not show on checkhealth.
--- add special handling for more filetypes
+-- TODO: add special handling for more filetypes
 
 -- A custom component for heirline to display a truncated or special buffer path with icons.
 local M = {}
@@ -75,27 +74,38 @@ local function handle_terminal()
     local path = vim.fn.expand("%")
     -- Extract info from "term://path//pid:shell"
     local terminal_info = vim.split(path, "//")[3] or ""
-    local display_name = "Terminal"
-    local pid_number = "" -- Will store just the PID number
 
     if terminal_info ~= "" then
         local pid_match = terminal_info:match("^%d+")
         local shell_path = pid_match and terminal_info:gsub("^%d+:", "") or terminal_info
-        local shell_name = shell_path:match("([^/]+)$") or shell_path
-        shell_name = shell_name:match("([^;]+)") or shell_name
-        display_name = shell_name ~= "" and shell_name or "Terminal"
 
-        if pid_match then
-            pid_number = pid_match -- Store just the number
+        if shell_path ~= "" then
+            -- Remove leading slash if present
+            if shell_path:sub(1, 1) == path_sep then
+                shell_path = shell_path:sub(2)
+            end
+
+            -- Split the shell path into parts
+            local shell_parts = vim.split(shell_path, path_sep, { trimempty = true })
+
+            -- Apply the same truncation logic as regular files
+            local shortened_parts = shorten_path(shell_parts, max_depth)
+
+            if #shortened_parts <= 1 then
+                return #shortened_parts == 1 and shortened_parts[1] or "Terminal"
+            else
+                local dir_parts = {}
+                for i = 1, #shortened_parts - 1 do
+                    table.insert(dir_parts, shortened_parts[i])
+                end
+                local dir_path = table.concat(dir_parts, path_sep)
+                local filename = shortened_parts[#shortened_parts]
+                return dir_path .. path_sep .. filename
+            end
         end
     end
 
-    return {
-        display_name = display_name,
-        pid_number = pid_number,
-        display_hl = "HeirlinePathTerminal",
-        pid_hl = "HeirlinePathTerminalPID",
-    }
+    return "Terminal" -- Fallback
 end
 
 --- Handles display for oil buffers.
@@ -201,11 +211,8 @@ function M.get_path()
 
     if buftype == "terminal" then
         path_data.type = "terminal"
-        local term_info = handle_terminal()
-        path_data.terminal_display_name = term_info.display_name
-        path_data.terminal_pid_number = term_info.pid_number
-        path_data.terminal_display_hl = term_info.display_hl
-        path_data.terminal_pid_hl = term_info.pid_hl
+        local result_str = handle_terminal() -- Now returns a path string like regular files
+        path_data.dir_path, path_data.filename = separate_path_filename(result_str)
     elseif filetype == "oil" then
         path_data.type = "oil"
         local result_str = handle_oil() -- handle_oil returns combined string
@@ -253,7 +260,7 @@ M.component = {
         provider = function()
             local path_info = M.get_path()
             -- *** CHANGE 2: Remove path_info.padding_left from the return string ***
-            return path_info.icon_str
+            return path_info.icon_str or ""
         end,
         hl = function()
             local path_info = M.get_path()
@@ -268,28 +275,28 @@ M.component = {
             local display_text = ""
             if path_info.type == "oil" then
                 -- For oil, this is the directory part
-                display_text = path_info.dir_path
+                display_text = path_info.dir_path or ""
             elseif path_info.type == "terminal" then
-                -- For terminal, this is the main shell/terminal name
-                display_text = path_info.terminal_display_name
+                -- For terminal, this is now the directory path like regular files
+                display_text = path_info.dir_path or ""
             elseif path_info.type == "checkhealth" then
                 -- For checkhealth, this is the "Health" text
-                display_text = path_info.checkhealth_text
+                display_text = path_info.checkhealth_text or ""
             else -- regular file
                 -- For regular files, this is the directory path
-                display_text = path_info.dir_path
+                display_text = path_info.dir_path or ""
             end
 
             -- Add leading space only if an icon is present, otherwise use no padding (since padding_left is removed from icon)
-            return path_info.icon_str ~= "" and " " .. display_text or display_text
+            return (path_info.icon_str and path_info.icon_str ~= "") and " " .. display_text or display_text
         end,
         hl = function()
             local path_info = M.get_path()
             if path_info.type == "oil" then
                 -- Only apply highlight if there's an actual directory path (e.g., not just "./")
-                return path_info.dir_path ~= "" and "HeirlinePathOilDir" or nil
+                return (path_info.dir_path and path_info.dir_path ~= "") and "HeirlinePathOilDir" or nil
             elseif path_info.type == "terminal" then
-                return path_info.terminal_display_hl
+                return "HeirlinePathDir" -- Use same highlight as regular files
             elseif path_info.type == "checkhealth" then
                 return "HeirlinePathHealth"
             else -- regular file
@@ -304,13 +311,13 @@ M.component = {
             local path_info = M.get_path()
             if path_info.type == "oil" then
                 -- For oil, this is the current folder name
-                return path_info.filename
+                return path_info.filename or ""
             elseif path_info.type == "terminal" then
-                -- For terminal, this is the PID number (with a leading space if it exists)
-                return path_info.terminal_pid_number ~= "" and " " .. path_info.terminal_pid_number or ""
+                -- For terminal, this is now the filename like regular files
+                return path_info.filename or ""
             else -- regular file
                 -- For regular files, this is the filename
-                return path_info.filename
+                return path_info.filename or ""
             end
         end,
         hl = function()
@@ -318,7 +325,7 @@ M.component = {
             if path_info.type == "oil" then
                 return "HeirlinePathOilCurrent"
             elseif path_info.type == "terminal" then
-                return path_info.terminal_pid_hl
+                return "HeirlinePathFile" -- Use same highlight as regular files
             else -- regular file
                 -- Use HeirlinePathModified if buffer is modified, otherwise use HeirlinePathFile
                 return vim.bo.modified and "HeirlinePathModified" or "HeirlinePathFile"
@@ -331,10 +338,19 @@ M.component = {
         provider = function()
             local buftype = vim.bo.buftype
             local filetype = vim.bo.filetype
+            local bufname = vim.fn.expand("%")
 
-            if filetype ~= "oil" and buftype ~= "terminal" and not vim.bo.modifiable then
+            -- Don't show lock for oil, terminal, or checkhealth buffers
+            if
+                filetype ~= "oil"
+                and buftype ~= "terminal"
+                and filetype ~= "checkhealth"
+                and not bufname:match("^health://")
+                and not bufname:match("checkhealth")
+                and not vim.bo.modifiable
+            then
                 local path_info = M.get_path()
-                return lock_icon .. path_info.padding_right
+                return lock_icon .. (path_info.padding_right or " ")
             else
                 return ""
             end
