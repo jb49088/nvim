@@ -1,4 +1,4 @@
-local path = require("custom.integrations.heirline_path")
+local path = require("custom.extensions.heirline_path")
 
 return {
     "rebelot/heirline.nvim",

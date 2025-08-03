@@ -33,22 +33,24 @@ nvim
 │   │   ├── lsp_diagnostic.lua
 │   │   └── options.lua
 │   ├── custom
-│   │   ├── integrations
+│   │   ├── extensions
 │   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
-│   │   │   ├── lualine_path.lua
-│   │   │   ├── mode_heirline_color.lua
 │   │   │   ├── session_picker.lua
 │   │   │   ├── tabs_picker.lua
 │   │   │   └── venv_picker.lua
+│   │   ├── indentation
+│   │   │   ├── init.lua
+│   │   │   └── python.lua
 │   │   └── modules
-│   │       ├── breadcrumbs.lua
+│   │       ├── code_runner.lua
 │   │       ├── eof_padding.lua
 │   │       ├── float_cycle.lua
 │   │       ├── floating_terminal.lua
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
-│   │       └── run.lua
+│   │       ├── session_manager.lua
+│   │       └── winbar_breadcrumbs.lua
 │   └── plugins
 │       ├── coding
 │       │   ├── autotag.lua
@@ -56,7 +58,6 @@ nvim
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── mini_pairs.lua
-│       │   ├── navic.lua
 │       │   ├── surround.lua
 │       │   └── treesitter.lua
 │       ├── lsp_completion
@@ -73,11 +74,9 @@ nvim
 │       │   ├── devicons.lua
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
-│       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
-│           ├── auto_session.lua
 │           ├── flash.lua
 │           ├── grug_far.lua
 │           ├── guess_indent.lua

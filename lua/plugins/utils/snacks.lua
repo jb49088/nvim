@@ -1,4 +1,4 @@
-local tabs_picker = require("custom.integrations.tabs_picker")
+local tabs_picker = require("custom.extensions.tabs_picker")
 
 return {
     "folke/snacks.nvim",
@@ -126,7 +126,7 @@ return {
 
         -- toggles
         -- stylua: ignore start
-        Snacks.toggle.animate():map("<leader>ua")
+        Snacks.toggle.animate():map("<leader>uA")
         Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map("<leader>uc")
         Snacks.toggle.diagnostics():map("<leader>ud")
         Snacks.toggle.indent():map("<leader>ug")

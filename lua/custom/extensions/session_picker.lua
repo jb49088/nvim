@@ -1,4 +1,6 @@
-return function()
+-- TODO: fix search function throwing error - FIXED
+
+return function(session_manager)
     -- Helper function to extract session name from path
     local function extract_session_name(path)
         local filename = path:match("([^/]+)$") or path
@@ -11,40 +13,31 @@ return function()
 
     -- Get the currently active session name
     local function get_active_session()
-        local ok, auto_session = pcall(require, "auto-session")
-        if ok and auto_session.current_session_name and auto_session.current_session_name ~= "" then
-            return auto_session.current_session_name
-        end
-
+        -- Check if we have a current session loaded
         local this_session = vim.v.this_session
         return this_session and this_session ~= "" and extract_session_name(this_session) or nil
     end
 
     -- Get list of available sessions
     local function get_sessions()
-        -- Try to get session directory from auto-session, fallback to default
-        local session_dir = vim.fn.stdpath("data") .. "/sessions"
-        local ok, auto_session = pcall(require, "auto-session")
-        if ok then
-            local config = require("auto-session.config")
-            session_dir = config.session_dir or config.auto_session_root_dir or session_dir
-        end
-
+        -- Use the session directory from our config
+        local session_dir = vim.fn.stdpath("data") .. "/sessions/"
         local sessions = {}
-        local session_files = vim.fn.glob(session_dir .. "/*.vim", false, true)
+        local session_files = vim.fn.glob(session_dir .. "*.vim", false, true)
 
         for _, file in ipairs(session_files) do
+            local name = extract_session_name(file)
             table.insert(sessions, {
-                name = extract_session_name(file),
+                name = name,
                 path = file,
-                icon = "",
-                source = "autosession",
+                text = name,
             })
         end
 
         table.sort(sessions, function(a, b)
             return a.name < b.name
         end)
+
         return sessions
     end
 
@@ -56,12 +49,14 @@ return function()
         finder = function()
             return sessions
         end,
+        matcher = {
+            fields = { "text" }, -- Search the text field (which contains the name)
+        },
         layout = { preset = "select" },
         format = function(item)
             local is_active = current_session and item.name == current_session
             return {
-                { item.icon, is_active and "AutoSessionActive" or "SnacksPickerDir" },
-                { " " },
+                { " ", is_active and "AutoSessionActive" or "SnacksPickerDir" }, -- Session icon
                 { item.name, "SnacksPickerFile" },
             }
         end,
@@ -69,12 +64,18 @@ return function()
             if item then
                 picker:close()
                 vim.schedule(function()
-                    vim.cmd("SessionRestore " .. vim.fn.fnameescape(item.name))
+                    -- Use the passed session manager to load the session
+                    session_manager.load_session(item.name)
                 end)
             end
         end,
         actions = {
             delete_session = function(picker, item)
+                -- Prevent deletion of the "last" session
+                if item.name == "last" then
+                    vim.notify('Cannot delete "last" session', vim.log.levels.WARN)
+                    return
+                end
                 vim.fn.delete(item.path)
                 sessions = get_sessions()
                 picker:find()

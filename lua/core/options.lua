@@ -20,7 +20,7 @@ opt.laststatus = 3 -- Always show statusline
 vim.opt.cmdheight = 0
 opt.statusline = " " -- Show a blank statusline before lualine loads in
 -- opt.winbar = " " -- Show a blank winbar before navic loads in
-opt.showtabline = 2 -- Show tabline
+opt.showtabline = 0 -- Disable tabline
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
 opt.cursorline = true -- Highlight the current line...
@@ -54,7 +54,7 @@ opt.shiftwidth = 4 -- Indent size
 opt.tabstop = 4 -- Tab width
 opt.expandtab = true -- Convert tabs to spaces
 opt.autoindent = true -- Copy indent from current line when starting new one
-cmd("filetype plugin indent on") -- Enable filetype-specific indentation
+-- cmd("filetype indent on") -- Enable filetype-specific indentation. See :set indentexpr?
 
 -- Clipboard (from https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim)
 opt.clipboard = "unnamedplus"

@@ -1,10 +1,9 @@
 return {
     "neovim/nvim-lspconfig",
     dependencies = {
-        { "williamboman/mason.nvim", opts = {} },
-        "williamboman/mason-lspconfig.nvim",
-        "WhoIsSethDaniel/mason-tool-installer.nvim",
         "saghen/blink.cmp",
+        "williamboman/mason.nvim",
+        "williamboman/mason-lspconfig.nvim",
     },
     config = function()
         -- lsp attach autocommand
@@ -44,7 +43,7 @@ return {
         })
 
         local servers = {
-            lua_ls = { -- lua lsp
+            lua_ls = {
                 settings = {
                     Lua = {
                         completion = {
@@ -66,10 +65,11 @@ return {
                     },
                 },
             },
-            basedpyright = { -- python lsp
+            basedpyright = {
                 settings = {
                     basedpyright = {
                         analysis = {
+                            -- autoImportCompletions = false,
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
                         },
@@ -80,6 +80,7 @@ return {
             --     settings = {
             --         python = {
             --             analysis = {
+            --                 autoImportCompletions = true,
             --                 typeCheckingMode = "standard",
             --                 autoSearchPaths = true,
             --                 useLibraryCodeForTypes = true,
@@ -89,21 +90,6 @@ return {
             --     },
             -- },
         }
-
-        ---@type MasonLspconfigSettings
-        ---@diagnostic disable-next-line: missing-fields
-        require("mason-lspconfig").setup({
-            automatic_enable = vim.tbl_keys(servers or {}),
-        })
-
-        local ensure_installed = vim.tbl_keys(servers or {})
-        vim.list_extend(ensure_installed, {
-            "luacheck", -- lua linter
-            "stylua", -- lua formatter
-            "ruff", -- python linter
-            "black", -- python formatter
-        })
-        require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
         for server_name, config in pairs(servers) do
             vim.lsp.config(server_name, config)

@@ -12,8 +12,9 @@ return {
             show_hidden = true,
         },
         float = {
-            max_width = 135,
-            max_height = 29,
+            -- Use percentage-based sizing (87% width, 75% height)
+            max_width = math.floor(vim.o.columns * 0.87),
+            max_height = math.floor(vim.o.lines * 0.75),
         },
     },
     lazy = false, -- recommended for oil

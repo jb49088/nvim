@@ -1,11 +1,21 @@
 return {
     "nvim-treesitter/nvim-treesitter",
-    event = { "BufReadPost", "BufNewFile" },
+    -- enabled = false,
+    branch = "main",
+    lazy = false,
     build = ":TSUpdate",
-    dependencies = { "nvim-treesitter/playground" },
-    main = "nvim-treesitter.configs",
-    opts = {
-        ensure_installed = {
+    config = function()
+        -- Setup with proper install directory
+        local install_dir = vim.fn.stdpath("data") .. "/site"
+        require("nvim-treesitter").setup({
+            install_dir = install_dir,
+        })
+
+        -- Ensure install directory is in runtimepath
+        vim.opt.runtimepath:prepend(install_dir)
+
+        -- Install parsers (same as your ensure_installed list)
+        require("nvim-treesitter").install({
             "bash",
             "c",
             "diff",
@@ -18,13 +28,14 @@ return {
             "vim",
             "vimdoc",
             "python",
-        },
-        auto_install = true,
-        highlight = {
-            enable = true,
-            -- For some languages, enable regex highlighting and disable indent to fix indent issues.
-            additional_vim_regex_highlighting = { "ruby" },
-        },
-        indent = { enable = true, disable = { "ruby", "python" } },
-    },
+        })
+
+        -- Enable treesitter features
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = { "python", "lua", "bash", "c", "html", "markdown", "vim", "ruby" },
+            callback = function()
+                vim.treesitter.start()
+            end,
+        })
+    end,
 }

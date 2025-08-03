@@ -30,6 +30,27 @@ local function cleanup_terminal()
     float_term.job_id = nil
 end
 
+-- Function to calculate dynamic window size
+local function get_window_size()
+    local width = vim.o.columns
+    local height = vim.o.lines
+
+    -- Use 87% width and 75% height
+    local win_width = math.floor(width * 0.87)
+    local win_height = math.floor(height * 0.75)
+
+    -- Calculate starting position to center the window
+    local row = math.ceil((height - win_height) / 2 - 1)
+    local col = math.ceil((width - win_width) / 2)
+
+    return {
+        width = win_width,
+        height = win_height,
+        row = row,
+        col = col,
+    }
+end
+
 -- Function to create or toggle the floating terminal
 function M.toggle_terminal()
     -- If terminal is already open, close it
@@ -39,33 +60,23 @@ function M.toggle_terminal()
         return
     end
 
-    -- Set fixed window size
-    local win_width = 135
-    local win_height = 29
-
-    -- Get editor dimensions for centering
-    local width = vim.o.columns
-    local height = vim.o.lines
-
-    -- Calculate starting position to center the window
-    local row = math.ceil((height - win_height) / 2 - 1)
-    local col = math.ceil((width - win_width) / 2)
+    -- Get dynamic window size
+    local size = get_window_size()
 
     -- Window configuration
     local opts = {
         style = "minimal",
         relative = "editor",
-        width = win_width,
-        height = win_height,
-        row = row,
-        col = col,
+        width = size.width,
+        height = size.height,
+        row = size.row,
+        col = size.col,
         border = "rounded",
     }
 
     -- Create buffer if it doesn't exist or is invalid
     if not float_term.buf or not vim.api.nvim_buf_is_valid(float_term.buf) then
         float_term.buf = vim.api.nvim_create_buf(false, true)
-
         -- Set up autocommand to handle terminal exit
         vim.api.nvim_create_autocmd("TermClose", {
             buffer = float_term.buf,

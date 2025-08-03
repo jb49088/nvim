@@ -1,4 +1,4 @@
-local venv_picker = require("custom.integrations.venv_picker")
+local venv_picker = require("custom.extensions.venv_picker")
 
 return {
     "linux-cultist/venv-selector.nvim",

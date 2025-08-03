@@ -1,5 +1,4 @@
--- TODO: add support for more filetypes like md
--- figure out what to do with no name files
+-- winbar_breadcrumbs.lua - Enhanced with content modification handling, truncation, and conditional display
 
 local M = {}
 
@@ -29,12 +28,71 @@ local config = {
         max_retries = 3, -- Maximum number of retries for failed requests
         retry_delay_ms = 200, -- Delay between retries
     },
-    -- Updated truncation config options for tabline
+    -- Updated truncation config options for winbar
     truncation = {
         enabled = true, -- Enable truncation
         separator = "  ", -- Separator between breadcrumb parts
         extends_symbol = "…", -- Symbol to show when truncated
         min_symbol_width = 1, -- Minimum width for each symbol when truncated
+    },
+    -- New: Enable/disable conditions for winbar
+    bar = {
+        ---@type boolean|fun(buf: integer, win: integer): boolean
+        enable = function(buf, win)
+            if not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_win_is_valid(win) then
+                return false
+            end
+
+            if vim.fn.win_gettype(win) ~= "" then
+                return false
+            end
+
+            local current_winbar = vim.wo[win].winbar
+            if current_winbar ~= "" and not current_winbar:match("breadcrumbs") then
+                return false
+            end
+
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            if bufname ~= "" then
+                local stat = vim.uv.fs_stat(bufname)
+                if stat and stat.size > 1024 * 1024 then
+                    return false
+                end
+            end
+
+            local buftype = vim.bo[buf].buftype
+            if buftype == "quickfix" or buftype == "nofile" or buftype == "prompt" or buftype == "terminal" then
+                return false
+            end
+
+            local filetype = vim.bo[buf].filetype
+            if filetype == "markdown" then
+                return true
+            end
+
+            if filetype == "help" then
+                return true
+            end
+
+            local has_parser = pcall(vim.treesitter.get_parser, buf)
+            if has_parser then
+                return true
+            end
+
+            local lsp_clients = vim.lsp.get_clients({
+                bufnr = buf,
+                method = vim.lsp.protocol.Methods.textDocument_documentSymbol,
+            })
+            if not vim.tbl_isempty(lsp_clients) then
+                return true
+            end
+
+            if buftype == "" and bufname ~= "" then
+                return true
+            end
+
+            return false
+        end,
     },
 }
 
@@ -187,109 +245,6 @@ local function build_breadcrumb_parts(filepath, symbols)
 
     local sep = package.config:sub(1, 1) -- path separator
     local ok, mini_icons = pcall(require, "mini.icons")
-
-    -- Handle terminal buffers specially
-    if vim.bo.buftype == "terminal" then
-        -- Terminal names are like "term://~/path//pid:shell"
-        -- Extract just the shell part (e.g., "/usr/bin/bash")
-        local pid, shell_path = filepath:match("//(%d+):(.+)$")
-        if pid and shell_path then
-            -- Remove leading slash if present
-            if shell_path:sub(1, 1) == sep then
-                shell_path = shell_path:sub(2)
-            end
-
-            local shell_parts = vim.split(shell_path, sep, { plain = true })
-
-            -- Filter out empty parts
-            local filtered_parts = {}
-            for _, part in ipairs(shell_parts) do
-                if part ~= "" then
-                    table.insert(filtered_parts, part)
-                end
-            end
-
-            -- Process filtered shell parts with proper icons
-            for i, part in ipairs(filtered_parts) do
-                local icon, hl_group = nil, nil
-
-                if ok then
-                    if i < #filtered_parts then
-                        -- Directory parts
-                        icon, hl_group = mini_icons.get("directory", part)
-                    else
-                        -- Last part (executable) - use terminal filetype icon
-                        icon, hl_group = mini_icons.get("filetype", "terminal")
-                    end
-                end
-
-                table.insert(parts, {
-                    text = part,
-                    highlight = nil,
-                    icon = icon,
-                    icon_highlight = hl_group,
-                })
-            end
-            return parts
-        end
-    end
-
-    -- Handle Oil.nvim buffers specially
-    if vim.bo.filetype == "oil" then
-        -- Oil buffer names are like "oil:///path/to/directory/"
-        local oil_path = filepath:match("^oil://(.+)$")
-        if oil_path then
-            -- Remove trailing slash if present to avoid empty parts at the end
-            if oil_path:sub(-1) == sep then
-                oil_path = oil_path:sub(1, -2)
-            end
-
-            -- Split the path into parts
-            local oil_parts = vim.split(oil_path, sep, { plain = true })
-
-            -- Filter out empty parts to avoid phantom directory icons
-            local filtered_parts = {}
-            for _, part in ipairs(oil_parts) do
-                if part ~= "" then
-                    table.insert(filtered_parts, part)
-                end
-            end
-
-            -- Process all parts as directories (since Oil shows directory contents)
-            for _, part in ipairs(filtered_parts) do
-                local icon, hl_group = nil, nil
-
-                if ok then
-                    -- All parts in oil are directories
-                    icon, hl_group = mini_icons.get("directory", part)
-                end
-
-                table.insert(parts, {
-                    text = part,
-                    highlight = nil,
-                    icon = icon,
-                    icon_highlight = hl_group,
-                })
-            end
-            return parts
-        end
-    end
-
-    -- Handle checkhealth buffers specially
-    if vim.bo.filetype == "checkhealth" or filepath:match("^health://") or filepath:match("checkhealth") then
-        local icon, hl_group = nil, nil
-        if ok then
-            icon, hl_group = mini_icons.get("filetype", "checkhealth")
-        end
-
-        table.insert(parts, {
-            text = "Health",
-            highlight = nil,
-            icon = icon,
-            icon_highlight = hl_group,
-        })
-        return parts
-    end
 
     -- Normalize full path
     filepath = vim.fs.normalize(filepath)
@@ -554,12 +509,12 @@ local function parts_to_display_string(parts)
             table.insert(result_parts, part.icon .. " ")
         end
 
-        -- Add text with TabLine highlight (force TabLine for all text)
-        table.insert(result_parts, "%#TabLine#" .. part.text .. "%*")
+        -- Add text with WinBar highlight (force WinBar for all text)
+        table.insert(result_parts, "%#WinBar#" .. part.text .. "%*")
 
-        -- Add separator between parts with TabLine highlight
+        -- Add separator between parts with WinBar highlight
         if i < #parts then
-            table.insert(result_parts, "%#TabLine#" .. separator .. "%*")
+            table.insert(result_parts, "%#WinBar#" .. separator .. "%*")
         end
     end
 
@@ -567,6 +522,34 @@ local function parts_to_display_string(parts)
     table.insert(result_parts, " ")
 
     return table.concat(result_parts, "")
+end
+
+--- Attach winbar to window if conditions are met
+---@param buf integer buffer number
+---@param win integer window number
+local function attach_winbar(buf, win)
+    buf = buf or vim.api.nvim_get_current_buf()
+    win = win or vim.api.nvim_get_current_win()
+
+    if not vim.api.nvim_win_is_valid(win) then
+        return
+    end
+
+    local should_enable
+    if type(config.bar.enable) == "function" then
+        should_enable = config.bar.enable(buf, win)
+    else
+        should_enable = config.bar.enable --[[@as boolean]]
+    end
+
+    if should_enable then
+        vim.wo[win].winbar = "%{%v:lua.require'custom.modules.winbar_breadcrumbs'.get_filename_display()%}"
+    else
+        local current_winbar = vim.wo[win].winbar
+        if current_winbar:match("breadcrumbs") then
+            vim.wo[win].winbar = ""
+        end
+    end
 end
 
 -- Function to get the current filename and breadcrumb display
@@ -578,8 +561,8 @@ function M.get_filename_display()
     -- Build breadcrumb parts
     local parts = build_breadcrumb_parts(filepath, symbols)
 
-    -- Use almost all available terminal width for breadcrumbs
-    local available_width = vim.o.columns - 2 -- Small buffer for safety
+    -- Get available width (use current window width)
+    local available_width = vim.api.nvim_win_get_width(0) - 2 -- Small buffer for safety
 
     -- Apply truncation if enabled
     if config.truncation.enabled then
@@ -804,8 +787,9 @@ local function setup_symbol_refresh_autocmds()
     vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
         group = augroup,
         callback = function()
-            -- Force redraw of tabline to update breadcrumbs display
-            vim.cmd.redrawtabline()
+            vim.schedule(function()
+                vim.cmd.redrawstatus()
+            end)
         end,
     })
 end
@@ -863,16 +847,41 @@ local function setup_buffer_focus_autocmds()
     })
 end
 
---- Setup autocmds to refresh breadcrumbs on terminal resize
-local function setup_terminal_resize_autocmds()
-    local augroup = vim.api.nvim_create_augroup("breadcrumbs_terminal_resize", { clear = true })
+--- Setup autocmds to refresh breadcrumbs on window resize
+local function setup_window_resize_autocmds()
+    local augroup = vim.api.nvim_create_augroup("breadcrumbs_window_resize", { clear = true })
 
-    -- Refresh breadcrumbs when terminal is resized (for tabline)
-    vim.api.nvim_create_autocmd({ "VimResized" }, {
+    -- Refresh breadcrumbs when window is resized
+    vim.api.nvim_create_autocmd({ "VimResized", "WinResized" }, {
         group = augroup,
         callback = function()
-            -- Force redraw of tabline to apply truncation with new terminal size
-            vim.cmd.redrawtabline()
+            -- Force redraw of winbar to apply truncation with new window size
+            vim.cmd.redrawstatus({ bang = true })
+        end,
+    })
+end
+
+--- Setup autocmds to refresh winbar when buffer changes
+local function setup_winbar_refresh_autocmds()
+    local augroup = vim.api.nvim_create_augroup("breadcrumbs_winbar_refresh", { clear = true })
+
+    vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "FileType", "BufWritePost" }, {
+        group = augroup,
+        callback = function(args)
+            local buf = args.buf or vim.api.nvim_get_current_buf()
+            local win = vim.api.nvim_get_current_win()
+            attach_winbar(buf, win)
+        end,
+    })
+
+    vim.api.nvim_create_autocmd({ "WinNew", "TabEnter" }, {
+        group = augroup,
+        callback = function()
+            vim.schedule(function()
+                local buf = vim.api.nvim_get_current_buf()
+                local win = vim.api.nvim_get_current_win()
+                attach_winbar(buf, win)
+            end)
         end,
     })
 end
@@ -894,6 +903,12 @@ function M.setup(opts)
         end
     end
 
+    -- Check if winbar is supported (Neovim 0.8+)
+    if vim.fn.has("nvim-0.8") == 0 then
+        vim.notify("breadcrumbs: Winbar is not supported in this Neovim version (requires 0.8+).", vim.log.levels.WARN)
+        return
+    end
+
     -- Setup the LSP auto-attach autocmd
     setup_lsp_auto_attach_autocmd()
 
@@ -903,11 +918,16 @@ function M.setup(opts)
     -- Setup symbol refresh autocmds
     setup_symbol_refresh_autocmds()
 
-    -- Setup terminal resize autocmds for tabline truncation
-    setup_terminal_resize_autocmds()
+    -- Setup window resize autocmds for truncation
+    setup_window_resize_autocmds()
 
-    -- Set up the tabline directly (standalone mode)
-    vim.o.tabline = "%{%v:lua.require'custom.modules.breadcrumbs'.get_filename_display()%}"
+    -- Setup winbar refresh autocmds for conditional display
+    setup_winbar_refresh_autocmds()
+
+    -- Initial setup - attach winbar to current window if conditions are met
+    local buf = vim.api.nvim_get_current_buf()
+    local win = vim.api.nvim_get_current_win()
+    attach_winbar(buf, win)
 end
 
 -- Function to disable breadcrumbs
@@ -917,14 +937,19 @@ function M.disable()
         cancel_debounce_timer(bufnr)
     end
 
-    -- Clear the tabline
-    vim.o.tabline = ""
+    -- Clear winbar for all windows
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_is_valid(win) then
+            vim.wo[win].winbar = ""
+        end
+    end
 
-    -- Clear specific autocmds created by breadcrumbs, using an augroup for precision
+    -- Clear specific autocmds created by breadcrumbs
     vim.api.nvim_clear_autocmds({ group = "breadcrumbs_lsp_autocmds" })
     vim.api.nvim_clear_autocmds({ group = "breadcrumbs_focus" })
     vim.api.nvim_clear_autocmds({ group = "breadcrumbs_symbol_refresh" })
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_terminal_resize" })
+    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_window_resize" })
+    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_winbar_refresh" })
 end
 
 -- Auto-setup when the module is required

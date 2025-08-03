@@ -1,5 +1,6 @@
 return {
     "L3MON4D3/LuaSnip",
+    -- enabled = false,
     event = { "InsertEnter", "CmdlineEnter" },
     version = "2.*",
     build = (function()

@@ -1,5 +1,6 @@
 return {
     "saghen/blink.cmp",
+    -- enabled = false,
     event = { "InsertEnter", "CmdlineEnter" },
     -- version = "1.*",
     dependencies = {
@@ -24,7 +25,7 @@ return {
                 draw = {
                     columns = {
                         { "kind_icon" },
-                        { "label", "label_description", "kind", gap = 3 },
+                        { "label", "label_description", "kind", gap = 1 },
                     },
                     components = {
                         kind_icon = {
