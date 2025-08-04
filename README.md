@@ -53,11 +53,11 @@ nvim
 │   │       └── winbar_breadcrumbs.lua
 │   └── plugins
 │       ├── coding
+│       │   ├── autopairs.lua
 │       │   ├── autotag.lua
 │       │   ├── dropbar.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
-│       │   ├── mini_pairs.lua
 │       │   ├── surround.lua
 │       │   └── treesitter.lua
 │       ├── lsp_completion
@@ -80,6 +80,7 @@ nvim
 │           ├── flash.lua
 │           ├── grug_far.lua
 │           ├── guess_indent.lua
+│           ├── hlchunk.lua
 │           ├── noice.lua
 │           ├── oil.lua
 │           ├── snacks.lua

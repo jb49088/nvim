@@ -1,6 +1,7 @@
 return {
     {
         "RRethy/vim-illuminate",
+        event = { "BufReadPost", "BufNewFile" },
         opts = {
             delay = 200,
             providers = { "lsp", "treesitter", "regex" },

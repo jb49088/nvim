@@ -2,9 +2,6 @@ local venv_picker = require("custom.extensions.venv_picker")
 
 return {
     "linux-cultist/venv-selector.nvim",
-    dependencies = {
-        "neovim/nvim-lspconfig",
-    },
     event = "VeryLazy",
     branch = "regexp",
     keys = {

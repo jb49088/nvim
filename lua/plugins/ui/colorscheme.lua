@@ -1,5 +1,6 @@
 return {
     "AstroNvim/astrotheme",
+    lazy = false,
     priority = 1000,
     config = function()
         require("astrotheme").setup({
@@ -11,6 +12,9 @@ return {
             },
         })
         vim.cmd("colorscheme astrotheme")
-        require("custom.extensions.highlights")
+
+        vim.schedule(function()
+            require("custom.extensions.highlights")
+        end)
     end,
 }

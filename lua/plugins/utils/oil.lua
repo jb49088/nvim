@@ -1,5 +1,6 @@
 return {
     "stevearc/oil.nvim",
+    cmd = "Oil",
     opts = {
         keymaps = {
             ["_"] = "actions.select",
@@ -17,7 +18,6 @@ return {
             max_height = math.floor(vim.o.lines * 0.75),
         },
     },
-    lazy = false, -- recommended for oil
     keys = {
         {
             "<leader>o",

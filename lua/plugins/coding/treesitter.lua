@@ -2,7 +2,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     -- enabled = false,
     branch = "main",
-    lazy = false,
+    event = "VeryLazy",
     build = ":TSUpdate",
     config = function()
         -- Setup with proper install directory
