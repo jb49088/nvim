@@ -19,7 +19,6 @@ opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title form
 opt.laststatus = 3 -- Always show statusline
 vim.opt.cmdheight = 0
 opt.statusline = " " -- Show a blank statusline before lualine loads in
--- opt.winbar = " " -- Show a blank winbar before navic loads in
 opt.showtabline = 0 -- Disable tabline
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
@@ -44,7 +43,6 @@ opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
--- opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions" -- Recommended for auto-session
 opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
 cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
 cmd("set formatoptions+=l") -- Don't break existing long lines when entering insert mode
@@ -54,7 +52,12 @@ opt.shiftwidth = 4 -- Indent size
 opt.tabstop = 4 -- Tab width
 opt.expandtab = true -- Convert tabs to spaces
 opt.autoindent = true -- Copy indent from current line when starting new one
--- cmd("filetype indent on") -- Enable filetype-specific indentation. See :set indentexpr?
+
+-- Providers
+g.loaded_python3_provider = 0
+g.loaded_node_provider = 0
+g.loaded_perl_provider = 0
+g.loaded_ruby_provider = 0
 
 -- Clipboard (from https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim)
 opt.clipboard = "unnamedplus"

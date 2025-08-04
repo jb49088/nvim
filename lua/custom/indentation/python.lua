@@ -27,60 +27,63 @@ local function in_string_at_start(lnum)
     return false
 end
 
--- Search for bracket (simplified but functional version of s:SearchBracket)
-local function search_bracket(lnum, direction)
+-- Simplified and more reliable bracket search
+local function find_opening_bracket(lnum)
     local bracket_pairs = {
-        ["("] = ")",
-        ["["] = "]",
-        ["{"] = "}",
         [")"] = "(",
         ["]"] = "[",
         ["}"] = "{",
     }
 
-    local open_brackets = { "(", "[", "{" }
-    local close_brackets = { ")", "]", "}" }
+    local opening_brackets = { "(", "[", "{" }
+    local closing_brackets = { ")", "]", "}" }
 
     local stack = {}
-    local search_lnum = lnum
 
-    -- Search backwards for opening bracket
-    while search_lnum > 0 do
+    -- Start from the line before the current line and search backwards
+    for search_lnum = lnum - 1, 1, -1 do
         local line = get_line(search_lnum)
 
-        -- Scan line from right to left
-        for i = #line, 1, -1 do
-            local char = line:sub(i, i)
+        -- Process each character from right to left
+        for col = #line, 1, -1 do
+            local char = line:sub(col, col)
 
-            if vim.tbl_contains(close_brackets, char) then
+            if vim.tbl_contains(closing_brackets, char) then
                 table.insert(stack, char)
-            elseif vim.tbl_contains(open_brackets, char) then
+            elseif vim.tbl_contains(opening_brackets, char) then
                 if #stack == 0 then
                     -- Found unmatched opening bracket
-                    return search_lnum, i
+                    return search_lnum, col
                 else
-                    -- Check if it matches the last closing bracket
+                    -- Pop matching closing bracket from stack
+                    local expected_close = nil
+                    if char == "(" then
+                        expected_close = ")"
+                    elseif char == "[" then
+                        expected_close = "]"
+                    elseif char == "{" then
+                        expected_close = "}"
+                    end
+
                     local last_close = table.remove(stack)
-                    if bracket_pairs[char] ~= last_close then
-                        -- Mismatched brackets, something's wrong
+                    if expected_close ~= last_close then
+                        -- Mismatched brackets
                         return 0, 0
                     end
                 end
             end
         end
-
-        search_lnum = search_lnum - 1
     end
 
     return 0, 0
 end
 
--- Check if user has already dedented (s:Dedented equivalent)
+-- Check if user has already dedented
 local function is_dedented(lnum, expected_indent)
     return get_indent(lnum) < expected_indent
 end
 
--- Remove trailing comment with syntax highlighting (lines 113-145)
+-- Remove trailing comment with syntax highlighting
 local function remove_comment(line, lnum)
     local line_len = #line
 
@@ -98,7 +101,7 @@ local function remove_comment(line, lnum)
         end
 
         if is_comment then
-            -- Binary search for comment start (like original)
+            -- Binary search for comment start
             local min_col = 1
             local max_col = line_len
 
@@ -135,7 +138,7 @@ local function remove_comment(line, lnum)
     return line
 end
 
--- Main indentation function (direct translation of python#GetIndent)
+-- Main indentation function
 function M.get_indent()
     local lnum = vim.v.lnum
 
@@ -158,52 +161,50 @@ function M.get_indent()
         return 0
     end
 
-    local plindent, plnumstart
-
-    -- Handle bracket/parentheses indentation with consistent spacing
-    -- Uses shiftwidth-based indentation instead of aligning with bracket position
-    if config.disable_parentheses_indenting then
-        plindent = get_indent(plnum)
-        plnumstart = plnum
-    else
-        -- Find opening bracket for current line
-        local parlnum, parcol = search_bracket(lnum)
-
-        if parlnum > 0 then
-            -- Closing brackets align with the line that opened them
-            if get_line(lnum):match("^%s*[%)%]%}]") and not config.closed_paren_align_last_line then
-                return get_indent(parlnum)
-            end
-        end
-
-        -- Check if previous line is inside parentheses
-        local prev_parlnum, _ = search_bracket(plnum)
-        if prev_parlnum > 0 then
-            plindent = get_indent(prev_parlnum)
-            plnumstart = prev_parlnum
-        else
-            plindent = get_indent(plnum)
-            plnumstart = plnum
-        end
-
-        -- Handle first line inside parentheses/brackets with consistent indentation
-        local p, _ = search_bracket(lnum)
-        if p > 0 then
-            if p == plnum then
-                -- First line inside parentheses uses consistent indentation
-                local pp, _ = search_bracket(lnum)
-                if pp > 0 then
-                    return get_indent(plnum) + config.nested_paren_indent
+    -- Handle bracket/parentheses indentation
+    if not config.disable_parentheses_indenting then
+        -- Check if current line is a closing bracket
+        local current_line = get_line(lnum)
+        if current_line:match("^%s*[%)%]%}]") then
+            if not config.closed_paren_align_last_line then
+                local parlnum, _ = find_opening_bracket(lnum)
+                if parlnum > 0 then
+                    return get_indent(parlnum)
                 end
-                return get_indent(plnum) + config.open_paren_indent
             end
+        end
 
-            if plnumstart == p then
-                return get_indent(plnum)
+        -- Check if we're inside brackets
+        local parlnum, parcol = find_opening_bracket(lnum)
+        if parlnum > 0 then
+            local bracket_line = get_line(parlnum)
+            local bracket_char = bracket_line:sub(parcol, parcol)
+
+            -- Check if the opening bracket line has content after the bracket
+            local after_bracket = bracket_line:sub(parcol + 1):match("^%s*(.*)$")
+
+            if after_bracket and after_bracket ~= "" and not after_bracket:match("^%s*$") then
+                -- There's content on the same line as the opening bracket
+                -- Align with the first non-whitespace character after the bracket
+                local first_content_col = parcol + 1
+                while first_content_col <= #bracket_line do
+                    if
+                        bracket_line:sub(first_content_col, first_content_col) ~= " "
+                        and bracket_line:sub(first_content_col, first_content_col) ~= "\t"
+                    then
+                        break
+                    end
+                    first_content_col = first_content_col + 1
+                end
+                return first_content_col - 1
+            else
+                -- No content after opening bracket, use standard indentation
+                return get_indent(parlnum) + config.open_paren_indent
             end
-            return plindent
         end
     end
+
+    local plindent = get_indent(plnum)
 
     -- Strip trailing comments from previous line before checking for colons
     local pline = remove_comment(get_line(plnum), plnum)
@@ -215,10 +216,10 @@ function M.get_indent()
 
     -- Dedent after stop-execution statements (break/continue/return/pass/raise)
     if get_line(plnum):match("^%s*%(break%|continue%|raise%|return%|pass%)%f[%A]") then
-        if is_dedented(lnum, get_indent(plnum)) then
+        if is_dedented(lnum, plindent) then
             return -1
         end
-        return get_indent(plnum) - vim.fn.shiftwidth()
+        return plindent - vim.fn.shiftwidth()
     end
 
     -- Align except/finally with their corresponding try statement
@@ -240,7 +241,7 @@ function M.get_indent()
     -- Dedent elif/else to match their corresponding if/elif statement
     if get_line(lnum):match("^%s*%(elif%|else%)%f[%A]") then
         -- Unless previous line was a one-liner
-        if get_line(plnumstart):match("^%s*%(for%|if%|elif%|try%)%f[%A]") then
+        if get_line(plnum):match("^%s*%(for%|if%|elif%|try%)%f[%A]") then
             return plindent
         end
 
@@ -251,17 +252,7 @@ function M.get_indent()
         return plindent - vim.fn.shiftwidth()
     end
 
-    -- Handle indentation after closing parentheses/brackets
-    local final_parlnum, _ = search_bracket(lnum)
-    if final_parlnum > 0 then
-        if is_dedented(lnum, plindent) then
-            return -1
-        else
-            return plindent
-        end
-    end
-
-    -- Default fallback: let Neovim handle indentation
+    -- Default fallback: maintain current indentation or let Neovim handle it
     return -1
 end
 

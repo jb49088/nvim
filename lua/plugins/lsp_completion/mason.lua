@@ -17,6 +17,7 @@ return {
         local servers = {
             "lua_ls", -- lua lsp
             "basedpyright", -- python lsp
+            -- "pyright",
         }
 
         ---@type MasonLspconfigSettings

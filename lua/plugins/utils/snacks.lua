@@ -10,9 +10,18 @@ return {
 
         --- INDENT ---
         indent = {
-            enabled = true,
+            enabled = false,
             scope = {
-                enabled = false,
+                enabled = true,
+            },
+            chunk = {
+                enabled = true,
+                only_current = true,
+                char = {
+                    corner_top = "╭",
+                    corner_bottom = "╰",
+                    arrow = "",
+                },
             },
         },
 

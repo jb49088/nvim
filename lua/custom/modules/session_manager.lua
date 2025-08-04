@@ -1,11 +1,12 @@
--- TODO: figure out inconsistently long startup times
-
 local session_picker = require("custom.extensions.session_picker")
 
 local M = {}
 
 -- Flag to control autosave
-local autosave_enabled = true
+local auto_save = true
+
+-- Flag to control auto-restore on startup
+local auto_restore = false
 
 -- Configuration
 local config = {
@@ -37,7 +38,10 @@ local function get_available_sessions()
 
     for _, file in ipairs(files) do
         local name = vim.fn.fnamemodify(file, ":t:r") -- Get just the filename without extension
-        table.insert(sessions, name)
+        -- Exclude the "last" session from the picker - it's only accessible via <leader>Sr
+        if name ~= config.last_session then
+            table.insert(sessions, name)
+        end
     end
 
     -- Sort sessions alphabetically
@@ -81,8 +85,13 @@ function M.load_session(name)
         -- Close all current buffers without prompting
         vim.cmd("silent! %bdelete!")
         vim.cmd("source " .. vim.fn.fnameescape(session_path))
-        local display_name = name or config.last_session
-        print('Loaded session "' .. display_name .. '"')
+
+        -- Different message for last session vs named sessions
+        if name == nil or name == config.last_session then
+            print("Loaded last session")
+        else
+            print('Loaded session "' .. name .. '"')
+        end
     else
         print("No session found: " .. session_path)
     end
@@ -96,8 +105,8 @@ end
 
 -- Toggle autosave
 function M.toggle_autosave()
-    autosave_enabled = not autosave_enabled
-    print("Autosave " .. (autosave_enabled and "enabled" or "disabled"))
+    auto_save = not auto_save
+    print("Autosave " .. (auto_save and "enabled" or "disabled"))
 end
 
 -- Setup function to initialize the session manager
@@ -115,6 +124,11 @@ function M.setup(opts)
     vim.keymap.set("n", "<leader>Ss", function()
         vim.ui.input({ prompt = "Session Name: " }, function(input)
             if input and input ~= "" then
+                -- Prevent naming a session "last" to avoid conflicts
+                if input == config.last_session then
+                    print('Cannot name session "' .. config.last_session .. '" - this name is reserved')
+                    return
+                end
                 M.save_session(input)
             end
         end)
@@ -125,34 +139,37 @@ function M.setup(opts)
         .toggle({
             name = "Session Autosave",
             get = function()
-                return autosave_enabled
+                return auto_save
             end,
             set = function()
-                autosave_enabled = not autosave_enabled
+                auto_save = not auto_save
             end,
         })
         :map("<leader>Sa")
 
-    -- Auto-save on exit and auto-restore on startup
+    -- Auto-save on exit and optionally auto-restore on startup
     vim.api.nvim_create_autocmd("VimLeavePre", {
         callback = function()
-            if autosave_enabled then
+            if auto_save then
                 M.save_session()
             end
         end,
     })
 
-    vim.api.nvim_create_autocmd("VimEnter", {
-        nested = true,
-        callback = function()
-            -- Only load if no files were passed as arguments
-            if vim.fn.argc(-1) == 0 then
-                if M.session_exists() then
-                    M.load_session()
+    -- Auto-restore on startup (if enabled)
+    if auto_restore then
+        vim.api.nvim_create_autocmd("VimEnter", {
+            nested = true,
+            callback = function()
+                -- Only load if no files were passed as arguments
+                if vim.fn.argc(-1) == 0 then
+                    if M.session_exists() then
+                        M.load_session()
+                    end
                 end
-            end
-        end,
-    })
+            end,
+        })
+    end
 end
 
 -- Auto-setup with default configuration
