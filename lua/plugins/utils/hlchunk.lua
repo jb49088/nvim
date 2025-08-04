@@ -23,6 +23,28 @@ return {
             },
         })
 
+        -- Track hlchunk state manually for reliable toggling
+        local hlchunk_enabled = true
+
+        -- Add Snacks toggle for hlchunk
+        Snacks.toggle({
+            name = "Indent Guides",
+            get = function()
+                return hlchunk_enabled
+            end,
+            set = function(enabled)
+                hlchunk_enabled = enabled
+                if enabled then
+                    vim.cmd("EnableHLChunk")
+                    vim.cmd("EnableHLIndent")
+                    vim.cmd("doautocmd CursorMoved")
+                else
+                    vim.cmd("DisableHLChunk")
+                    vim.cmd("DisableHLIndent")
+                end
+            end,
+        }):map("<leader>ug")
+
         -- HACK: Add support for Python list nodes as chunks
         local chunkHelper = require("hlchunk.utils.chunkHelper")
         local original_get_chunk_range = chunkHelper.get_chunk_range

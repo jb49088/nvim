@@ -138,7 +138,7 @@ return {
         Snacks.toggle.animate():map("<leader>uA")
         Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map("<leader>uc")
         Snacks.toggle.diagnostics():map("<leader>ud")
-        Snacks.toggle.indent():map("<leader>ug")
+        -- Snacks.toggle.indent():map("<leader>ug")
         Snacks.toggle.line_number():map("<leader>ul")
         Snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>uL")
         Snacks.toggle.option("wrap", { name = "Line Wrapping" }):map("<leader>uw")
