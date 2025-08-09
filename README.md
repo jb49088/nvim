@@ -17,7 +17,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Indent guides module
 - Chunk guides module
 - Breadcrumb navigation module
-- Integrated code runner
+- Unified code runner
 - [venv-selector.nvim](https://github.com/linux-cultist/venv-selector.nvim) with a custom venv picker
 - [oil.nvim](https://github.com/stevearc/oil.nvim)
 - [flash.nvim](https://github.com/folke/flash.nvim)
