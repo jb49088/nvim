@@ -27,7 +27,8 @@ return {
             notify_on_error = false,
             formatters_by_ft = {
                 lua = { "stylua" },
-                python = { "black" },
+                -- python = { "black", "isort" },
+                python = { "ruff_format", "ruff_organize_imports" },
                 markdown = { "injected" },
             },
             format_on_save = function(bufnr)

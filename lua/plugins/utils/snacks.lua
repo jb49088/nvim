@@ -12,7 +12,7 @@ return {
         indent = {
             enabled = false,
             scope = {
-                enabled = true,
+                enabled = false,
             },
             chunk = {
                 enabled = true,
@@ -20,7 +20,7 @@ return {
                 char = {
                     corner_top = "╭",
                     corner_bottom = "╰",
-                    arrow = "",
+                    arrow = "─",
                 },
             },
         },
@@ -76,8 +76,8 @@ return {
         -- Top Pickers & Explorer
         { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Search" }) end, desc = "Search Current Buffer"},
-        { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
+        { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Search" }) end, desc = "Search Current Buffer" },
+        { "<leader>e",  function() Snacks.explorer() end, desc = "File Explorer" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
         { "<leader>bo", function() local visible_bufs = {} for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do local buf = vim.api.nvim_win_get_buf(win) visible_bufs[buf] = true end Snacks.bufdelete.delete({ filter = function(buf) return not visible_bufs[buf] end }) end, desc = "Close Other Buffers" },
@@ -118,11 +118,11 @@ return {
         { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
         { "<leader>sn", function() Snacks.picker.notifications() end, desc = "Notification History" },
         { "<leader>sp", function() Snacks.picker.lazy() end, desc = "Search for Plugin Spec" },
-        { "<leader>sP", function() Snacks.picker.pickers() end, desc = "Pickers"},
+        { "<leader>sP", function() Snacks.picker.pickers() end, desc = "Pickers" },
         { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
-        { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
+        -- { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
         { "<leader>ts", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
         -- other
         { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
@@ -131,12 +131,12 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations by default
-        vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
+        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
 
         -- toggles
         -- stylua: ignore start
         Snacks.toggle.animate():map("<leader>uA")
-        Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map("<leader>uc")
+        Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map( "<leader>uc")
         Snacks.toggle.diagnostics():map("<leader>ud")
         -- Snacks.toggle.indent():map("<leader>ug")
         Snacks.toggle.line_number():map("<leader>ul")
@@ -144,7 +144,7 @@ return {
         Snacks.toggle.option("wrap", { name = "Line Wrapping" }):map("<leader>uw")
         Snacks.toggle.dim():map("<leader>uD")
         Snacks.toggle.option("spell", { name = "Spell Check" }):map("<leader>us")
-        Snacks.toggle.treesitter():map("<leader>uT")
+        Snacks.toggle.treesitter({ name = "Treesitter Highlighting" }):map("<leader>uT")
         Snacks.toggle.inlay_hints():map("<leader>uh")
         -- stylua: ignore end
     end,

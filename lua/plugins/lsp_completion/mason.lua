@@ -3,35 +3,50 @@ return {
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
         "williamboman/mason-lspconfig.nvim",
-        "WhoIsSethDaniel/mason-tool-installer.nvim",
     },
-    opts = {
-        ui = {
-            border = "rounded",
-            backdrop = 100,
-        },
-    },
-    config = function(_, opts)
-        require("mason").setup(opts)
-
-        local servers = {
-            "lua_ls", -- lua lsp
-            "basedpyright", -- python lsp
-            -- "pyright",
-        }
-
-        ---@type MasonLspconfigSettings
-        ---@diagnostic disable-next-line: missing-fields
-        require("mason-lspconfig").setup({
-            automatic_enable = servers,
+    config = function()
+        -- mason
+        require("mason").setup({
+            ui = {
+                border = "rounded",
+                backdrop = 100,
+            },
         })
 
-        local ensure_installed = vim.list_extend(servers, {
+        -- mason lsp config
+        require("mason-lspconfig").setup({
+            ensure_installed = {
+                "lua_ls", -- lua lsp
+                "basedpyright", -- python lsp
+                -- "ty", -- python lsp
+            },
+            automatic_enable = true,
+        })
+
+        -- Custom tool installation using Mason registry directly
+        local tools = {
             "luacheck", -- lua linter
             "stylua", -- lua formatter
-            "ruff", -- python linter
-            "black", -- python formatter
-        })
-        require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
+            "ruff", -- python linter/formatter
+        }
+
+        local registry = require("mason-registry")
+        registry.refresh(function()
+            for _, name in ipairs(tools) do
+                if not registry.is_installed(name) then
+                    local package = registry.get_package(name)
+
+                    vim.notify(name .. ": installing", vim.log.levels.INFO)
+
+                    package:install():once("closed", function()
+                        if package:is_installed() then
+                            vim.notify(name .. ": successfully installed", vim.log.levels.INFO)
+                        else
+                            vim.notify(name .. ": installation failed", vim.log.levels.ERROR)
+                        end
+                    end)
+                end
+            end
+        end)
     end,
 }

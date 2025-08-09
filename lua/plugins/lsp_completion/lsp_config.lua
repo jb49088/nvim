@@ -73,23 +73,14 @@ return {
                             -- autoImportCompletions = false,
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
+                            diagnosticSeverityOverrides = {
+                                reportUnusedImport = false,
+                            },
                         },
                     },
                 },
             },
-            -- pyright = { -- python lsp
-            --     settings = {
-            --         python = {
-            --             analysis = {
-            --                 autoImportCompletions = true,
-            --                 typeCheckingMode = "standard",
-            --                 autoSearchPaths = true,
-            --                 useLibraryCodeForTypes = true,
-            --                 extraPaths = { "." },
-            --             },
-            --         },
-            --     },
-            -- },
+            -- ty = {},
         }
 
         for server_name, config in pairs(servers) do

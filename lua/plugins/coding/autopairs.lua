@@ -1,11 +1,10 @@
 return {
     "windwp/nvim-autopairs",
     -- enabled = false,
-    event = "InsertEnter",
+    event = "VeryLazy",
     config = function()
         local autopairs = require("nvim-autopairs")
         autopairs.setup({})
-
         -- Create toggle for nvim-autopairs
         Snacks.toggle({
             name = "Auto Pairing",

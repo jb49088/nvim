@@ -2,8 +2,6 @@ local opt = vim.opt
 local g = vim.g
 local cmd = vim.cmd
 
--- vim.highlight.priorities.semantic_tokens = 95
-
 -- Interface / UI
 g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
 g.have_nerd_font = true -- Enable nerd font
@@ -15,17 +13,16 @@ opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu
 opt.title = true -- Enable window title
 opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
--- opt.showmode = false -- Disable mode display in command line
 opt.laststatus = 3 -- Always show statusline
-vim.opt.cmdheight = 0
-opt.statusline = " " -- Show a blank statusline before lualine loads in
+opt.cmdheight = 0
+opt.statuscolumn = "%!v:lua.require'custom.modules.status_column'.get()" -- Custom status column
+opt.statusline = " " -- Show a blank statusline before heirline loads in
 opt.showtabline = 0 -- Disable tabline
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
 opt.cursorline = true -- Highlight the current line...
--- opt.cursorlineopt = "number" -- ...but only highlight the line number
 opt.wrap = false -- Disable line wrapping
-opt.scrolloff = 999 -- Vertical scroll offset
+opt.scrolloff = 10 -- Vertical scroll offset
 opt.sidescrolloff = 10 -- Horizontal scroll offset
 -- opt.winborder = "rounded" -- Rounded borders for lsp hover
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
@@ -43,9 +40,9 @@ opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
-opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
-cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
-cmd("set formatoptions+=l") -- Don't break existing long lines when entering insert mode
+-- opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
+-- cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
+-- cmd("set formatoptions+=l") -- Don't break existing long lines when entering insert mode
 
 -- Indentation
 opt.shiftwidth = 4 -- Indent size

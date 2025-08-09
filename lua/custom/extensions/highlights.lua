@@ -94,3 +94,8 @@ hl(0, "ModeColorVisual", { fg = c.ui.purple, bold = true })
 hl(0, "ModeColorCommand", { fg = c.ui.yellow, bold = true })
 hl(0, "ModeColorTerminal", { fg = c.ui.orange, bold = true })
 hl(0, "ModeColorReplace", { fg = c.ui.red, bold = true })
+
+-- Indent guides
+hl(0, "IndentGuidesChar", { fg = c.ui.border })
+
+-- hl(0, "Special", { fg = c.ui.yellow })
