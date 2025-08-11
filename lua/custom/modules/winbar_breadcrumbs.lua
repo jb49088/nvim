@@ -2,6 +2,9 @@
 
 local M = {}
 
+-- Add enabled state tracking
+M.enabled = false
+
 -- Store client info per buffer (for the currently attached LSP)
 local attached_lsp_clients = {}
 
@@ -13,6 +16,9 @@ local pending_requests = {}
 
 -- Track buffer versions to handle content modifications
 local buffer_versions = {}
+
+-- Store augroup IDs for cleanup
+local augroups = {}
 
 -- Configuration options (can be overridden by user in M.setup)
 local config = {
@@ -535,6 +541,15 @@ local function attach_winbar(buf, win)
         return
     end
 
+    -- Check if breadcrumbs is enabled globally
+    if not M.enabled then
+        local current_winbar = vim.wo[win].winbar
+        if current_winbar:match("breadcrumbs") then
+            vim.wo[win].winbar = ""
+        end
+        return
+    end
+
     local should_enable
     if type(config.bar.enable) == "function" then
         should_enable = config.bar.enable(buf, win)
@@ -554,6 +569,11 @@ end
 
 -- Function to get the current filename and breadcrumb display
 function M.get_filename_display()
+    -- Return empty string if breadcrumbs is disabled
+    if not M.enabled then
+        return ""
+    end
+
     local filepath = vim.api.nvim_buf_get_name(0)
     local bufnr = vim.api.nvim_get_current_buf()
     local symbols = find_symbols_at_cursor(bufnr)
@@ -716,11 +736,21 @@ function M.request_symbols(bufnr, client, retry_count)
             end
             -- Removed error notification for production use
         elseif symbols then
-            -- Process and store the symbols
             local processed_symbols = process_symbols(symbols)
             buffer_symbols[bufnr] = processed_symbols
+
+            vim.schedule(function()
+                -- Force winbar refresh for all windows showing this buffer
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == bufnr then
+                        local current_winbar = vim.wo[win].winbar
+                        if current_winbar and current_winbar:match("breadcrumbs") then
+                            vim.wo[win].winbar = current_winbar -- Force re-evaluation
+                        end
+                    end
+                end
+            end)
         end
-        -- Removed "no symbols" notification for production use
     end)
 end
 
@@ -743,8 +773,15 @@ end
 
 --- Sets up the LspAttach autocommand for automatic breadcrumbs attachment.
 local function setup_lsp_auto_attach_autocmd()
+    augroups.lsp_attach = vim.api.nvim_create_augroup("breadcrumbs_lsp_attach", { clear = true })
+
     vim.api.nvim_create_autocmd("LspAttach", {
+        group = augroups.lsp_attach,
         callback = function(args)
+            if not M.enabled then
+                return
+            end
+
             local client = vim.lsp.get_client_by_id(args.data.client_id)
             -- Add this check to ensure 'client' is not nil
             if client then
@@ -767,12 +804,16 @@ end
 
 --- Setup autocmds to refresh symbols when buffer content changes and cursor moves
 local function setup_symbol_refresh_autocmds()
-    local augroup = vim.api.nvim_create_augroup("breadcrumbs_symbol_refresh", { clear = true })
+    augroups.symbol_refresh = vim.api.nvim_create_augroup("breadcrumbs_symbol_refresh", { clear = true })
 
     -- Refresh symbols when buffer is modified
     vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
-        group = augroup,
+        group = augroups.symbol_refresh,
         callback = function()
+            if not M.enabled then
+                return
+            end
+
             local bufnr = vim.api.nvim_get_current_buf()
             local client = attached_lsp_clients[bufnr]
 
@@ -785,8 +826,12 @@ local function setup_symbol_refresh_autocmds()
 
     -- Refresh breadcrumbs display when cursor moves (no need to refetch symbols)
     vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-        group = augroup,
+        group = augroups.symbol_refresh,
         callback = function()
+            if not M.enabled then
+                return
+            end
+
             vim.schedule(function()
                 vim.cmd.redrawstatus()
             end)
@@ -801,11 +846,15 @@ local function setup_buffer_focus_autocmds()
     end
 
     -- Create augroup for focus-related autocmds
-    local augroup = vim.api.nvim_create_augroup("breadcrumbs_focus", { clear = true })
+    augroups.focus = vim.api.nvim_create_augroup("breadcrumbs_focus", { clear = true })
 
     vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
-        group = augroup,
+        group = augroups.focus,
         callback = function()
+            if not M.enabled then
+                return
+            end
+
             local bufnr = vim.api.nvim_get_current_buf()
 
             -- Check if this buffer already has breadcrumbs attached
@@ -828,7 +877,7 @@ local function setup_buffer_focus_autocmds()
     })
 
     vim.api.nvim_create_autocmd({ "BufLeave", "WinLeave" }, {
-        group = augroup,
+        group = augroups.focus,
         callback = function()
             local bufnr = vim.api.nvim_get_current_buf()
 
@@ -849,12 +898,16 @@ end
 
 --- Setup autocmds to refresh breadcrumbs on window resize
 local function setup_window_resize_autocmds()
-    local augroup = vim.api.nvim_create_augroup("breadcrumbs_window_resize", { clear = true })
+    augroups.window_resize = vim.api.nvim_create_augroup("breadcrumbs_window_resize", { clear = true })
 
     -- Refresh breadcrumbs when window is resized
     vim.api.nvim_create_autocmd({ "VimResized", "WinResized" }, {
-        group = augroup,
+        group = augroups.window_resize,
         callback = function()
+            if not M.enabled then
+                return
+            end
+
             -- Force redraw of winbar to apply truncation with new window size
             vim.cmd.redrawstatus({ bang = true })
         end,
@@ -863,10 +916,10 @@ end
 
 --- Setup autocmds to refresh winbar when buffer changes
 local function setup_winbar_refresh_autocmds()
-    local augroup = vim.api.nvim_create_augroup("breadcrumbs_winbar_refresh", { clear = true })
+    augroups.winbar_refresh = vim.api.nvim_create_augroup("breadcrumbs_winbar_refresh", { clear = true })
 
     vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "FileType", "BufWritePost" }, {
-        group = augroup,
+        group = augroups.winbar_refresh,
         callback = function(args)
             local buf = args.buf or vim.api.nvim_get_current_buf()
             local win = vim.api.nvim_get_current_win()
@@ -875,7 +928,7 @@ local function setup_winbar_refresh_autocmds()
     })
 
     vim.api.nvim_create_autocmd({ "WinNew", "TabEnter" }, {
-        group = augroup,
+        group = augroups.winbar_refresh,
         callback = function()
             vim.schedule(function()
                 local buf = vim.api.nvim_get_current_buf()
@@ -884,6 +937,105 @@ local function setup_winbar_refresh_autocmds()
             end)
         end,
     })
+end
+
+--- Force immediate refresh
+local function force_refresh()
+    -- Clear all state immediately
+    attached_lsp_clients = {}
+    buffer_symbols = {}
+    pending_requests = {}
+    buffer_versions = {}
+
+    -- Cancel all timers
+    for bufnr in pairs(debounce_timers) do
+        cancel_debounce_timer(bufnr)
+    end
+
+    -- Trigger immediate redraw
+    vim.schedule(function()
+        vim.cmd("redrawstatus!")
+    end)
+end
+
+--- Enable breadcrumbs
+function M.enable()
+    if M.enabled then
+        return
+    end
+    M.enabled = true
+
+    -- Setup all autocmds
+    setup_lsp_auto_attach_autocmd()
+    setup_buffer_focus_autocmds()
+    setup_symbol_refresh_autocmds()
+    setup_window_resize_autocmds()
+    setup_winbar_refresh_autocmds()
+
+    -- Re-enable breadcrumbs on all visible windows/buffers
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_is_valid(win) then
+            local buf = vim.api.nvim_win_get_buf(win)
+            if vim.api.nvim_buf_is_valid(buf) then
+                -- Attach to any existing LSP clients for this buffer FIRST
+                local clients = vim.lsp.get_clients({ bufnr = buf })
+                if #clients > 0 then
+                    for _, client in ipairs(clients) do
+                        if client.server_capabilities.documentSymbolProvider then
+                            M.attach(client, buf)
+                            break
+                        end
+                    end
+                end
+                -- THEN attach winbar (after LSP attachment initiated)
+                attach_winbar(buf, win)
+            end
+        end
+    end
+
+    -- Force immediate refresh
+    vim.schedule(function()
+        vim.cmd("redrawstatus!")
+    end)
+end
+
+--- Disable breadcrumbs
+function M.disable()
+    if not M.enabled then
+        return
+    end
+    M.enabled = false
+
+    -- Cancel all debounce timers
+    for bufnr, _ in pairs(debounce_timers) do
+        cancel_debounce_timer(bufnr)
+    end
+
+    -- Clear winbar for all windows
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_is_valid(win) then
+            local current_winbar = vim.wo[win].winbar
+            if current_winbar:match("breadcrumbs") then
+                vim.wo[win].winbar = ""
+            end
+        end
+    end
+
+    -- Clear all autocmds created by breadcrumbs
+    for _, group_id in pairs(augroups) do
+        if group_id then
+            vim.api.nvim_clear_autocmds({ group = group_id })
+        end
+    end
+    augroups = {}
+
+    -- Clear all state
+    attached_lsp_clients = {}
+    buffer_symbols = {}
+    pending_requests = {}
+    buffer_versions = {}
+
+    vim.cmd("redrawstatus!")
 end
 
 --- Main setup function for the breadcrumbs module.
@@ -908,51 +1060,27 @@ function M.setup(opts)
         vim.notify("breadcrumbs: Winbar is not supported in this Neovim version (requires 0.8+).", vim.log.levels.WARN)
         return
     end
-
-    -- Setup the LSP auto-attach autocmd
-    setup_lsp_auto_attach_autocmd()
-
-    -- Setup buffer focus autocmds if focus_only is enabled
-    setup_buffer_focus_autocmds()
-
-    -- Setup symbol refresh autocmds
-    setup_symbol_refresh_autocmds()
-
-    -- Setup window resize autocmds for truncation
-    setup_window_resize_autocmds()
-
-    -- Setup winbar refresh autocmds for conditional display
-    setup_winbar_refresh_autocmds()
-
-    -- Initial setup - attach winbar to current window if conditions are met
-    local buf = vim.api.nvim_get_current_buf()
-    local win = vim.api.nvim_get_current_win()
-    attach_winbar(buf, win)
 end
 
--- Function to disable breadcrumbs
-function M.disable()
-    -- Cancel all debounce timers
-    for bufnr, _ in pairs(debounce_timers) do
-        cancel_debounce_timer(bufnr)
-    end
-
-    -- Clear winbar for all windows
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-        if vim.api.nvim_win_is_valid(win) then
-            vim.wo[win].winbar = ""
-        end
-    end
-
-    -- Clear specific autocmds created by breadcrumbs
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_lsp_autocmds" })
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_focus" })
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_symbol_refresh" })
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_window_resize" })
-    vim.api.nvim_clear_autocmds({ group = "breadcrumbs_winbar_refresh" })
-end
-
--- Auto-setup when the module is required
+-- Auto-setup and enable when the module is required
 M.setup()
+M.enable()
+
+-- Snacks toggle integration
+if Snacks and Snacks.toggle then
+    Snacks.toggle({
+        name = "Breadcrumbs",
+        get = function()
+            return M.enabled
+        end,
+        set = function(enabled)
+            if enabled then
+                M.enable()
+            else
+                M.disable()
+            end
+        end,
+    }):map("<leader>ub")
+end
 
 return M

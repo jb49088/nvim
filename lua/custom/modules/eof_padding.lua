@@ -23,6 +23,9 @@ end
 
 -- Check and apply EOF scrolloff for the current window (optimized)
 local function check_eof_scrolloff(ev)
+    -- Always sync scrolloff with current vim setting first
+    scrolloff = vim.o.scrolloff
+
     -- Early exit checks (cheapest operations first)
     if mode_disabled then
         return
@@ -40,7 +43,7 @@ local function check_eof_scrolloff(ev)
         end
     end
 
-    if ev.event == "WinScrolled" then
+    if ev and ev.event == "WinScrolled" then
         local win_id = vim.api.nvim_get_current_win()
         local win_event = vim.v.event[tostring(win_id)]
         if win_event ~= nil and win_event.topline <= 0 then

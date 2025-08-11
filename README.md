@@ -27,7 +27,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 ### Project Structure
 
 ```
-nvim
 ├── init.lua
 ├── lazy-lock.json
 ├── lua
@@ -63,7 +62,6 @@ nvim
 │   └── plugins
 │       ├── coding
 │       │   ├── autopairs.lua
-│       │   ├── autotag.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── surround.lua
@@ -75,6 +73,7 @@ nvim
 │       │   ├── lsp_config.lua
 │       │   ├── luasnip.lua
 │       │   ├── mason.lua
+│       │   ├── nvim-lint.lua
 │       │   └── snippets
 │       │       └── python.lua
 │       ├── ui

@@ -18,9 +18,8 @@ return {
             ensure_installed = {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
-                -- "ty", -- python lsp
             },
-            automatic_enable = true,
+            automatic_enable = false,
         })
 
         -- Custom tool installation using Mason registry directly

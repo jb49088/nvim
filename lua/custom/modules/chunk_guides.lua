@@ -413,7 +413,7 @@ local function render_chunk_guides(bufnr)
         return
     end
 
-    -- Only render for current window to prevent ghost chunks during session restore
+    -- Only render for current window
     local current_win = api.nvim_get_current_win()
     local current_buf = api.nvim_get_current_buf()
     if bufnr ~= current_buf then

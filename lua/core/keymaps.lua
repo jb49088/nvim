@@ -49,19 +49,6 @@ map("n", "<leader>Tf", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
 map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
 map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
 
--- Flicker-free scrolling
-vim.keymap.set("n", "<C-d>", function()
-    vim.o.cursorline = false
-    vim.cmd("normal! \4")
-    vim.o.cursorline = true
-end)
-
-vim.keymap.set("n", "<C-u>", function()
-    vim.o.cursorline = false
-    vim.cmd("normal! \21")
-    vim.o.cursorline = true
-end)
-
 -- Quickfix list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })

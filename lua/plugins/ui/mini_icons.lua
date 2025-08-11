@@ -11,9 +11,9 @@ return {
             terminal = { glyph = "", hl = "MiniIconsRed" },
             dotenv = { glyph = "", hl = "MiniIconsYellow" },
         },
-        lsp = {
-            object = { glyph = "", hl = "MiniIconsOrange" },
-        },
+        -- lsp = {
+        --     object = { glyph = "", hl = "MiniIconsOrange" },
+        -- },
     },
     init = function()
         package.preload["nvim-web-devicons"] = function()

@@ -1,3 +1,5 @@
+-- TODO: figure out why sometimes there is a delay even with delay = 0
+
 return {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -13,6 +15,7 @@ return {
             { "<leader>R", icon = { icon = "", hl = "MiniIconsRed" } },
             { "<leader>K", icon = { icon = "󰋽", hl = "MiniIconsBlue" } },
             { "<leader>v", icon = { icon = "", hl = "MiniIconsYellow" } },
+            { "<leader>cm", icon = { icon = "󱁤", hl = "MiniIconsGrey" } },
             -- groups
             { "<leader>b", group = "Buffer" },
             { "<leader>c", group = "Code" },

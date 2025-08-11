@@ -396,15 +396,6 @@ function M.disable()
     vim.cmd("redraw!")
 end
 
---- Toggle indent guides
-function M.toggle()
-    if M.enabled then
-        M.disable()
-    else
-        M.enable()
-    end
-end
-
 --- Setup function
 function M.setup(opts)
     config = vim.tbl_deep_extend("force", config, opts or {})

@@ -60,6 +60,7 @@ return {
                         },
                         diagnostics = {
                             globals = {
+                                "vim",
                                 "Snacks",
                             },
                         },
@@ -80,11 +81,10 @@ return {
                     },
                 },
             },
-            -- ty = {},
         }
 
         for server_name, config in pairs(servers) do
-            vim.lsp.config(server_name, config)
+            require("lspconfig")[server_name].setup(config)
         end
     end,
 }
