@@ -1,3 +1,5 @@
+-- TODO: test what other chunk plugins do with markdown and implement something similar
+
 local treesitter = vim.treesitter
 local api = vim.api
 local fn = vim.fn

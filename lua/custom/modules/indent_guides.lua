@@ -1,3 +1,5 @@
+-- TODO: test what other indent plugins do with markdown and implement something similar
+
 local M = {}
 
 M.enabled = false
