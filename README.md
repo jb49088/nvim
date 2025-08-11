@@ -28,7 +28,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 ### Project Structure
 ```
 nvim
-├── README.md
 ├── init.lua
 ├── lazy-lock.json
 ├── lua
@@ -96,9 +95,11 @@ nvim
 │           ├── trouble.lua
 │           ├── venv_selector.lua
 │           └── whichkey.lua
-└── temp_structure.txt
+├── README.md
+├── temp_structure.txt
+└── testing
 
-13 directories, 57 files
+13 directories, 58 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
