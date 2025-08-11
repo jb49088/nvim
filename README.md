@@ -24,9 +24,10 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - [trouble.nvim](https://github.com/folke/trouble.nvim)
 - And much more
 
-### Project Structure
+<!-- PROJECT_STRUCTURE_START -->
 
 ```
+nvim
 ├── init.lua
 ├── lazy-lock.json
 ├── lua
@@ -96,6 +97,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 ├── README.md
 └── .stylua.toml
 ```
+<!-- PROJECT_STRUCTURE_END -->
 
 ### Screenshots
 

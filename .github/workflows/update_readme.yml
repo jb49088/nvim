@@ -1,0 +1,79 @@
+# .github/workflows/update_readme.yml
+name: Update README Project Structure
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Install tree
+        run: sudo apt-get install tree
+        
+      - name: Generate project structure
+        run: |
+          # Generate tree structure excluding common ignore patterns
+          tree -I 'node_modules|.git|.github|__pycache__|*.pyc|.env|.venv|dist|build|.DS_Store' | sed 's/^\./nvim/' > temp_structure.txt
+          
+          # Create the updated README section
+          cat > temp_section.md << 'EOF'
+          ### Project Structure
+          ```
+          EOF
+          
+          cat temp_structure.txt >> temp_section.md
+          
+          cat >> temp_section.md << 'EOF'
+          ```
+          EOF
+          
+      - name: Update README
+        run: |
+          # Check if README exists
+          if [ ! -f README.md ]; then
+            echo "README.md not found!"
+            exit 1
+          fi
+          
+          # Replace the project structure section
+          # This assumes you have markers in your README like:
+          # <!-- PROJECT_STRUCTURE_START -->
+          # <!-- PROJECT_STRUCTURE_END -->
+          
+          awk '
+          /<!-- PROJECT_STRUCTURE_START -->/ {
+            print $0
+            while ((getline line < "temp_section.md") > 0) {
+              print line
+            }
+            skip = 1
+            next
+          }
+          /<!-- PROJECT_STRUCTURE_END -->/ {
+            skip = 0
+            print $0
+            next
+          }
+          !skip { print }
+          ' README.md > README_new.md
+          
+          mv README_new.md README.md
+          rm temp_structure.txt temp_section.md
+          
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-update project structure in README"
+            git push
+          fi
