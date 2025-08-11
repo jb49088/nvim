@@ -25,9 +25,10 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - And much more
 
 <!-- PROJECT_STRUCTURE_START -->
-
+### Project Structure
 ```
 nvim
+├── README.md
 ├── init.lua
 ├── lazy-lock.json
 ├── lua
@@ -66,7 +67,8 @@ nvim
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── surround.lua
-│       │   └── treesitter.lua
+│       │   ├── treesitter.lua
+│       │   └── treesj.lua
 │       ├── lsp_completion
 │       │   ├── blink_cmp.lua
 │       │   ├── conform.lua
@@ -94,8 +96,9 @@ nvim
 │           ├── trouble.lua
 │           ├── venv_selector.lua
 │           └── whichkey.lua
-├── README.md
-└── .stylua.toml
+└── temp_structure.txt
+
+13 directories, 57 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
