@@ -4,10 +4,8 @@ return {
     config = function()
         local lint = require("lint")
 
-        -- Configure linters by filetype
         lint.linters_by_ft = {
             lua = { "luacheck" },
-            python = { "ruff" },
         }
 
         lint.linters.luacheck.args = {
@@ -21,12 +19,26 @@ return {
             "-",
         }
 
-        -- Create autocommand to run linters
-        vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+        -- Debounced lint function (slightly longer than updatetime)
+        local lint_timer = nil
+        local function debounced_lint()
+            if lint_timer then
+                vim.fn.timer_stop(lint_timer)
+            end
+            lint_timer = vim.fn.timer_start(300, function()
+                require("lint").try_lint(nil, { ignore_errors = true })
+            end)
+        end
+
+        vim.api.nvim_create_autocmd({
+            "BufWritePost", -- Always lint on save
+            "BufReadPost", -- Lint when opening files
+            "InsertLeave", -- Lint when leaving insert mode
+            "TextChanged", -- Lint after text changes in normal mode
+            "CursorHold", -- Lint after 250ms of inactivity (your updatetime)
+        }, {
             group = vim.api.nvim_create_augroup("nvim_lint", { clear = true }),
-            callback = function()
-                require("lint").try_lint()
-            end,
+            callback = debounced_lint,
         })
     end,
 }

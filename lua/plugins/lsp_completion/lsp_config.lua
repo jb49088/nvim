@@ -71,11 +71,12 @@ return {
                 settings = {
                     basedpyright = {
                         analysis = {
+                            -- autoFormatStrings = true,
                             -- autoImportCompletions = false,
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
                             diagnosticSeverityOverrides = {
-                                reportUnusedImport = false,
+                                reportUnusedImport = true,
                             },
                         },
                     },
@@ -84,7 +85,7 @@ return {
         }
 
         for server_name, config in pairs(servers) do
-            require("lspconfig")[server_name].setup(config)
+            vim.lsp.config(server_name, config)
         end
     end,
 }

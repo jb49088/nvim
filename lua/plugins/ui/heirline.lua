@@ -238,15 +238,112 @@ return {
             },
         }
 
-        local LSPActive = {
-            condition = conditions.lsp_attached,
-            update = { "LspAttach", "LspDetach", "BufEnter" },
-            provider = function()
-                local names = {}
-                for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
-                    table.insert(names, server.name)
+        local ToolingActive = {
+            condition = function()
+                -- Show if any tooling is available (LSP, linters, or formatters)
+                local has_lsp = next(vim.lsp.get_clients({ bufnr = 0 })) ~= nil
+                local has_lint = false
+                local has_format = false
+
+                -- Check for linters
+                local ok_lint, lint = pcall(require, "lint")
+                if ok_lint then
+                    local ft = vim.bo.filetype
+                    has_lint = lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0
                 end
-                return table.concat(names, ", ")
+
+                -- Check for formatters
+                local ok_conform, conform = pcall(require, "conform")
+                if ok_conform then
+                    local formatters = conform.list_formatters(0)
+                    has_format = #formatters > 0
+                end
+
+                return has_lsp or has_lint or has_format
+            end,
+
+            update = { "LspAttach", "LspDetach", "BufEnter", "FileType" },
+
+            provider = function()
+                local components = {}
+                local ft = vim.bo.filetype
+
+                -- Get LSPs
+                local lsp_names = {}
+                for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
+                    table.insert(lsp_names, server.name)
+                end
+                if #lsp_names > 0 then
+                    table.insert(components, "LSP: " .. table.concat(lsp_names, ", "))
+                end
+
+                -- Get linters
+                local ok_lint, lint = pcall(require, "lint")
+                if ok_lint and lint.linters_by_ft[ft] then
+                    local linters = lint.linters_by_ft[ft]
+                    if #linters > 0 then
+                        table.insert(components, "Lint: " .. table.concat(linters, ", "))
+                    end
+                end
+
+                -- Get formatters
+                local ok_conform, conform = pcall(require, "conform")
+                if ok_conform then
+                    local formatters = conform.list_formatters(0)
+                    local formatter_names = {}
+                    for _, formatter in ipairs(formatters) do
+                        table.insert(formatter_names, formatter.name)
+                    end
+                    if #formatter_names > 0 then
+                        table.insert(components, "Format: " .. table.concat(formatter_names, ", "))
+                    end
+                end
+
+                -- Compact version with ruff deduplication
+                local all_tools = {}
+                local seen_tools = {}
+
+                -- Helper to normalize ruff variants
+                local function normalize_name(name)
+                    if name:match("^ruff") then
+                        return "ruff"
+                    end
+                    return name
+                end
+
+                -- Add LSPs
+                for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
+                    local normalized = normalize_name(server.name)
+                    if not seen_tools[normalized] then
+                        table.insert(all_tools, normalized)
+                        seen_tools[normalized] = true
+                    end
+                end
+
+                -- Add linters
+                if ok_lint and lint.linters_by_ft[ft] then
+                    for _, linter in ipairs(lint.linters_by_ft[ft]) do
+                        local normalized = normalize_name(linter)
+                        if not seen_tools[normalized] then
+                            table.insert(all_tools, normalized)
+                            seen_tools[normalized] = true
+                        end
+                    end
+                end
+
+                -- Add formatters
+                if ok_conform then
+                    local formatters = conform.list_formatters(0)
+                    for _, formatter in ipairs(formatters) do
+                        local normalized = normalize_name(formatter.name)
+                        if not seen_tools[normalized] then
+                            table.insert(all_tools, normalized)
+                            seen_tools[normalized] = true
+                        end
+                    end
+                end
+
+                return table.concat(all_tools, ", ")
             end,
         }
 
@@ -406,7 +503,7 @@ return {
             with_trailing_space(path.component),
             with_trailing_space(Diagnostics),
             { provider = "%=" },
-            with_leading_space(LSPActive),
+            with_leading_space(ToolingActive),
             with_leading_space(FileEncoding),
             with_leading_space(FileFormat),
             with_leading_space(LineColumn),
