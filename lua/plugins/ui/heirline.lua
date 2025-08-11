@@ -238,7 +238,7 @@ return {
             },
         }
 
-        local ToolingActive = {
+        local ActiveTooling = {
             condition = function()
                 -- Show if any tooling is available (LSP, linters, or formatters)
                 local has_lsp = next(vim.lsp.get_clients({ bufnr = 0 })) ~= nil
@@ -503,7 +503,7 @@ return {
             with_trailing_space(path.component),
             with_trailing_space(Diagnostics),
             { provider = "%=" },
-            with_leading_space(ToolingActive),
+            with_leading_space(ActiveTooling),
             with_leading_space(FileEncoding),
             with_leading_space(FileFormat),
             with_leading_space(LineColumn),
