@@ -95,11 +95,9 @@ nvim
 │           ├── trouble.lua
 │           ├── venv_selector.lua
 │           └── whichkey.lua
-├── README.md
-├── temp_structure.txt
-└── testing
+└── README.md
 
-13 directories, 58 files
+13 directories, 56 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
