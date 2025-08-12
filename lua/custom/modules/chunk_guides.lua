@@ -44,7 +44,6 @@ local node_types = {
         "^for",
         "^with",
         "^try",
-        "^except",
         "^match",
         "^arguments",
         "^argument_list",

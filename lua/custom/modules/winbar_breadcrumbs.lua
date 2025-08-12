@@ -1,4 +1,4 @@
--- winbar_breadcrumbs.lua - Enhanced with content modification handling, truncation, and conditional display
+-- winbar_breadcrumbs.lua - Enhanced with content modification handling, truncation, conditional display, and mode-based colors
 
 local M = {}
 
@@ -20,6 +20,28 @@ local buffer_versions = {}
 -- Store augroup IDs for cleanup
 local augroups = {}
 
+-- Mode color mapping
+local mode_color_map = {
+    ["n"] = "ModeColorNormal",
+    ["i"] = "ModeColorInsert",
+    ["v"] = "ModeColorVisual",
+    ["V"] = "ModeColorVisual",
+    ["\22"] = "ModeColorVisual",
+    ["c"] = "ModeColorCommand",
+    ["R"] = "ModeColorReplace",
+    ["Rc"] = "ModeColorReplace",
+    ["Rx"] = "ModeColorReplace",
+    ["Rv"] = "ModeColorReplace",
+    ["Rvc"] = "ModeColorReplace",
+    ["Rvx"] = "ModeColorReplace",
+    ["r"] = "ModeColorReplace",
+    ["t"] = "ModeColorTerminal",
+}
+
+-- Cache the current mode to avoid repeated calls
+local current_cached_mode = nil
+local mode_cache_timer = nil
+
 -- Configuration options (can be overridden by user in M.setup)
 local config = {
     -- Placeholder for future general config options
@@ -40,6 +62,12 @@ local config = {
         separator = "  ", -- Separator between breadcrumb parts
         extends_symbol = "…", -- Symbol to show when truncated
         min_symbol_width = 1, -- Minimum width for each symbol when truncated
+    },
+    -- Mode-based color configuration
+    mode_colors = {
+        enabled = true, -- Enable mode-based colors
+        separator_only = true, -- Only apply mode colors to separators (vs all text)
+        fallback_color = "#ffffff", -- Fallback color when mode color can't be determined
     },
     -- New: Enable/disable conditions for winbar
     bar = {
@@ -104,6 +132,70 @@ local config = {
 
 -- Debounce timer for symbol requests
 local debounce_timers = {}
+
+-- Utility function to get highlight color
+local function get_highlight_color(group_name)
+    local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group_name })
+    if ok and hl.fg then
+        return string.format("#%06x", hl.fg)
+    end
+    return nil
+end
+
+-- Get current mode color
+local function get_mode_color()
+    if not config.mode_colors.enabled then
+        return nil
+    end
+
+    -- Use cached mode or get fresh mode
+    local mode_code
+    if current_cached_mode then
+        mode_code = current_cached_mode
+    else
+        mode_code = vim.api.nvim_get_mode().mode
+    end
+
+    local color_group = mode_color_map[mode_code] or "ModeColorNormal"
+    return get_highlight_color(color_group) or config.mode_colors.fallback_color
+end
+
+-- Update mode highlight group for breadcrumbs
+local function update_mode_highlight()
+    if not config.mode_colors.enabled then
+        return nil
+    end
+
+    local color = get_mode_color()
+    if color then
+        vim.api.nvim_set_hl(0, "BreadcrumbsMode", { fg = color })
+        return "BreadcrumbsMode"
+    end
+    return "WinBar" -- Fallback to default winbar highlight
+end
+
+-- Update cached mode and refresh all winbars
+local function update_cached_mode_and_refresh()
+    local new_mode = vim.api.nvim_get_mode().mode
+
+    if new_mode ~= current_cached_mode then
+        current_cached_mode = new_mode
+        update_mode_highlight()
+
+        -- Schedule refresh of all winbars
+        vim.schedule(function()
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                if vim.api.nvim_win_is_valid(win) then
+                    local current_winbar = vim.wo[win].winbar
+                    if current_winbar and current_winbar:match("breadcrumbs") then
+                        -- Force re-evaluation
+                        vim.api.nvim_win_set_option(win, "winbar", current_winbar)
+                    end
+                end
+            end
+        end)
+    end
+end
 
 -- Get icon using mini.icons
 local function get_file_icon(filename, filetype)
@@ -491,7 +583,7 @@ local function apply_truncation(parts, available_width)
     return truncated_parts
 end
 
---- Convert breadcrumb parts to display string with highlights
+--- Convert breadcrumb parts to display string with highlights and mode colors
 ---@param parts table Array of breadcrumb parts with {text, highlight, icon, icon_highlight}
 ---@return string Display string with highlight codes
 local function parts_to_display_string(parts)
@@ -501,6 +593,9 @@ local function parts_to_display_string(parts)
 
     local separator = config.truncation.separator
     local result_parts = {}
+
+    -- Update mode highlight group
+    local mode_hl = update_mode_highlight()
 
     -- Add left padding
     table.insert(result_parts, " ")
@@ -515,12 +610,20 @@ local function parts_to_display_string(parts)
             table.insert(result_parts, part.icon .. " ")
         end
 
-        -- Add text with WinBar highlight (force WinBar for all text)
-        table.insert(result_parts, "%#WinBar#" .. part.text .. "%*")
+        -- Add text with appropriate highlight
+        local text_hl = "WinBar"
+        if config.mode_colors.enabled and not config.mode_colors.separator_only then
+            text_hl = mode_hl or "WinBar"
+        end
+        table.insert(result_parts, "%#" .. text_hl .. "#" .. part.text .. "%*")
 
-        -- Add separator between parts with WinBar highlight
+        -- Add separator between parts with mode-based or default highlight
         if i < #parts then
-            table.insert(result_parts, "%#WinBar#" .. separator .. "%*")
+            local separator_hl = "WinBar"
+            if config.mode_colors.enabled then
+                separator_hl = mode_hl or "WinBar"
+            end
+            table.insert(result_parts, "%#" .. separator_hl .. "#" .. separator .. "%*")
         end
     end
 
@@ -589,7 +692,7 @@ function M.get_filename_display()
         parts = apply_truncation(parts, available_width)
     end
 
-    -- Convert to display string
+    -- Convert to display string with mode colors
     return parts_to_display_string(parts)
 end
 
@@ -839,6 +942,51 @@ local function setup_symbol_refresh_autocmds()
     })
 end
 
+--- Setup autocmds to refresh breadcrumbs on mode changes for color updates
+local function setup_mode_change_autocmds()
+    if not config.mode_colors.enabled then
+        return
+    end
+
+    augroups.mode_change = vim.api.nvim_create_augroup("breadcrumbs_mode_change", { clear = true })
+
+    -- More aggressive mode detection for visual modes
+    vim.api.nvim_create_autocmd({
+        "ModeChanged",
+        "CursorMoved",
+        "CursorMovedI",
+        "InsertEnter",
+        "InsertLeave",
+        "CmdlineEnter",
+        "CmdlineLeave",
+        "TermEnter",
+        "TermLeave",
+    }, {
+        group = augroups.mode_change,
+        callback = function()
+            if not M.enabled then
+                return
+            end
+
+            -- Clear any existing timer
+            if mode_cache_timer then
+                mode_cache_timer:stop()
+                mode_cache_timer:close()
+                mode_cache_timer = nil
+            end
+
+            -- Update immediately
+            update_cached_mode_and_refresh()
+
+            -- Set up a short timer to catch any delayed mode changes
+            mode_cache_timer = vim.defer_fn(function()
+                update_cached_mode_and_refresh()
+                mode_cache_timer = nil
+            end, 10)
+        end,
+    })
+end
+
 --- Handle buffer focus changes to attach/detach breadcrumbs
 local function setup_buffer_focus_autocmds()
     if not config.lsp.focus_only then
@@ -969,6 +1117,7 @@ function M.enable()
     setup_lsp_auto_attach_autocmd()
     setup_buffer_focus_autocmds()
     setup_symbol_refresh_autocmds()
+    setup_mode_change_autocmds() -- New: Setup mode change autocmds
     setup_window_resize_autocmds()
     setup_winbar_refresh_autocmds()
 
@@ -1011,6 +1160,13 @@ function M.disable()
         cancel_debounce_timer(bufnr)
     end
 
+    -- Cancel mode cache timer
+    if mode_cache_timer then
+        mode_cache_timer:stop()
+        mode_cache_timer:close()
+        mode_cache_timer = nil
+    end
+
     -- Clear winbar for all windows
     for _, win in ipairs(vim.api.nvim_list_wins()) do
         if vim.api.nvim_win_is_valid(win) then
@@ -1034,6 +1190,7 @@ function M.disable()
     buffer_symbols = {}
     pending_requests = {}
     buffer_versions = {}
+    current_cached_mode = nil
 
     vim.cmd("redrawstatus!")
 end

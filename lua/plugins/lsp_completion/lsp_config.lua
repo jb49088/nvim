@@ -11,11 +11,12 @@ return {
         vim.api.nvim_create_autocmd("LspAttach", {
             group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
             callback = function(event)
-                -- -- Disable semantic tokens
-                -- local client = vim.lsp.get_client_by_id(event.data.client_id)
-                -- if client and client.server_capabilities.semanticTokensProvider then
-                --     client.server_capabilities.semanticTokensProvider = nil
-                -- end
+                local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+                -- Disable hover for ruff since it doesn't provide useful hover info
+                if client and client.name == "ruff" then
+                    client.server_capabilities.hoverProvider = false
+                end
 
                 local map = function(keys, func, desc, mode)
                     mode = mode or "n"
@@ -76,7 +77,7 @@ return {
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
                             diagnosticSeverityOverrides = {
-                                reportUnusedImport = true,
+                                reportUnusedImport = false,
                             },
                         },
                     },
