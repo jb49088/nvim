@@ -267,7 +267,22 @@ end
 
 --- Check if we should show a guide at a specific position
 local function should_show_guide(buf, lnum, col)
+    -- Safety checks
+    if not vim.api.nvim_buf_is_valid(buf) then
+        return false
+    end
+
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    if lnum < 1 or lnum > line_count then
+        return false
+    end
+
     local line = vim.api.nvim_buf_get_lines(buf, lnum - 1, lnum, false)[1] or ""
+
+    -- Additional safety: ensure col is valid
+    if col < 0 then
+        return false
+    end
 
     -- Don't show guide if there's non-whitespace content at this position
     if col < #line then
@@ -281,6 +296,16 @@ end
 
 --- Main rendering function
 function M.on_win(win, buf, top, bottom)
+    -- Safety check: ensure buffer is valid and has content
+    if not vim.api.nvim_buf_is_valid(buf) then
+        return
+    end
+
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    if line_count == 0 then
+        return
+    end
+
     local state = get_state(win, buf, top + 1, bottom + 1)
 
     if not state.line_indents then
@@ -289,6 +314,11 @@ function M.on_win(win, buf, top, bottom)
 
     vim.api.nvim_buf_call(buf, function()
         for l = state.top, state.bottom do
+            -- Safety check: ensure line number is within valid range
+            if l < 1 or l > line_count then
+                goto continue
+            end
+
             local line = vim.api.nvim_buf_get_lines(buf, l - 1, l, false)[1] or ""
             local indent = state.line_indents[l] or 0
 
@@ -297,7 +327,6 @@ function M.on_win(win, buf, top, bottom)
             if line:len() == 0 and indent > 0 then
                 -- Look ahead to see if this empty line sequence ends with actual code or just trailing empty
                 local is_trailing_empty = true
-                local line_count = vim.api.nvim_buf_line_count(buf)
 
                 -- Check lines after this one
                 for check_line = l + 1, math.min(line_count, l + 20) do
@@ -326,10 +355,17 @@ function M.on_win(win, buf, top, bottom)
                     local col = opts.virt_text_win_col
                     -- Only place guide if it won't overlap with text
                     if should_show_guide(buf, l, col) then
-                        vim.api.nvim_buf_set_extmark(buf, ns, l - 1, 0, opts)
+                        -- Safety check before setting extmark
+                        local success = pcall(vim.api.nvim_buf_set_extmark, buf, ns, l - 1, 0, opts)
+                        if not success then
+                            -- If extmark fails, just skip this guide
+                            goto continue
+                        end
                     end
                 end
             end
+
+            ::continue::
         end
     end)
 end
