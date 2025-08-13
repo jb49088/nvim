@@ -1,4 +1,4 @@
--- Enhanced EOF padding that applies to all visible buffers (OPTIMIZED - NO DELAY)
+-- Simplified EOF padding - current window only
 local mode_disabled = false
 local initial_scrolloff = vim.o.scrolloff
 local scrolloff = vim.o.scrolloff
@@ -10,18 +10,7 @@ local opts = {
     disabled_modes = { "t", "nt" },
 }
 
--- Cache for expensive calculations
-local win_cache = {}
-local function get_win_cache_key(win_id, buf_id)
-    return tostring(win_id) .. "_" .. tostring(buf_id)
-end
-
--- Clear cache when window or buffer changes
-local function clear_win_cache()
-    win_cache = {}
-end
-
--- Check and apply EOF scrolloff for the current window (optimized)
+-- Check and apply EOF scrolloff for the current window only
 local function check_eof_scrolloff(ev)
     -- Always sync scrolloff with current vim setting first
     scrolloff = vim.o.scrolloff
@@ -81,82 +70,21 @@ local function check_eof_scrolloff(ev)
     end
 end
 
--- Optimized version for specific window
-local function check_eof_scrolloff_for_win(win_id)
-    if not vim.api.nvim_win_is_valid(win_id) then
-        return
-    end
-
-    local buf = vim.api.nvim_win_get_buf(win_id)
-    if not vim.api.nvim_buf_is_valid(buf) then
-        return
-    end
-
-    -- Use cache key for this window/buffer combo
-    local cache_key = get_win_cache_key(win_id, buf)
-
-    -- Safely execute in the window's context
-    pcall(vim.api.nvim_win_call, win_id, function()
-        -- Early exit checks
-        if mode_disabled then
-            return
-        end
-
-        local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
-        if opts.disabled_filetypes[filetype] then
-            return
-        end
-
-        if opts.floating == false then
-            local curr_win = vim.api.nvim_win_get_config(0)
-            if curr_win.relative ~= "" then
-                return
-            end
-        end
-
-        -- Fast EOF distance check
-        local cursor_line = vim.fn.line(".")
-        local total_lines = vim.fn.line("$")
-        local lines_from_eof = total_lines - cursor_line
-
-        if lines_from_eof > scrolloff + 3 then
-            return
-        end
-
-        -- Apply EOF padding logic only when needed
-        local win_height = vim.fn.winheight(0)
-        local win_cur_line = vim.fn.winline()
-        local visual_distance_to_eof = win_height - win_cur_line
-
-        if visual_distance_to_eof < scrolloff then
-            local win_view = vim.fn.winsaveview()
-            local new_topline = win_view.topline + scrolloff - visual_distance_to_eof
-
-            if new_topline ~= win_view.topline then
-                vim.fn.winrestview({
-                    skipcol = 0,
-                    topline = new_topline,
-                })
-            end
-        end
-    end)
-end
-
--- Apply EOF padding to all visible buffers (with reduced redundancy)
-local function apply_eof_padding_to_visible_buffers()
-    local visible_wins = vim.api.nvim_tabpage_list_wins(0)
-
-    for _, win in ipairs(visible_wins) do
-        check_eof_scrolloff_for_win(win)
-    end
-end
-
 local vim_resized_cb = function()
-    clear_win_cache()
-    scrolloff = vim.o.scrolloff -- Just use whatever scrolloff is set to
+    local win_height = vim.fn.winheight(0)
+    local half_win_height = math.floor(win_height / 2)
+    if initial_scrolloff < half_win_height then
+        if vim.o.scrolloff < initial_scrolloff then
+            vim.o.scrolloff = initial_scrolloff
+            scrolloff = initial_scrolloff
+        end
+        return
+    end
+    scrolloff = half_win_height
+    vim.o.scrolloff = win_height % 2 == 0 and scrolloff - 1 or scrolloff
 end
 
--- Convert disabled arrays to hashmaps for O(1) lookup (keep this optimization)
+-- Convert disabled arrays to hashmaps for O(1) lookup
 local disabled_filetypes_hashmap = {}
 for _, val in pairs(opts.disabled_filetypes) do
     disabled_filetypes_hashmap[val] = true
@@ -177,38 +105,24 @@ end
 
 local eof_padding = vim.api.nvim_create_augroup("eof_padding", { clear = true })
 
--- Mode change tracking (with cache clear)
+-- Mode change tracking
 vim.api.nvim_create_autocmd("ModeChanged", {
     group = eof_padding,
     pattern = opts.pattern,
     callback = function()
         local current_mode = vim.api.nvim_get_mode().mode
         mode_disabled = opts.disabled_modes[current_mode] == true
-        clear_win_cache()
     end,
 })
 
--- Window resize and buffer enter (with cache clear)
+-- Window resize and buffer enter
 vim.api.nvim_create_autocmd({ "VimResized", "BufEnter" }, {
     group = eof_padding,
     pattern = opts.pattern,
-    callback = function()
-        clear_win_cache()
-        vim_resized_cb()
-    end,
+    callback = vim_resized_cb,
 })
 
--- Tab switching
-vim.api.nvim_create_autocmd("TabEnter", {
-    group = eof_padding,
-    pattern = opts.pattern,
-    callback = function()
-        clear_win_cache()
-        apply_eof_padding_to_visible_buffers()
-    end,
-})
-
--- Buffer window enter (optimized with early exits)
+-- Buffer window enter with early exits for non-file buffers
 vim.api.nvim_create_autocmd("BufWinEnter", {
     group = eof_padding,
     pattern = opts.pattern,
@@ -229,19 +143,19 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
             return
         end
 
-        clear_win_cache()
-        apply_eof_padding_to_visible_buffers()
+        -- Just trigger EOF check for current window
+        check_eof_scrolloff()
     end,
 })
 
--- Main cursor movement and scrolling handler (immediate, no delay)
+-- Main cursor movement and scrolling handler
 vim.api.nvim_create_autocmd(autocmds, {
     group = eof_padding,
     pattern = opts.pattern,
     callback = check_eof_scrolloff,
 })
 
--- Window switching (with cache management)
+-- Window switching - recalculate scrolloff for new window
 vim.api.nvim_create_autocmd("WinEnter", {
     group = eof_padding,
     pattern = opts.pattern,
@@ -261,25 +175,22 @@ vim.api.nvim_create_autocmd("WinEnter", {
             return
         end
 
-        clear_win_cache()
-        apply_eof_padding_to_visible_buffers()
+        -- Recalculate scrolloff for the new window and apply EOF padding
+        vim_resized_cb()
+        check_eof_scrolloff()
+    end,
+})
+
+-- Session loading - recalculate and apply immediately
+vim.api.nvim_create_autocmd("SessionLoadPost", {
+    group = eof_padding,
+    callback = function()
+        vim.defer_fn(function()
+            vim_resized_cb()
+            check_eof_scrolloff()
+        end, 0)
     end,
 })
 
 -- Initialize system
 vim_resized_cb()
-vim.defer_fn(function()
-    vim_resized_cb()
-    apply_eof_padding_to_visible_buffers()
-end, 0)
-
--- Session loading
-vim.api.nvim_create_autocmd("SessionLoadPost", {
-    group = eof_padding,
-    callback = function()
-        vim.defer_fn(function()
-            clear_win_cache()
-            apply_eof_padding_to_visible_buffers()
-        end, 50)
-    end,
-})

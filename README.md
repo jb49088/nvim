@@ -75,6 +75,7 @@ nvim
 │       │   ├── lsp_config.lua
 │       │   ├── luasnip.lua
 │       │   ├── mason.lua
+│       │   ├── nvim-dap.lua
 │       │   ├── nvim-lint.lua
 │       │   └── snippets
 │       │       └── python.lua
@@ -90,6 +91,7 @@ nvim
 │           ├── guess_indent.lua
 │           ├── noice.lua
 │           ├── oil.lua
+│           ├── scrolleof.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── trouble.lua
@@ -97,7 +99,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 56 files
+13 directories, 58 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

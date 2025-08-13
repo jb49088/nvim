@@ -72,12 +72,10 @@ return {
                 settings = {
                     basedpyright = {
                         analysis = {
-                            -- autoFormatStrings = true,
-                            -- autoImportCompletions = false,
                             typeCheckingMode = "basic",
                             extraPaths = { "." },
                             diagnosticSeverityOverrides = {
-                                reportUnusedImport = false,
+                                reportUnusedImport = false, -- ruff overlap
                             },
                         },
                     },
