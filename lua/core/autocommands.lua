@@ -1,9 +1,3 @@
--- vim.api.nvim_create_autocmd("VimEnter", {
---     callback = function()
---         vim.cmd("autocmd!") -- Nuclear option - disables ALL autocommands
---     end,
--- })
-
 --- Editor behavior ---
 vim.api.nvim_create_augroup("editor_behavior", { clear = true })
 
