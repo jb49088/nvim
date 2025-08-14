@@ -75,7 +75,7 @@ return {
             },
         },
         snippets = { preset = "luasnip" },
-        fuzzy = { implementation = "lua" },
+        fuzzy = { implementation = "prefer_rust_with_warning" },
         signature = {
             enabled = true,
             window = {
@@ -85,3 +85,9 @@ return {
         },
     },
 }
+
+-- return {
+--     "saghen/blink.cmp",
+--     version = "1.*",
+--     opts = {},
+-- }

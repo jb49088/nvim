@@ -1,5 +1,3 @@
--- TODO: figure out why not all friendly snippets are working
-
 return {
     "L3MON4D3/LuaSnip",
     -- enable = false,
@@ -11,9 +9,7 @@ return {
         end
         return "make install_jsregexp"
     end)(),
-    dependencies = {
-        "rafamadriz/friendly-snippets",
-    },
+    dependencies = { "rafamadriz/friendly-snippets" },
     config = function()
         require("luasnip").setup({ enable_autosnippets = true })
         require("luasnip.loaders.from_vscode").lazy_load()

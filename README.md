@@ -91,6 +91,7 @@ nvim
 │           ├── flash.lua
 │           ├── grug_far.lua
 │           ├── guess_indent.lua
+│           ├── indent_blankline.lua
 │           ├── noice.lua
 │           ├── oil.lua
 │           ├── scrolleof.lua
@@ -101,7 +102,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 58 files
+13 directories, 59 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

@@ -1,5 +1,3 @@
--- TODO: fix search function throwing error - FIXED
-
 return function(session_manager)
     -- Helper function to extract session name from path
     local function extract_session_name(path)
