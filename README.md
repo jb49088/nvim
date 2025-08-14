@@ -54,7 +54,6 @@ nvim
 │   │       ├── chunk_guides.lua
 │   │       ├── code_runner.lua
 │   │       ├── eof_padding.lua
-│   │       ├── float_cycle.lua
 │   │       ├── floating_terminal.lua
 │   │       ├── indent_guides.lua
 │   │       ├── init.lua
@@ -102,7 +101,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 59 files
+13 directories, 58 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
