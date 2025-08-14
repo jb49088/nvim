@@ -25,7 +25,9 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - And much more
 
 <!-- PROJECT_STRUCTURE_START -->
+
 ### Project Structure
+
 ```
 nvim
 ├── init.lua

@@ -2,10 +2,11 @@ return {
     "saghen/blink.cmp",
     -- enabled = false,
     event = { "InsertEnter", "CmdlineEnter" },
-    -- version = "1.*",
+    version = "1.*",
     dependencies = {
         "rafamadriz/friendly-snippets",
         "folke/lazydev.nvim",
+        "archie-judd/blink-cmp-words",
     },
     opts = {
         keymap = {
@@ -69,9 +70,19 @@ return {
             enabled = false,
         },
         sources = {
-            default = { "lsp", "path", "snippets", "buffer", "lazydev" },
+            -- default = { "lsp", "path", "snippets", "buffer", "lazydev" },
+            default = { "lsp", "path", "snippets", "buffer", "lazydev", "dictionary" },
             providers = {
                 lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
+                dictionary = {
+                    name = "blink-cmp-words",
+                    module = "blink-cmp-words.dictionary",
+                    opts = {
+                        dictionary_search_threshold = 3,
+                        score_offset = 0,
+                        definition_pointers = { "!", "&", "^" },
+                    },
+                },
             },
         },
         snippets = { preset = "luasnip" },
@@ -85,3 +96,9 @@ return {
         },
     },
 }
+
+-- return {
+--     "saghen/blink.cmp",
+--     version = "1.*",
+--     opts = {},
+-- }
