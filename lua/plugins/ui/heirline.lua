@@ -238,81 +238,61 @@ return {
             },
         }
 
+        -- Helper function to check if a plugin is available
+        local function is_available(plugin)
+            local lazy_config_avail, lazy_config = pcall(require, "lazy.core.config")
+            return lazy_config_avail and lazy_config.spec.plugins[plugin] ~= nil
+        end
+
+        -- Check plugin availability once during setup
+        local integrations = {
+            conform = is_available("conform.nvim"),
+            lint = is_available("nvim-lint"),
+        }
+
         local ActiveTooling = {
             condition = function()
-                -- Show if any tooling is available (LSP, linters, or formatters)
+                -- Quick LSP check
                 local has_lsp = next(vim.lsp.get_clients({ bufnr = 0 })) ~= nil
-                local has_lint = false
-                local has_format = false
+                if has_lsp then
+                    return true
+                end
 
-                -- Check for linters
-                local ok_lint, lint = pcall(require, "lint")
-                if ok_lint then
+                -- Check linters (only if plugin is available and loaded)
+                if integrations.lint and package.loaded["lint"] then
+                    local lint = require("lint")
                     local ft = vim.bo.filetype
-                    has_lint = lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0
+                    if lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0 then
+                        return true
+                    end
                 end
 
-                -- Check for formatters
-                local ok_conform, conform = pcall(require, "conform")
-                if ok_conform then
+                -- Check formatters (only if plugin is available and loaded)
+                if integrations.conform and package.loaded["conform"] then
+                    local conform = require("conform")
                     local formatters = conform.list_formatters(0)
-                    has_format = #formatters > 0
+                    if #formatters > 0 then
+                        return true
+                    end
                 end
 
-                return has_lsp or has_lint or has_format
+                return false
             end,
 
             update = { "LspAttach", "LspDetach", "BufEnter", "FileType" },
 
             provider = function()
-                local components = {}
-                local ft = vim.bo.filetype
-
-                -- Get LSPs
-                local lsp_names = {}
-                for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
-                    table.insert(lsp_names, server.name)
-                end
-                if #lsp_names > 0 then
-                    table.insert(components, "LSP: " .. table.concat(lsp_names, ", "))
-                end
-
-                -- Get linters
-                local ok_lint, lint = pcall(require, "lint")
-                if ok_lint and lint.linters_by_ft[ft] then
-                    local linters = lint.linters_by_ft[ft]
-                    if #linters > 0 then
-                        table.insert(components, "Lint: " .. table.concat(linters, ", "))
-                    end
-                end
-
-                -- Get formatters
-                local ok_conform, conform = pcall(require, "conform")
-                if ok_conform then
-                    local formatters = conform.list_formatters(0)
-                    local formatter_names = {}
-                    for _, formatter in ipairs(formatters) do
-                        table.insert(formatter_names, formatter.name)
-                    end
-                    if #formatter_names > 0 then
-                        table.insert(components, "Format: " .. table.concat(formatter_names, ", "))
-                    end
-                end
-
-                -- Compact version with ruff deduplication
+                local bufnr = 0
                 local all_tools = {}
                 local seen_tools = {}
 
                 -- Helper to normalize ruff variants
                 local function normalize_name(name)
-                    if name:match("^ruff") then
-                        return "ruff"
-                    end
-                    return name
+                    return name:match("^ruff") and "ruff" or name
                 end
 
                 -- Add LSPs
-                for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
+                for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
                     local normalized = normalize_name(server.name)
                     if not seen_tools[normalized] then
                         table.insert(all_tools, normalized)
@@ -320,19 +300,24 @@ return {
                     end
                 end
 
-                -- Add linters
-                if ok_lint and lint.linters_by_ft[ft] then
-                    for _, linter in ipairs(lint.linters_by_ft[ft]) do
-                        local normalized = normalize_name(linter)
-                        if not seen_tools[normalized] then
-                            table.insert(all_tools, normalized)
-                            seen_tools[normalized] = true
+                -- Add linters (only if available and loaded)
+                if integrations.lint and package.loaded["lint"] then
+                    local lint = require("lint")
+                    local ft = vim.bo[bufnr].filetype
+                    if lint.linters_by_ft[ft] then
+                        for _, linter in ipairs(lint.linters_by_ft[ft]) do
+                            local normalized = normalize_name(linter)
+                            if not seen_tools[normalized] then
+                                table.insert(all_tools, normalized)
+                                seen_tools[normalized] = true
+                            end
                         end
                     end
                 end
 
-                -- Add formatters
-                if ok_conform then
+                -- Add formatters (only if available and loaded)
+                if integrations.conform and package.loaded["conform"] then
+                    local conform = require("conform")
                     local formatters = conform.list_formatters(0)
                     for _, formatter in ipairs(formatters) do
                         local normalized = normalize_name(formatter.name)
@@ -343,7 +328,7 @@ return {
                     end
                 end
 
-                return table.concat(all_tools, ", ")
+                return #all_tools > 0 and table.concat(all_tools, ", ") or ""
             end,
         }
 
