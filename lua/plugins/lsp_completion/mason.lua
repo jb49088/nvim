@@ -17,8 +17,7 @@ return {
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls", -- lua lsp
-                -- "basedpyright", -- python lsp
-                "pyrefly", -- python lsp
+                "basedpyright", -- python lsp
             },
             automatic_enable = true,
         })

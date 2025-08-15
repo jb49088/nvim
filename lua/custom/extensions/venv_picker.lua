@@ -1,9 +1,7 @@
 local active_venv = nil
-
 return function()
     local gui_utils = require("venv-selector.gui.utils")
     local search = require("venv-selector.search")
-
     local results = {}
 
     -- Helper function to extract venv name from path
@@ -12,7 +10,6 @@ return function()
         for part in string.gmatch(name, "[^/]+") do
             table.insert(parts, part)
         end
-
         -- Look for common venv directory patterns
         for i = 1, #parts - 1 do
             if parts[i] == "venvs" or parts[i] == "envs" or parts[i] == ".venv" or parts[i] == "virtualenvs" then
@@ -24,7 +21,6 @@ return function()
                 end
             end
         end
-
         -- Fallback: look for pattern where second-to-last directory might be venv name
         if #parts >= 3 and parts[#parts] == "python" and parts[#parts - 1] == "bin" then
             local venv_name = parts[#parts - 2]
@@ -32,7 +28,6 @@ return function()
             local after_venv = string.sub(name, string.find(name, venv_name) + string.len(venv_name))
             return venv_name, before_venv, after_venv
         end
-
         return nil, name, ""
     end
 
@@ -46,12 +41,10 @@ return function()
             format = function(item)
                 local venv_name, before_venv, after_venv = extract_venv_name(item.name)
                 local is_active = active_venv and item.name == active_venv
-
                 local result = {
                     { item.icon, is_active and "VenvPickerActive" or "SnacksPickerDir" },
                     { " " },
                 }
-
                 if venv_name then
                     if before_venv ~= "" then
                         table.insert(result, { before_venv, "SnacksPickerDir" })
@@ -68,18 +61,29 @@ return function()
             end,
             confirm = function(picker, item)
                 if item then
-                    gui_utils.select(item)
-                    picker:close()
-                    vim.schedule(function()
-                        active_venv = item.name
-                    end)
+                    -- Check if selecting the same venv that's already active
+                    if active_venv and item.name == active_venv then
+                        -- Deactivate the current venv
+                        require("venv-selector").deactivate()
+                        picker:close()
+                        vim.schedule(function()
+                            active_venv = nil
+                            vim.notify("Virtual environment deactivated", vim.log.levels.INFO)
+                        end)
+                    else
+                        -- Activate the selected venv
+                        gui_utils.select(item)
+                        picker:close()
+                        vim.schedule(function()
+                            active_venv = item.name
+                        end)
+                    end
                 end
             end,
         })
     end
 
     local picker = nil
-
     local search_handler = {
         insert_result = function(_, result)
             result.text = result.source .. " " .. result.name
@@ -90,7 +94,6 @@ return function()
                 picker = create_picker()
             end
         end,
-
         search_done = function(_)
             results = gui_utils.remove_dups(results)
             table.sort(results, function(a, b)
