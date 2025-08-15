@@ -36,7 +36,15 @@ return function(session_manager)
         end)
         return sessions
     end
+
     local sessions = get_sessions()
+
+    -- Check if there are no saved sessions
+    if #sessions == 0 then
+        vim.notify("No saved sessions", vim.log.levels.WARN)
+        return
+    end
+
     local current_session = get_active_session()
     return Snacks.picker.pick({
         title = "Sessions",
