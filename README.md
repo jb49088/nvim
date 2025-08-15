@@ -85,6 +85,7 @@ nvim
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
 │       │   ├── mini_icons.lua
+│       │   ├── nvim-notify.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
 │           ├── flash.lua
@@ -101,7 +102,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 58 files
+13 directories, 59 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

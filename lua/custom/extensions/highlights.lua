@@ -92,3 +92,20 @@ hl(0, "ModeColorReplace", { fg = c.ui.red })
 
 -- Indent guides
 hl(0, "IndentGuidesChar", { fg = c.ui.border })
+
+-- Nvim-notify
+hl(0, "NotifyINFOBorder", { fg = c.ui.blue })
+hl(0, "NotifyINFOIcon", { fg = c.ui.blue })
+hl(0, "NotifyINFOTitle", { fg = c.ui.blue })
+hl(0, "NotifyWarningBorder", { fg = c.ui.yellow })
+hl(0, "NotifyWarningIcon", { fg = c.ui.yellow })
+hl(0, "NotifyWarningTitle", { fg = c.ui.yellow })
+hl(0, "NotifyErrorBorder", { fg = c.ui.red })
+hl(0, "NotifyErrorIcon", { fg = c.ui.red })
+hl(0, "NotifyErrorTitle", { fg = c.ui.red })
+hl(0, "NotifyDebugBorder", { fg = c.ui.cyan })
+hl(0, "NotifyDebugIcon", { fg = c.ui.cyan })
+hl(0, "NotifyDebugTitle", { fg = c.ui.cyan })
+hl(0, "NotifyTraceBorder", { fg = c.ui.purple })
+hl(0, "NotifyTraceIcon", { fg = c.ui.purple })
+hl(0, "NotifyTraceTitle", { fg = c.ui.purple })
