@@ -24,6 +24,12 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - [trouble.nvim](https://github.com/folke/trouble.nvim)
 - And much more
 
+### Known Issues
+
+- Tabs picker throwing an error when hovering over help buffers
+- Sometimes opening whichkey has a delay even when on delay = 0
+- Indent guides may not be perfect yet
+
 <!-- PROJECT_STRUCTURE_START -->
 
 ### Project Structure
