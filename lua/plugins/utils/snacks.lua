@@ -119,8 +119,6 @@ return {
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
         { "<leader>ts", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
-        -- other
-        { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
     },
     config = function(_, opts)
         require("snacks").setup(opts)
