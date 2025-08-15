@@ -30,6 +30,16 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Sometimes opening whichkey has a delay even when on delay = 0
 - Indent guides may not be perfect yet
 
+### Startup Time
+
+```
+Startuptime: 28.4ms
+
+LazyStart 8.19ms
+LazyDone  23ms (+14.81ms)
+UIEnter   28.4ms (+5.4ms)
+```
+
 <!-- PROJECT_STRUCTURE_START -->
 
 ### Project Structure
