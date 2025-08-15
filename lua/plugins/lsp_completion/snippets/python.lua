@@ -5,18 +5,6 @@ local i = ls.insert_node
 local fmt = require("luasnip.extras.fmt").fmt
 
 return {
-    -- Workaround for LuaSnip overlapping prefix bug
-    -- These override the inconsistent friendly-snippets behavior
-    s({ trig = "##", priority = 2000 }, {
-        t('"""'),
-        i(0),
-        t('"""'),
-    }),
-    s({ trig = "#", priority = 1000 }, {
-        t('"""'),
-        i(0),
-        t('\n"""'),
-    }),
     -- learning snippets
     s(
         "fruits",
