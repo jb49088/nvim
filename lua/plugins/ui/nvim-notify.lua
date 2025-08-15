@@ -3,10 +3,10 @@ return {
     -- enabled = false,
     opts = {
         icons = {
-            DEBUG = "",
+            DEBUG = "",
             ERROR = "󰅚",
             INFO = "󰋽",
-            TRACE = "",
+            TRACE = "",
             WARN = "󰀪",
         },
         stages = "static",
