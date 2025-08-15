@@ -48,7 +48,7 @@ return function()
                 local is_active = active_venv and item.name == active_venv
 
                 local result = {
-                    { item.icon, is_active and "VenvSelectActive" or "SnacksPickerDir" },
+                    { item.icon, is_active and "VenvPickerActive" or "SnacksPickerDir" },
                     { " " },
                 }
 

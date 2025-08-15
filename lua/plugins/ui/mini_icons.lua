@@ -11,9 +11,7 @@ return {
             terminal = { glyph = "", hl = "MiniIconsRed" },
             dotenv = { glyph = "", hl = "MiniIconsYellow" },
         },
-        lsp = {
-            dictionary = { glyph = "", hl = "MiniIconsGreen" }, -- for archie-judd/blink-cmp-words
-        },
+        lsp = {},
     },
     init = function()
         package.preload["nvim-web-devicons"] = function()

@@ -50,7 +50,7 @@ return function(session_manager)
         format = function(item)
             local is_active = current_session and item.name == current_session
             return {
-                { " ", is_active and "AutoSessionActive" or "SnacksPickerDir" }, -- Session icon
+                { " ", is_active and "SessionPickerActive" or "SnacksPickerDir" }, -- Session icon
                 { item.name, "SnacksPickerFile" },
             }
         end,

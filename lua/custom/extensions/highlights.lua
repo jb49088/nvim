@@ -12,10 +12,6 @@ hl(0, "Pmenu", { fg = c.ui.text_active })
 -- Cursorline
 hl(0, "CursorLine", { bg = nil })
 
--- Tabline
-hl(0, "Tabline", { fg = c.syntax.text })
-hl(0, "TablineFill", { bg = nil })
-
 -- Statusline
 hl(0, "StatusLine", { fg = c.ui.text })
 
@@ -27,7 +23,6 @@ hl(0, "WinSeparator", { fg = c.ui.border })
 
 -- Winbar
 hl(0, "WinBar", { fg = c.syntax.text })
-hl(0, "WinBarNC", { fg = c.syntax.text })
 
 -- Blink cmp
 hl(0, "BlinkCmpMenuBorder", { fg = c.ui.border })
@@ -70,11 +65,11 @@ hl(0, "RainbowDelimiters5", { fg = c.ui.green })
 hl(0, "RainbowDelimiters6", { fg = c.ui.purple })
 hl(0, "RainbowDelimiters7", { fg = c.ui.cyan })
 
--- Venv selector
-hl(0, "VenvSelectActive", { fg = c.ui.yellow })
+-- Venv picker
+hl(0, "VenvPickerActive", { fg = c.ui.yellow })
 
--- Auto session
-hl(0, "AutoSessionActive", { fg = c.ui.blue })
+-- Session picker
+hl(0, "SessionPickerActive", { fg = c.ui.blue })
 
 -- Heirline path
 hl(0, "HeirlinePathDir", { fg = c.syntax.comment })
@@ -88,14 +83,12 @@ hl(0, "HeirlinePathLock", { fg = c.ui.orange })
 hl(0, "HeirlinePathHealth", { fg = c.syntax.text })
 
 -- Mode colors
-hl(0, "ModeColorNormal", { fg = c.ui.blue, bold = true })
-hl(0, "ModeColorInsert", { fg = c.ui.green, bold = true })
-hl(0, "ModeColorVisual", { fg = c.ui.purple, bold = true })
-hl(0, "ModeColorCommand", { fg = c.ui.yellow, bold = true })
-hl(0, "ModeColorTerminal", { fg = c.ui.orange, bold = true })
-hl(0, "ModeColorReplace", { fg = c.ui.red, bold = true })
+hl(0, "ModeColorNormal", { fg = c.ui.blue })
+hl(0, "ModeColorInsert", { fg = c.ui.green })
+hl(0, "ModeColorVisual", { fg = c.ui.purple })
+hl(0, "ModeColorCommand", { fg = c.ui.yellow })
+hl(0, "ModeColorTerminal", { fg = c.ui.orange })
+hl(0, "ModeColorReplace", { fg = c.ui.red })
 
 -- Indent guides
 hl(0, "IndentGuidesChar", { fg = c.ui.border })
-
--- hl(0, "Special", { fg = c.ui.yellow })
