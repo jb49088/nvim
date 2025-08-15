@@ -29,7 +29,7 @@ return {
                         illuminate.pause()
                     end
                 end,
-            }):map("<leader>ux")
+            }):map("<leader>ui")
 
             -- turn off in inactive windows
             vim.api.nvim_create_autocmd("WinLeave", {

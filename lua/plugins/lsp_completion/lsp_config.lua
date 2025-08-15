@@ -69,19 +69,20 @@ return {
                     },
                 },
             },
-            basedpyright = {
-                settings = {
-                    basedpyright = {
-                        analysis = {
-                            typeCheckingMode = "basic",
-                            extraPaths = { "." },
-                            diagnosticSeverityOverrides = {
-                                reportUnusedImport = false, -- ruff overlap
-                            },
-                        },
-                    },
-                },
-            },
+            -- basedpyright = {
+            --     settings = {
+            --         basedpyright = {
+            --             analysis = {
+            --                 typeCheckingMode = "basic",
+            --                 extraPaths = { "." },
+            --                 diagnosticSeverityOverrides = {
+            --                     reportUnusedImport = false, -- ruff overlap
+            --                 },
+            --             },
+            --         },
+            --     },
+            -- },
+            pyrefly = {},
         }
 
         for server_name, config in pairs(servers) do

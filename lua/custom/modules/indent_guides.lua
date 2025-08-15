@@ -457,7 +457,7 @@ if Snacks and Snacks.toggle then
                 M.disable()
             end
         end,
-    }):map("<leader>ug")
+    }):map("<leader>uI")
 end
 
 return M

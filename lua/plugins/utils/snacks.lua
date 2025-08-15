@@ -122,7 +122,6 @@ return {
         { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
-        -- { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
         { "<leader>ts", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
         -- other
         { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
@@ -131,14 +130,12 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations by default
-        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
 
         -- toggles
         -- stylua: ignore start
         Snacks.toggle.animate():map("<leader>uA")
         Snacks.toggle.option("conceallevel", { off = 0, on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2, name = "Conceal Level" }):map( "<leader>uc")
         Snacks.toggle.diagnostics():map("<leader>ud")
-        -- Snacks.toggle.indent():map("<leader>ug")
         Snacks.toggle.line_number():map("<leader>ul")
         Snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>uL")
         Snacks.toggle.option("wrap", { name = "Line Wrapping" }):map("<leader>uw")

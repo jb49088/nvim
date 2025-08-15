@@ -82,10 +82,3 @@ end, { desc = "Location List" })
 
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
-
--- Inspect position and syntax tree
-map("n", "<leader>ui", vim.show_pos, { desc = "Inspect Pos" })
-map("n", "<leader>uI", function()
-    vim.treesitter.inspect_tree()
-    vim.api.nvim_input("I")
-end, { desc = "Inspect Tree" })
