@@ -28,7 +28,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 - Tabs picker throwing an error when hovering over help buffers
 - Sometimes opening whichkey has a delay even when on delay = 0
-- Indent guides may not be perfect yet
+- Indent guides and winbar breadcrumbs may not be perfect yet
 
 ### Startup Time
 
@@ -80,8 +80,10 @@ nvim
 │   └── plugins
 │       ├── coding
 │       │   ├── autopairs.lua
+│       │   ├── dropbar.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
+│       │   ├── navic.lua
 │       │   ├── surround.lua
 │       │   ├── treesitter.lua
 │       │   └── treesj.lua
@@ -116,7 +118,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 57 files
+13 directories, 59 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
