@@ -24,6 +24,7 @@ return {
                 },
             },
         },
+        notifier = { enabled = false },
         --- PICKER ---
         picker = {
             enabled = true,

@@ -30,6 +30,22 @@ return {
                 python = { "ruff_format", "ruff_organize_imports" },
                 markdown = { "injected" },
             },
+            -- Custom formatter configurations
+            formatters = {
+                stylua = {
+                    args = {
+                        "--line-endings",
+                        "Unix",
+                        "--indent-type",
+                        "Spaces",
+                        "--indent-width",
+                        "4",
+                        "--stdin-filepath",
+                        "$FILENAME",
+                        "-",
+                    },
+                },
+            },
             format_on_save = function(bufnr)
                 if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
                     return
