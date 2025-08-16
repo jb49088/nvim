@@ -61,8 +61,7 @@ nvim
 │   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
 │   │   │   ├── session_picker.lua
-│   │   │   ├── tabs_picker.lua
-│   │   │   └── venv_picker.lua
+│   │   │   └── tabs_picker.lua
 │   │   ├── indentation
 │   │   │   ├── init.lua
 │   │   │   └── python.lua
@@ -76,6 +75,7 @@ nvim
 │   │       ├── mode_number_color.lua
 │   │       ├── session_manager.lua
 │   │       ├── status_column.lua
+│   │       ├── venv_selector.lua
 │   │       └── winbar_breadcrumbs.lua
 │   └── plugins
 │       ├── coding
@@ -114,11 +114,10 @@ nvim
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── trouble.lua
-│           ├── venv_selector.lua
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 59 files
+13 directories, 58 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
