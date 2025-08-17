@@ -1,4 +1,4 @@
--- winbar_breadcrumbs.lua - Enhanced with content modification handling, truncation, conditional display, and mode-based colors
+-- winbar_breadcrumbs.lua - Enhanced with navic-style symbol handling and tree structure
 
 local M = {}
 
@@ -8,17 +8,17 @@ M.enabled = false
 -- Store client info per buffer (for the currently attached LSP)
 local attached_lsp_clients = {}
 
--- Store processed symbols per buffer
-local buffer_symbols = {}
+-- Store parsed symbol trees per buffer (following navic's approach)
+local buffer_symbol_trees = {}
 
--- Track pending requests to avoid duplicate requests
-local pending_requests = {}
-
--- Track buffer versions to handle content modifications
-local buffer_versions = {}
+-- Store context data per buffer (symbols containing cursor)
+local buffer_context_data = {}
 
 -- Store augroup IDs for cleanup
 local augroups = {}
+
+-- Track awaiting LSP response status
+local awaiting_lsp_response = {}
 
 -- Mode color mapping
 local mode_color_map = {
@@ -42,36 +42,30 @@ local mode_color_map = {
 local current_cached_mode = nil
 local mode_cache_timer = nil
 
--- Configuration options (can be overridden by user in M.setup)
+-- Configuration options
 local config = {
-    -- Placeholder for future general config options
     lsp = {
-        auto_attach = true, -- Default to true
+        auto_attach = true,
         preference = nil,
-        focus_only = true, -- Only attach to currently focused buffer
+        focus_only = true,
     },
-    -- New config options for handling content modifications
     symbol_request = {
-        debounce_ms = 500, -- Debounce symbol requests by 500ms
-        max_retries = 3, -- Maximum number of retries for failed requests
-        retry_delay_ms = 200, -- Delay between retries
+        debounce_ms = 500,
+        max_retries = 3,
+        retry_delay_ms = 200,
     },
-    -- Updated truncation config options for winbar
     truncation = {
-        enabled = true, -- Enable truncation
-        separator = "  ", -- Separator between breadcrumb parts
-        extends_symbol = "…", -- Symbol to show when truncated
-        min_symbol_width = 1, -- Minimum width for each symbol when truncated
+        enabled = true,
+        separator = "  ",
+        extends_symbol = "…",
+        min_symbol_width = 1,
     },
-    -- Mode-based color configuration
     mode_colors = {
-        enabled = true, -- Enable mode-based colors
-        separator_only = true, -- Only apply mode colors to separators (vs all text)
-        fallback_color = "#ffffff", -- Fallback color when mode color can't be determined
+        enabled = true,
+        separator_only = true,
+        fallback_color = "#ffffff",
     },
-    -- New: Enable/disable conditions for winbar
     bar = {
-        ---@type boolean|fun(buf: integer, win: integer): boolean
         enable = function(buf, win)
             if not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_win_is_valid(win) then
                 return false
@@ -100,11 +94,7 @@ local config = {
             end
 
             local filetype = vim.bo[buf].filetype
-            if filetype == "markdown" then
-                return true
-            end
-
-            if filetype == "help" then
+            if filetype == "markdown" or filetype == "help" then
                 return true
             end
 
@@ -148,14 +138,7 @@ local function get_mode_color()
         return nil
     end
 
-    -- Use cached mode or get fresh mode
-    local mode_code
-    if current_cached_mode then
-        mode_code = current_cached_mode
-    else
-        mode_code = vim.api.nvim_get_mode().mode
-    end
-
+    local mode_code = current_cached_mode or vim.api.nvim_get_mode().mode
     local color_group = mode_color_map[mode_code] or "ModeColorNormal"
     return get_highlight_color(color_group) or config.mode_colors.fallback_color
 end
@@ -171,7 +154,7 @@ local function update_mode_highlight()
         vim.api.nvim_set_hl(0, "BreadcrumbsMode", { fg = color })
         return "BreadcrumbsMode"
     end
-    return "WinBar" -- Fallback to default winbar highlight
+    return "WinBar"
 end
 
 -- Update cached mode and refresh all winbars
@@ -182,13 +165,11 @@ local function update_cached_mode_and_refresh()
         current_cached_mode = new_mode
         update_mode_highlight()
 
-        -- Schedule refresh of all winbars
         vim.schedule(function()
             for _, win in ipairs(vim.api.nvim_list_wins()) do
                 if vim.api.nvim_win_is_valid(win) then
                     local current_winbar = vim.wo[win].winbar
                     if current_winbar and current_winbar:match("breadcrumbs") then
-                        -- Force re-evaluation
                         vim.api.nvim_win_set_option(win, "winbar", current_winbar)
                     end
                 end
@@ -203,6 +184,7 @@ local function get_file_icon(filename, filetype)
     if not ok then
         return nil, nil
     end
+
     local icon, hl, is_default
     if type(filename) == "string" and filename ~= "" then
         icon, hl, is_default = mini_icons.get("file", filename)
@@ -210,12 +192,14 @@ local function get_file_icon(filename, filetype)
             return icon, hl
         end
     end
+
     if filetype and type(filetype) == "string" and filetype ~= "" then
         icon, hl, is_default = mini_icons.get("filetype", filetype)
         if not is_default then
             return icon, hl
         end
     end
+
     return nil, nil
 end
 
@@ -226,7 +210,6 @@ local function get_lsp_kind_icon(kind)
         return nil, nil
     end
 
-    -- Map LSP kind numbers to mini.icons LSP kind strings
     local kind_map = {
         [1] = "file",
         [2] = "module",
@@ -267,129 +250,319 @@ local function get_lsp_kind_icon(kind)
     return nil, nil
 end
 
---- Check if cursor position is within a symbol's range.
----@param cursor_pos table {line, character} - 1-indexed line, 0-indexed character
----@param range table LSP range with start/end line/character
----@return boolean
-local function is_in_range(cursor_pos, range)
-    local line = cursor_pos[1] - 1 -- Convert to 0-indexed for LSP comparison
-    local char = cursor_pos[2]
+--- Symbol tree parsing (following navic's approach)
+local function symbol_relation(symbol, other)
+    local s = symbol.scope
+    local o = other.scope
 
-    -- Check if position is within the range
-    if line < range.start.line or line > range["end"].line then
-        return false
+    if
+        o["end"].line < s["start"].line
+        or (o["end"].line == s["start"].line and o["end"].character <= s["start"].character)
+    then
+        return "before"
     end
 
-    if line == range.start.line and char < range.start.character then
-        return false
+    if
+        o["start"].line > s["end"].line
+        or (o["start"].line == s["end"].line and o["start"].character >= s["end"].character)
+    then
+        return "after"
     end
 
-    if line == range["end"].line and char > range["end"].character then
-        return false
+    if
+        (
+            o["start"].line < s["start"].line
+            or (o["start"].line == s["start"].line and o["start"].character <= s["start"].character)
+        )
+        and (
+            o["end"].line > s["end"].line
+            or (o["end"].line == s["end"].line and o["end"].character >= s["end"].character)
+        )
+    then
+        return "around"
     end
 
-    return true
+    return "within"
 end
 
---- Find symbols that contain the current cursor position.
----@param bufnr number Buffer number
----@return table|nil Array of symbols from outermost to innermost
-local function find_symbols_at_cursor(bufnr)
-    local symbols = buffer_symbols[bufnr]
-    if not symbols then
-        return nil
+local function symbolInfo_treemaker(symbols, root_node)
+    -- Convert location to scope
+    for _, node in ipairs(symbols) do
+        node.scope = node.location.range
+        node.scope["start"].line = node.scope["start"].line + 1
+        node.scope["end"].line = node.scope["end"].line + 1
+        node.location = nil
+        node.name_range = node.scope
+        node.containerName = nil
     end
 
-    local cursor_pos = vim.api.nvim_win_get_cursor(0)
-    local containing_symbols = {}
-
-    -- Find all symbols that contain the cursor position
-    for _, symbol in ipairs(symbols) do
-        if is_in_range(cursor_pos, symbol.range) then
-            table.insert(containing_symbols, symbol)
-        end
-    end
-
-    -- Sort by range size (larger ranges = more general/outer symbols)
-    -- This ensures outermost to innermost ordering
-    table.sort(containing_symbols, function(a, b)
-        -- Calculate range size more accurately
-        local a_lines = a.range["end"].line - a.range.start.line
-        local a_chars = a.range["end"].character - a.range.start.character
-        local b_lines = b.range["end"].line - b.range.start.line
-        local b_chars = b.range["end"].character - b.range.start.character
-
-        -- Primary sort by line span, secondary by character span
-        if a_lines ~= b_lines then
-            return a_lines > b_lines -- More lines = larger/outer symbol
-        end
-
-        return a_chars > b_chars -- More characters = larger/outer symbol
+    -- Sort symbols
+    table.sort(symbols, function(a, b)
+        local loc = symbol_relation(a, b)
+        return loc == "after" or loc == "within"
     end)
 
-    return containing_symbols
+    -- Build tree
+    root_node.children = {}
+    if #symbols == 0 then
+        return
+    end
+
+    table.insert(root_node.children, symbols[1])
+    symbols[1].parent = root_node
+    local stack = { root_node }
+
+    for i = 2, #symbols do
+        local prev_chain_node_relation = symbol_relation(symbols[i], symbols[i - 1])
+        local stack_top_node_relation = symbol_relation(symbols[i], stack[#stack])
+
+        if prev_chain_node_relation == "around" then
+            table.insert(stack, symbols[i - 1])
+            if not symbols[i - 1].children then
+                symbols[i - 1].children = {}
+            end
+            table.insert(symbols[i - 1].children, symbols[i])
+            symbols[i].parent = symbols[i - 1]
+        elseif prev_chain_node_relation == "before" and stack_top_node_relation == "around" then
+            table.insert(stack[#stack].children, symbols[i])
+            symbols[i].parent = stack[#stack]
+        elseif stack_top_node_relation == "before" then
+            while symbol_relation(symbols[i], stack[#stack]) ~= "around" do
+                stack[#stack] = nil
+            end
+            table.insert(stack[#stack].children, symbols[i])
+            symbols[i].parent = stack[#stack]
+        end
+    end
+
+    local function dfs_index(node)
+        if node.children == nil then
+            return
+        end
+
+        for i = 1, #node.children do
+            node.children[i].index = i
+            dfs_index(node.children[i])
+        end
+
+        for i = 1, #node.children do
+            local curr_node = node.children[i]
+            if i ~= 1 then
+                local prev_node = node.children[i - 1]
+                prev_node.next = curr_node
+                curr_node.prev = prev_node
+            end
+            if node.children[i + 1] ~= nil then
+                local next_node = node.children[i + 1]
+                next_node.prev = curr_node
+                curr_node.next = next_node
+            end
+        end
+    end
+
+    dfs_index(root_node)
+end
+
+local function dfs(curr_symbol_layer, parent_node)
+    if #curr_symbol_layer == 0 then
+        return
+    end
+
+    parent_node.children = {}
+
+    for _, val in ipairs(curr_symbol_layer) do
+        local scope = val.range
+        scope["start"].line = scope["start"].line + 1
+        scope["end"].line = scope["end"].line + 1
+
+        local name_range = val.selectionRange
+        name_range["start"].line = name_range["start"].line + 1
+        name_range["end"].line = name_range["end"].line + 1
+
+        local curr_parsed_symbol = {
+            name = val.name or "<???>",
+            scope = scope,
+            name_range = name_range,
+            kind = val.kind or 0,
+            parent = parent_node,
+        }
+
+        if val.children then
+            dfs(val.children, curr_parsed_symbol)
+        end
+
+        table.insert(parent_node.children, curr_parsed_symbol)
+    end
+
+    table.sort(parent_node.children, function(a, b)
+        if b.scope.start.line == a.scope.start.line then
+            return b.scope.start.character > a.scope.start.character
+        end
+        return b.scope.start.line > a.scope.start.line
+    end)
+
+    for i = 1, #parent_node.children do
+        parent_node.children[i].prev = parent_node.children[i - 1]
+        parent_node.children[i].next = parent_node.children[i + 1]
+        parent_node.children[i].index = i
+    end
+end
+
+--- Parse LSP symbols into tree structure (following navic's approach)
+local function parse_symbols(symbols)
+    local root_node = {
+        is_root = true,
+        index = 1,
+        scope = {
+            start = { line = -10, character = 0 },
+            ["end"] = { line = 2147483640, character = 0 },
+        },
+    }
+
+    if #symbols >= 1 and symbols[1].range == nil then
+        symbolInfo_treemaker(symbols, root_node)
+    else
+        dfs(symbols, root_node)
+    end
+
+    return root_node
+end
+
+--- Check if cursor position is within a range
+local function in_range(cursor_pos, range)
+    local line = cursor_pos[1]
+    local char = cursor_pos[2]
+
+    if line < range["start"].line then
+        return -1
+    elseif line > range["end"].line then
+        return 1
+    end
+
+    if line == range["start"].line and char < range["start"].character then
+        return -1
+    elseif line == range["end"].line and char > range["end"].character then
+        return 1
+    end
+
+    return 0
+end
+
+--- Update context data (symbols containing cursor) following navic's approach
+local function update_context(bufnr, cursor_pos)
+    cursor_pos = cursor_pos or vim.api.nvim_win_get_cursor(0)
+
+    if buffer_context_data[bufnr] == nil then
+        buffer_context_data[bufnr] = {}
+    end
+
+    local old_context_data = buffer_context_data[bufnr]
+    local new_context_data = {}
+    local curr = buffer_symbol_trees[bufnr]
+
+    if curr == nil then
+        return
+    end
+
+    -- Always keep root node
+    if curr.is_root then
+        table.insert(new_context_data, curr)
+    end
+
+    -- Find larger context that remained same
+    for _, context in ipairs(old_context_data) do
+        if curr == nil then
+            break
+        end
+        if
+            in_range(cursor_pos, context.scope) == 0
+            and curr.children ~= nil
+            and curr.children[context.index] ~= nil
+            and context.name == curr.children[context.index].name
+            and context.kind == curr.children[context.index].kind
+        then
+            table.insert(new_context_data, curr.children[context.index])
+            curr = curr.children[context.index]
+        else
+            break
+        end
+    end
+
+    -- Fill out context_data using binary search
+    while curr.children ~= nil do
+        local go_deeper = false
+        local l = 1
+        local h = #curr.children
+
+        while l <= h do
+            local m = bit.rshift(l + h, 1)
+            local comp = in_range(cursor_pos, curr.children[m].scope)
+            if comp == -1 then
+                h = m - 1
+            elseif comp == 1 then
+                l = m + 1
+            else
+                table.insert(new_context_data, curr.children[m])
+                curr = curr.children[m]
+                go_deeper = true
+                break
+            end
+        end
+
+        if not go_deeper then
+            break
+        end
+    end
+
+    buffer_context_data[bufnr] = new_context_data
+end
+
+--- Get context data for buffer
+local function get_context_data(bufnr)
+    return buffer_context_data[bufnr]
 end
 
 --- Build breadcrumb parts with icons and highlights
----@param filepath string The file path
----@param symbols table|nil The symbols at cursor
----@return table Array of breadcrumb parts {text, highlight, icon, icon_highlight}
-local function build_breadcrumb_parts(filepath, symbols)
+local function build_breadcrumb_parts(filepath, context_symbols)
     local parts = {}
 
     if filepath == "" then
-        return parts -- Return empty parts array to show nothing
+        return parts
     end
 
-    local sep = package.config:sub(1, 1) -- path separator
+    local sep = package.config:sub(1, 1)
     local ok, mini_icons = pcall(require, "mini.icons")
 
-    -- Normalize full path
+    -- Normalize and process file path (keeping your existing logic)
     filepath = vim.fs.normalize(filepath)
-
-    -- Get current working directory
-    local cwd = vim.fn.getcwd()
-    cwd = vim.fs.normalize(cwd)
-
+    local cwd = vim.fs.normalize(vim.fn.getcwd())
     local relpath
 
-    -- Check if the file is under the current working directory
     if filepath:sub(1, #cwd) == cwd then
-        -- File is under CWD, make it relative to CWD
         relpath = filepath:sub(#cwd + 1)
-        -- Remove leading separator if present
         if relpath:sub(1, 1) == sep then
             relpath = relpath:sub(2)
         end
-        -- If relpath is empty (file is exactly at CWD), use filename
         if relpath == "" then
             relpath = vim.fn.fnamemodify(filepath, ":t")
         end
     else
-        -- File is outside CWD, try to make it relative to HOME for better display
-        local home = vim.env.HOME or vim.fn.expand("$HOME")
-        home = vim.fs.normalize(home)
-
+        local home = vim.fs.normalize(vim.env.HOME or vim.fn.expand("$HOME"))
         if filepath:sub(1, #home) == home then
             relpath = filepath:sub(#home + 1)
-            -- Remove leading separator if present
             if relpath:sub(1, 1) == sep then
                 relpath = relpath:sub(2)
             end
         else
-            -- File is outside both CWD and HOME, use full path
             relpath = filepath
-            -- Remove leading separator if present for full paths
             if relpath:sub(1, 1) == sep then
                 relpath = relpath:sub(2)
             end
         end
     end
 
-    -- Split the relative path into parts
+    -- Split path and add path parts
     local path_parts = vim.split(relpath, sep, { plain = true })
-
-    -- Filter out empty parts to avoid phantom directory icons
     local filtered_parts = {}
     for _, part in ipairs(path_parts) do
         if part ~= "" then
@@ -416,9 +589,10 @@ local function build_breadcrumb_parts(filepath, symbols)
         })
     end
 
-    -- Add symbols
-    if symbols and #symbols > 0 then
-        for _, symbol in ipairs(symbols) do
+    -- Add context symbols (skip root)
+    if context_symbols and #context_symbols > 1 then
+        for i = 2, #context_symbols do -- Skip root node
+            local symbol = context_symbols[i]
             if symbol.name and symbol.name ~= "" and not symbol.name:match("^%s*$") then
                 local kind_icon, kind_hl = get_lsp_kind_icon(symbol.kind)
 
@@ -435,10 +609,7 @@ local function build_breadcrumb_parts(filepath, symbols)
     return parts
 end
 
---- Apply truncation logic to breadcrumb parts following dropbar approach
----@param parts table Array of breadcrumb parts with {text, highlight, icon, icon_highlight} structure
----@param available_width number Available width for the breadcrumb
----@return table Truncated breadcrumb parts
+--- Apply truncation logic (keeping your existing implementation)
 local function apply_truncation(parts, available_width)
     if not config.truncation.enabled or #parts == 0 then
         return parts
@@ -448,16 +619,14 @@ local function apply_truncation(parts, available_width)
     local extends_symbol = config.truncation.extends_symbol
     local min_width = config.truncation.min_symbol_width
 
-    -- Helper function to get display width of a part (including icon if present)
     local function get_part_display_width(part)
         local width = vim.fn.strdisplaywidth(part.text or "")
         if part.icon then
-            width = width + vim.fn.strdisplaywidth(part.icon) + 1 -- +1 for space between icon and text
+            width = width + vim.fn.strdisplaywidth(part.icon) + 1
         end
         return width
     end
 
-    -- Helper function to calculate total width of parts
     local function calculate_total_width(part_list)
         local total = 0
         local sep_width = vim.fn.strdisplaywidth(separator)
@@ -471,7 +640,6 @@ local function apply_truncation(parts, available_width)
         return total
     end
 
-    -- Make a working copy of parts
     local truncated_parts = {}
     for i, part in ipairs(parts) do
         truncated_parts[i] = {
@@ -486,16 +654,14 @@ local function apply_truncation(parts, available_width)
     local current_width = calculate_total_width(truncated_parts)
     local delta = current_width - available_width
 
-    -- Return early if it already fits
     if delta <= 0 then
-        -- Remove the min_width field from return value
         for _, part in ipairs(truncated_parts) do
             part.min_width = nil
         end
         return truncated_parts
     end
 
-    -- Phase 1: Truncate individual parts by shortening their text (keep icons)
+    -- Phase 1: Truncate individual parts
     for _, part in ipairs(truncated_parts) do
         if delta <= 0 then
             break
@@ -506,25 +672,18 @@ local function apply_truncation(parts, available_width)
         local min_len = extends_width + part.min_width
 
         if text_len > min_len then
-            -- Calculate how much we can truncate from this part's text
             local max_reduction = text_len - min_len
             local reduction = math.min(delta, max_reduction)
-
-            -- Truncate the text part only
             local new_len = text_len - reduction
             local truncated_chars = math.max(part.min_width, new_len - extends_width)
             part.text = vim.fn.strcharpart(part.text, 0, truncated_chars) .. extends_symbol
-
-            -- Update delta
             delta = delta - reduction
         end
     end
 
-    -- Phase 2: If still too long, remove parts from the beginning
+    -- Phase 2: Remove parts from beginning
     if delta > 0 and #truncated_parts > 1 then
         local sep_width = vim.fn.strdisplaywidth(separator)
-
-        -- Create extends part to replace removed parts
         local extends_part = {
             text = extends_symbol,
             highlight = nil,
@@ -535,47 +694,39 @@ local function apply_truncation(parts, available_width)
         local first_part = truncated_parts[1]
         local first_width = get_part_display_width(first_part)
         local extends_part_width = get_part_display_width(extends_part)
-
-        -- Check if replacing first part with extends helps
         local width_diff = extends_part_width - first_width
 
-        if width_diff < 0 then -- extends is smaller than first part
-            -- Replace first part with extends
+        if width_diff < 0 then
             truncated_parts[1] = extends_part
             delta = delta + width_diff
 
-            -- Keep removing parts from position 2 until we fit
             while delta > 0 and #truncated_parts > 1 do
                 local part_to_remove = truncated_parts[2]
                 local part_width = get_part_display_width(part_to_remove)
-
                 table.remove(truncated_parts, 2)
                 delta = delta - part_width - sep_width
             end
         end
     end
 
-    -- Phase 3: Final fallback - if still doesn't fit, keep only the last part
+    -- Phase 3: Final fallback
     if delta > 0 and #truncated_parts > 1 then
         local last_part = truncated_parts[#truncated_parts]
         local last_width = get_part_display_width(last_part)
         local extends_width = vim.fn.strdisplaywidth(extends_symbol)
 
-        -- If last part + extends symbol fits, use that
         if last_width + extends_width <= available_width then
             truncated_parts = {
                 { text = extends_symbol, highlight = nil, icon = nil, icon_highlight = nil },
                 last_part,
             }
         else
-            -- Otherwise, just use extends symbol
             truncated_parts = {
                 { text = extends_symbol, highlight = nil, icon = nil, icon_highlight = nil },
             }
         end
     end
 
-    -- Clean up: remove min_width field from return value
     for _, part in ipairs(truncated_parts) do
         part.min_width = nil
     end
@@ -583,9 +734,7 @@ local function apply_truncation(parts, available_width)
     return truncated_parts
 end
 
---- Convert breadcrumb parts to display string with highlights and mode colors
----@param parts table Array of breadcrumb parts with {text, highlight, icon, icon_highlight}
----@return string Display string with highlight codes
+--- Convert breadcrumb parts to display string (keeping your mode color logic)
 local function parts_to_display_string(parts)
     if #parts == 0 then
         return ""
@@ -593,31 +742,24 @@ local function parts_to_display_string(parts)
 
     local separator = config.truncation.separator
     local result_parts = {}
-
-    -- Update mode highlight group
     local mode_hl = update_mode_highlight()
 
-    -- Add left padding
     table.insert(result_parts, " ")
 
-    -- Add parts with separators
     for i, part in ipairs(parts) do
-        -- Add icon with its highlight if present (keep icon highlights unchanged)
         if part.icon and part.icon_highlight then
             table.insert(result_parts, "%#" .. part.icon_highlight .. "#" .. part.icon .. "%*")
-            table.insert(result_parts, " ") -- Space between icon and text
+            table.insert(result_parts, " ")
         elseif part.icon then
             table.insert(result_parts, part.icon .. " ")
         end
 
-        -- Add text with appropriate highlight
         local text_hl = "WinBar"
         if config.mode_colors.enabled and not config.mode_colors.separator_only then
             text_hl = mode_hl or "WinBar"
         end
         table.insert(result_parts, "%#" .. text_hl .. "#" .. part.text .. "%*")
 
-        -- Add separator between parts with mode-based or default highlight
         if i < #parts then
             local separator_hl = "WinBar"
             if config.mode_colors.enabled then
@@ -627,15 +769,11 @@ local function parts_to_display_string(parts)
         end
     end
 
-    -- Add right padding
     table.insert(result_parts, " ")
-
     return table.concat(result_parts, "")
 end
 
 --- Attach winbar to window if conditions are met
----@param buf integer buffer number
----@param win integer window number
 local function attach_winbar(buf, win)
     buf = buf or vim.api.nvim_get_current_buf()
     win = win or vim.api.nvim_get_current_win()
@@ -644,7 +782,6 @@ local function attach_winbar(buf, win)
         return
     end
 
-    -- Check if breadcrumbs is enabled globally
     if not M.enabled then
         local current_winbar = vim.wo[win].winbar
         if current_winbar:match("breadcrumbs") then
@@ -657,7 +794,7 @@ local function attach_winbar(buf, win)
     if type(config.bar.enable) == "function" then
         should_enable = config.bar.enable(buf, win)
     else
-        should_enable = config.bar.enable --[[@as boolean]]
+        should_enable = config.bar.enable
     end
 
     if should_enable then
@@ -670,87 +807,27 @@ local function attach_winbar(buf, win)
     end
 end
 
--- Function to get the current filename and breadcrumb display
+--- Main function to get display string
 function M.get_filename_display()
-    -- Return empty string if breadcrumbs is disabled
     if not M.enabled then
         return ""
     end
 
     local filepath = vim.api.nvim_buf_get_name(0)
     local bufnr = vim.api.nvim_get_current_buf()
-    local symbols = find_symbols_at_cursor(bufnr)
+    local context_symbols = get_context_data(bufnr)
 
-    -- Build breadcrumb parts
-    local parts = build_breadcrumb_parts(filepath, symbols)
+    local parts = build_breadcrumb_parts(filepath, context_symbols)
+    local available_width = vim.api.nvim_win_get_width(0) - 2
 
-    -- Get available width (use current window width)
-    local available_width = vim.api.nvim_win_get_width(0) - 2 -- Small buffer for safety
-
-    -- Apply truncation if enabled
     if config.truncation.enabled then
         parts = apply_truncation(parts, available_width)
     end
 
-    -- Convert to display string with mode colors
     return parts_to_display_string(parts)
 end
 
---- Process LSP document symbols into a flat list with hierarchy info.
----@param symbols table The raw LSP symbols
----@return table Processed symbols with position info
-local function process_symbols(symbols)
-    local processed = {}
-
-    local function process_symbol(symbol, parent_names)
-        parent_names = parent_names or {}
-
-        -- Create a processed symbol entry
-        local processed_symbol = {
-            name = symbol.name,
-            kind = symbol.kind,
-            parent_names = vim.deepcopy(parent_names),
-            range = symbol.range or symbol.location.range,
-            selectionRange = symbol.selectionRange or symbol.range or symbol.location.range,
-        }
-
-        table.insert(processed, processed_symbol)
-
-        -- Process children if they exist
-        if symbol.children then
-            local new_parent_names = vim.deepcopy(parent_names)
-            table.insert(new_parent_names, symbol.name)
-
-            for _, child in ipairs(symbol.children) do
-                process_symbol(child, new_parent_names)
-            end
-        end
-    end
-
-    -- Process all top-level symbols
-    for _, symbol in ipairs(symbols) do
-        process_symbol(symbol, {})
-    end
-
-    return processed
-end
-
---- Get the current buffer version (changeset number)
----@param bufnr number Buffer number
----@return number Buffer version
-local function get_buffer_version(bufnr)
-    return vim.api.nvim_buf_get_changedtick(bufnr)
-end
-
---- Check if the error is a "Content modified" error
----@param err table Error object
----@return boolean True if this is a content modified error
-local function is_content_modified_error(err)
-    return err and err.code == -32801 and err.message == "Content modified."
-end
-
 --- Cancel debounce timer for buffer
----@param bufnr number Buffer number
 local function cancel_debounce_timer(bufnr)
     if debounce_timers[bufnr] then
         debounce_timers[bufnr]:stop()
@@ -759,122 +836,184 @@ local function cancel_debounce_timer(bufnr)
     end
 end
 
---- Debounced symbol request to avoid rapid successive requests
----@param bufnr number Buffer number
----@param client table LSP client
----@param delay_ms number|nil Delay in milliseconds (optional)
-local function debounced_request_symbols(bufnr, client, delay_ms)
-    delay_ms = delay_ms or config.symbol_request.debounce_ms
+--- LSP callback following navic's approach
+local function lsp_callback(bufnr, symbols)
+    awaiting_lsp_response[bufnr] = false
 
-    -- Cancel any existing timer for this buffer
-    cancel_debounce_timer(bufnr)
-
-    -- Create new timer
-    debounce_timers[bufnr] = vim.defer_fn(function()
-        debounce_timers[bufnr] = nil
-        M.request_symbols(bufnr, client)
-    end, delay_ms)
-end
-
---- Make request to lsp server for document symbols with retry logic.
----@param bufnr number The buffer number
----@param client table The LSP client object
----@param retry_count number|nil Current retry attempt (default: 0)
-function M.request_symbols(bufnr, client, retry_count)
-    retry_count = retry_count or 0
-
-    if not vim.api.nvim_buf_is_loaded(bufnr) then
-        return
+    if symbols and #symbols > 0 then
+        buffer_symbol_trees[bufnr] = parse_symbols(symbols)
+    else
+        buffer_symbol_trees[bufnr] = nil
     end
 
-    -- Check if there's already a pending request for this buffer
-    if pending_requests[bufnr] then
-        return
-    end
-
-    -- Store the current buffer version
-    local current_version = get_buffer_version(bufnr)
-    buffer_versions[bufnr] = current_version
-
-    local textDocument_argument = vim.lsp.util.make_text_document_params(bufnr)
-
-    local function make_lsp_request(method, params, callback)
-        if vim.fn.has("nvim-0.11") == 1 then
-            client:request(method, params, callback, bufnr)
-        else
-            client.request(method, params, callback, bufnr)
-        end
-    end
-
-    -- Mark request as pending
-    pending_requests[bufnr] = true
-
-    make_lsp_request("textDocument/documentSymbol", { textDocument = textDocument_argument }, function(err, symbols, _)
-        -- Clear pending request flag
-        pending_requests[bufnr] = nil
-
-        if not vim.api.nvim_buf_is_valid(bufnr) then
-            return
-        end
-
-        -- Check if buffer was modified during the request
-        local new_version = get_buffer_version(bufnr)
-        if buffer_versions[bufnr] and new_version ~= buffer_versions[bufnr] then
-            -- Buffer was modified, request new symbols with debounce
-            debounced_request_symbols(bufnr, client)
-            return
-        end
-
-        if err then
-            if is_content_modified_error(err) then
-                -- Handle content modified error with retry logic
-                if retry_count < config.symbol_request.max_retries then
-                    vim.defer_fn(function()
-                        M.request_symbols(bufnr, client, retry_count + 1)
-                    end, config.symbol_request.retry_delay_ms)
-                else
-                    -- Max retries reached, use debounced request instead
-                    debounced_request_symbols(bufnr, client)
+    vim.schedule(function()
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == bufnr then
+                local current_winbar = vim.wo[win].winbar
+                if current_winbar and current_winbar:match("breadcrumbs") then
+                    vim.wo[win].winbar = current_winbar
                 end
             end
-            -- Removed error notification for production use
-        elseif symbols then
-            local processed_symbols = process_symbols(symbols)
-            buffer_symbols[bufnr] = processed_symbols
-
-            vim.schedule(function()
-                -- Force winbar refresh for all windows showing this buffer
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == bufnr then
-                        local current_winbar = vim.wo[win].winbar
-                        if current_winbar and current_winbar:match("breadcrumbs") then
-                            vim.wo[win].winbar = current_winbar -- Force re-evaluation
-                        end
-                    end
-                end
-            end)
         end
     end)
 end
 
---- Attach LSP client to the buffer and request document symbols.
----@param client table The LSP client object
----@param bufnr number The buffer number
-function M.attach(client, bufnr)
-    if not client.server_capabilities.documentSymbolProvider then
+--- Request symbols following navic's approach with retry logic
+local function request_symbols(bufnr, client, retry_count)
+    if not vim.api.nvim_buf_is_loaded(bufnr) then
         return
     end
 
-    -- For now, always attach (we'll add preference logic in a later step)
+    retry_count = retry_count or 10
+    if retry_count == 0 then
+        lsp_callback(bufnr, {})
+        return
+    end
+
+    local textDocument_argument = vim.lsp.util.make_text_document_params(bufnr)
+
+    local function make_request(...)
+        if vim.fn.has("nvim-0.11") == 1 then
+            client:request(...)
+        else
+            client.request(...)
+        end
+    end
+
+    make_request("textDocument/documentSymbol", { textDocument = textDocument_argument }, function(err, symbols, _)
+        if symbols == nil then
+            if vim.api.nvim_buf_is_valid(bufnr) then
+                lsp_callback(bufnr, {})
+            end
+        elseif err ~= nil then
+            if vim.api.nvim_buf_is_valid(bufnr) then
+                vim.defer_fn(function()
+                    request_symbols(bufnr, client, retry_count - 1)
+                end, 750)
+            end
+        elseif symbols ~= nil then
+            if vim.api.nvim_buf_is_loaded(bufnr) then
+                lsp_callback(bufnr, symbols)
+            end
+        end
+    end, bufnr)
+end
+
+--- Attach LSP client following navic's approach
+function M.attach(client, bufnr)
+    if not client.server_capabilities.documentSymbolProvider then
+        if not vim.g.navic_silence then
+            vim.notify(
+                'winbar_breadcrumbs: Server "' .. client.name .. '" does not support documentSymbols.',
+                vim.log.levels.ERROR
+            )
+        end
+        return
+    end
+
+    if vim.b[bufnr].breadcrumbs_client_id ~= nil and vim.b[bufnr].breadcrumbs_client_name ~= client.name then
+        local prev_client = vim.b[bufnr].breadcrumbs_client_name
+        if not vim.g.navic_silence then
+            vim.notify(
+                "winbar_breadcrumbs: Failed to attach to "
+                    .. client.name
+                    .. " for current buffer. Already attached to "
+                    .. prev_client,
+                vim.log.levels.WARN
+            )
+        end
+        return
+    end
+
     vim.b[bufnr].breadcrumbs_client_id = client.id
     vim.b[bufnr].breadcrumbs_client_name = client.name
     attached_lsp_clients[bufnr] = client
+    local changedtick = 0
 
-    -- Make the initial request for document symbols with debounce
-    debounced_request_symbols(bufnr, client, 100) -- Shorter initial delay
+    local breadcrumbs_augroup = vim.api.nvim_create_augroup("breadcrumbs_lsp_" .. bufnr, { clear = false })
+    vim.api.nvim_clear_autocmds({
+        buffer = bufnr,
+        group = breadcrumbs_augroup,
+    })
+
+    -- Request symbols on buffer changes
+    vim.api.nvim_create_autocmd({ "InsertLeave", "BufEnter", "CursorHold" }, {
+        callback = function()
+            if not awaiting_lsp_response[bufnr] and changedtick < vim.b[bufnr].changedtick then
+                awaiting_lsp_response[bufnr] = true
+                changedtick = vim.b[bufnr].changedtick
+                request_symbols(bufnr, client)
+            end
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    -- Update context on cursor movements
+    vim.api.nvim_create_autocmd("CursorHold", {
+        callback = function()
+            update_context(bufnr)
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    vim.api.nvim_create_autocmd("CursorMoved", {
+        callback = function()
+            update_context(bufnr)
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    -- Clean up on buffer delete
+    vim.api.nvim_create_autocmd("BufDelete", {
+        callback = function()
+            buffer_symbol_trees[bufnr] = nil
+            buffer_context_data[bufnr] = nil
+            attached_lsp_clients[bufnr] = nil
+            awaiting_lsp_response[bufnr] = nil
+            cancel_debounce_timer(bufnr)
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    -- Make initial request
+    awaiting_lsp_response[bufnr] = true
+    request_symbols(bufnr, client)
 end
 
---- Sets up the LspAttach autocommand for automatic breadcrumbs attachment.
+--- Check if breadcrumbs is available for buffer
+function M.is_available(bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    return vim.b[bufnr].breadcrumbs_client_id ~= nil
+end
+
+--- Get breadcrumb data for buffer (following navic's API)
+function M.get_data(bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    local context_data = get_context_data(bufnr)
+
+    if context_data == nil or #context_data <= 1 then
+        return nil
+    end
+
+    local ret = {}
+    -- Skip root node (index 1)
+    for i = 2, #context_data do
+        local v = context_data[i]
+        table.insert(ret, {
+            kind = v.kind,
+            name = v.name,
+            scope = v.scope,
+        })
+    end
+
+    return ret
+end
+
+--- Setup autocmds for LSP auto-attach
 local function setup_lsp_auto_attach_autocmd()
     augroups.lsp_attach = vim.api.nvim_create_augroup("breadcrumbs_lsp_attach", { clear = true })
 
@@ -886,11 +1025,17 @@ local function setup_lsp_auto_attach_autocmd()
             end
 
             local client = vim.lsp.get_client_by_id(args.data.client_id)
-            -- Add this check to ensure 'client' is not nil
-            if client then
-                -- Only auto-attach if the global config allows it
+            if not client then
+                return
+            end
+
+            if not client.server_capabilities.documentSymbolProvider then
+                return
+            end
+
+            local prev_client = vim.b[args.buf].breadcrumbs_client_name
+            if not prev_client or prev_client == client.name then
                 if config.lsp.auto_attach then
-                    -- Check if we should only attach to focused buffer
                     if config.lsp.focus_only then
                         local current_buf = vim.api.nvim_get_current_buf()
                         if args.buf == current_buf then
@@ -900,6 +1045,32 @@ local function setup_lsp_auto_attach_autocmd()
                         M.attach(client, args.buf)
                     end
                 end
+                return
+            end
+
+            if not config.lsp.preference then
+                if not vim.g.navic_silence then
+                    vim.notify(
+                        "winbar_breadcrumbs: Trying to attach "
+                            .. client.name
+                            .. " for current buffer. Already attached to "
+                            .. prev_client
+                            .. ". Please use the preference option to set a higher preference for one of the servers",
+                        vim.log.levels.WARN
+                    )
+                end
+                return
+            end
+
+            for _, preferred_lsp in ipairs(config.lsp.preference) do
+                if preferred_lsp == client.name then
+                    vim.b[args.buf].breadcrumbs_client_id = nil
+                    vim.b[args.buf].breadcrumbs_client_name = nil
+                    M.attach(client, args.buf)
+                    return
+                elseif preferred_lsp == prev_client then
+                    return
+                end
             end
         end,
     })
@@ -908,24 +1079,6 @@ end
 --- Setup autocmds to refresh symbols when buffer content changes and cursor moves
 local function setup_symbol_refresh_autocmds()
     augroups.symbol_refresh = vim.api.nvim_create_augroup("breadcrumbs_symbol_refresh", { clear = true })
-
-    -- Refresh symbols when buffer is modified
-    vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
-        group = augroups.symbol_refresh,
-        callback = function()
-            if not M.enabled then
-                return
-            end
-
-            local bufnr = vim.api.nvim_get_current_buf()
-            local client = attached_lsp_clients[bufnr]
-
-            if client and client.server_capabilities.documentSymbolProvider then
-                -- Use debounced request to avoid too many requests
-                debounced_request_symbols(bufnr, client)
-            end
-        end,
-    })
 
     -- Refresh breadcrumbs display when cursor moves (no need to refetch symbols)
     vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
@@ -950,7 +1103,6 @@ local function setup_mode_change_autocmds()
 
     augroups.mode_change = vim.api.nvim_create_augroup("breadcrumbs_mode_change", { clear = true })
 
-    -- More aggressive mode detection for visual modes
     vim.api.nvim_create_autocmd({
         "ModeChanged",
         "CursorMoved",
@@ -968,17 +1120,14 @@ local function setup_mode_change_autocmds()
                 return
             end
 
-            -- Clear any existing timer
             if mode_cache_timer then
                 mode_cache_timer:stop()
                 mode_cache_timer:close()
                 mode_cache_timer = nil
             end
 
-            -- Update immediately
             update_cached_mode_and_refresh()
 
-            -- Set up a short timer to catch any delayed mode changes
             mode_cache_timer = vim.defer_fn(function()
                 update_cached_mode_and_refresh()
                 mode_cache_timer = nil
@@ -993,7 +1142,6 @@ local function setup_buffer_focus_autocmds()
         return
     end
 
-    -- Create augroup for focus-related autocmds
     augroups.focus = vim.api.nvim_create_augroup("breadcrumbs_focus", { clear = true })
 
     vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
@@ -1005,15 +1153,12 @@ local function setup_buffer_focus_autocmds()
 
             local bufnr = vim.api.nvim_get_current_buf()
 
-            -- Check if this buffer already has breadcrumbs attached
             if attached_lsp_clients[bufnr] then
                 return
             end
 
-            -- Check if there's an LSP client available for this buffer
             local clients = vim.lsp.get_clients({ bufnr = bufnr })
             if #clients > 0 then
-                -- Attach to the first available client that supports document symbols
                 for _, client in ipairs(clients) do
                     if client.server_capabilities.documentSymbolProvider then
                         M.attach(client, bufnr)
@@ -1028,17 +1173,13 @@ local function setup_buffer_focus_autocmds()
         group = augroups.focus,
         callback = function()
             local bufnr = vim.api.nvim_get_current_buf()
-
-            -- Cancel any pending debounce timers
             cancel_debounce_timer(bufnr)
 
-            -- Clean up symbols for buffers that are no longer focused
-            -- This helps with memory management
-            if buffer_symbols[bufnr] and not vim.api.nvim_buf_is_valid(bufnr) then
-                buffer_symbols[bufnr] = nil
+            if buffer_symbol_trees[bufnr] and not vim.api.nvim_buf_is_valid(bufnr) then
+                buffer_symbol_trees[bufnr] = nil
+                buffer_context_data[bufnr] = nil
                 attached_lsp_clients[bufnr] = nil
-                pending_requests[bufnr] = nil
-                buffer_versions[bufnr] = nil
+                awaiting_lsp_response[bufnr] = nil
             end
         end,
     })
@@ -1048,7 +1189,6 @@ end
 local function setup_window_resize_autocmds()
     augroups.window_resize = vim.api.nvim_create_augroup("breadcrumbs_window_resize", { clear = true })
 
-    -- Refresh breadcrumbs when window is resized
     vim.api.nvim_create_autocmd({ "VimResized", "WinResized" }, {
         group = augroups.window_resize,
         callback = function()
@@ -1056,7 +1196,6 @@ local function setup_window_resize_autocmds()
                 return
             end
 
-            -- Force redraw of winbar to apply truncation with new window size
             vim.cmd.redrawstatus({ bang = true })
         end,
     })
@@ -1087,25 +1226,6 @@ local function setup_winbar_refresh_autocmds()
     })
 end
 
---- Force immediate refresh
-local function force_refresh()
-    -- Clear all state immediately
-    attached_lsp_clients = {}
-    buffer_symbols = {}
-    pending_requests = {}
-    buffer_versions = {}
-
-    -- Cancel all timers
-    for bufnr in pairs(debounce_timers) do
-        cancel_debounce_timer(bufnr)
-    end
-
-    -- Trigger immediate redraw
-    vim.schedule(function()
-        vim.cmd("redrawstatus!")
-    end)
-end
-
 --- Enable breadcrumbs
 function M.enable()
     if M.enabled then
@@ -1113,11 +1233,10 @@ function M.enable()
     end
     M.enabled = true
 
-    -- Setup all autocmds
     setup_lsp_auto_attach_autocmd()
     setup_buffer_focus_autocmds()
     setup_symbol_refresh_autocmds()
-    setup_mode_change_autocmds() -- New: Setup mode change autocmds
+    setup_mode_change_autocmds()
     setup_window_resize_autocmds()
     setup_winbar_refresh_autocmds()
 
@@ -1126,7 +1245,6 @@ function M.enable()
         if vim.api.nvim_win_is_valid(win) then
             local buf = vim.api.nvim_win_get_buf(win)
             if vim.api.nvim_buf_is_valid(buf) then
-                -- Attach to any existing LSP clients for this buffer FIRST
                 local clients = vim.lsp.get_clients({ bufnr = buf })
                 if #clients > 0 then
                     for _, client in ipairs(clients) do
@@ -1136,13 +1254,11 @@ function M.enable()
                         end
                     end
                 end
-                -- THEN attach winbar (after LSP attachment initiated)
                 attach_winbar(buf, win)
             end
         end
     end
 
-    -- Force immediate refresh
     vim.schedule(function()
         vim.cmd("redrawstatus!")
     end)
@@ -1160,7 +1276,6 @@ function M.disable()
         cancel_debounce_timer(bufnr)
     end
 
-    -- Cancel mode cache timer
     if mode_cache_timer then
         mode_cache_timer:stop()
         mode_cache_timer:close()
@@ -1177,7 +1292,7 @@ function M.disable()
         end
     end
 
-    -- Clear all autocmds created by breadcrumbs
+    -- Clear all autocmds
     for _, group_id in pairs(augroups) do
         if group_id then
             vim.api.nvim_clear_autocmds({ group = group_id })
@@ -1187,19 +1302,16 @@ function M.disable()
 
     -- Clear all state
     attached_lsp_clients = {}
-    buffer_symbols = {}
-    pending_requests = {}
-    buffer_versions = {}
+    buffer_symbol_trees = {}
+    buffer_context_data = {}
+    awaiting_lsp_response = {}
     current_cached_mode = nil
 
     vim.cmd("redrawstatus!")
 end
 
---- Main setup function for the breadcrumbs module.
---- This can be called explicitly with options, or implicitly on require.
----@param opts table|nil
+--- Main setup function
 function M.setup(opts)
-    -- Merge provided options with default config
     if opts then
         for k, v in pairs(opts) do
             if type(config[k]) == "table" and type(v) == "table" then
@@ -1212,7 +1324,6 @@ function M.setup(opts)
         end
     end
 
-    -- Check if winbar is supported (Neovim 0.8+)
     if vim.fn.has("nvim-0.8") == 0 then
         vim.notify("breadcrumbs: Winbar is not supported in this Neovim version (requires 0.8+).", vim.log.levels.WARN)
         return
