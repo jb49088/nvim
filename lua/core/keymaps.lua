@@ -12,7 +12,7 @@ map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })
 
 -- Buffers
-map("n", "<leader>.", "<Cmd>e #<CR>", { desc = "Switch to Alternate Buffer" })
+map("n", "<leader>.", "<Cmd>e #<CR>", { desc = "Alternate Buffer" })
 map("n", "<leader>bn", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
 map("n", "<leader>bp", "<Cmd>bprevious<CR>", { desc = "Previous Buffer" })
 map("n", "<leader>bC", "<Cmd>bd<CR>", { desc = "Close Buffer and Window" })
@@ -48,6 +48,10 @@ map("n", "<leader>tp", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
 map("n", "<leader>Tf", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
 map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
 map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
+
+-- Commenting
+map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Below" })
+map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
 
 -- Quickfix list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })

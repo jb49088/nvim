@@ -5,7 +5,6 @@ return {
         keymaps = {
             ["_"] = "actions.select",
             ["g_"] = "actions.open_cwd",
-            -- ["<C-v>"] = { "actions.select", opts = { vertical = true } },
         },
         delete_to_trash = true,
         skip_confirm_for_simple_edits = true,
@@ -18,20 +17,8 @@ return {
             max_height = math.floor(vim.o.lines * 0.75),
         },
     },
-    keys = {
-        {
-            "<leader>o",
-            function()
-                if vim.bo.filetype == "oil" then
-                    vim.cmd("close")
-                else
-                    vim.cmd("Oil --float")
-                end
-            end,
-            desc = "Oil",
-            mode = "n",
-        },
-    },
+    -- stylua: ignore
+    keys = { { "<leader>o", function() vim.cmd("Oil --float") end, desc = "Oil", mode = "n" } },
     config = function(_, opts)
         require("oil").setup(opts)
     end,
