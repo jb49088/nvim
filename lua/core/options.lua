@@ -14,7 +14,6 @@ cmd("aunmenu PopUp") -- Disable right click menu
 opt.title = true -- Enable window title
 opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
 opt.laststatus = 3 -- Always show statusline
-opt.cmdheight = 0
 opt.statuscolumn = "%!v:lua.require'custom.modules.status_column'.get()" -- Custom status column
 opt.statusline = " " -- Show a blank statusline before heirline loads in
 opt.showtabline = 0 -- Disable tabline

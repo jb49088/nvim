@@ -1,3 +1,5 @@
+-- :echo $VIRTUAL_ENV
+
 local M = {}
 
 local VENV_SEARCH_PATH = "~/venvs" -- Change this to your venvs directory
@@ -68,12 +70,23 @@ local function update_lsp_servers(python_path)
     return updated_count
 end
 
--- Set environment variables
-local function set_env_vars(venv_path)
+-- Set environment variables with dynamic prompt command
+local function set_env_vars(venv_path, venv_name)
     if venv_path then
         vim.fn.setenv("VIRTUAL_ENV", venv_path)
         vim.fn.setenv("CONDA_PREFIX", nil) -- Clear conda prefix
+
+        -- Set PROMPT_COMMAND to dynamically update PS1 based on VIRTUAL_ENV
+        local prompt_cmd =
+            'if [[ -n "$VIRTUAL_ENV" ]]; then venv_name=$(basename "$VIRTUAL_ENV"); if [[ "$PS1" != *"($venv_name)"* ]]; then if [[ -z "$_NVIM_ORIGINAL_PS1" ]]; then export _NVIM_ORIGINAL_PS1="$PS1"; fi; PS1="($venv_name) $_NVIM_ORIGINAL_PS1"; fi; elif [[ -n "$_NVIM_ORIGINAL_PS1" ]]; then PS1="$_NVIM_ORIGINAL_PS1"; fi'
+        vim.fn.setenv("PROMPT_COMMAND", prompt_cmd)
     end
+end
+
+-- Clear environment variables
+local function clear_env_vars()
+    vim.fn.setenv("VIRTUAL_ENV", nil)
+    vim.fn.setenv("PROMPT_COMMAND", nil)
 end
 
 -- Find all Python executables in the venv directory
@@ -132,17 +145,14 @@ local function activate_venv(venv_info)
     -- Try to update LSP servers
     local lsp_count = update_lsp_servers(python_path)
 
-    -- Update environment
-    set_env_vars(venv_path)
+    -- Update environment (now includes PS1)
+    set_env_vars(venv_path, venv_info.name)
 
     -- Update state
     current_python = python_path
     current_venv = venv_path
 
     local message = string.format("Activated venv: %s", venv_info.name)
-    if lsp_count > 0 then
-        message = message .. string.format(" (updated %d LSP server%s)", lsp_count, lsp_count > 1 and "s" or "")
-    end
 
     vim.notify(message, vim.log.levels.INFO)
     return true
@@ -160,8 +170,8 @@ local function deactivate_venv()
     current_python = nil
     current_venv = nil
 
-    -- Clear environment variables
-    vim.fn.setenv("VIRTUAL_ENV", nil)
+    -- Clear environment variables (now includes PS1 restoration)
+    clear_env_vars()
 
     vim.notify("Deactivated venv: " .. old_name, vim.log.levels.INFO)
 end
