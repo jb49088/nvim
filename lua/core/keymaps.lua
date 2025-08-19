@@ -16,6 +16,34 @@ map("n", "<leader>.", "<Cmd>e #<CR>", { desc = "Alternate Buffer" })
 map("n", "<leader>bn", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
 map("n", "<leader>bp", "<Cmd>bprevious<CR>", { desc = "Previous Buffer" })
 map("n", "<leader>bC", "<Cmd>bd<CR>", { desc = "Close Buffer and Window" })
+map("n", "<leader>bo", function()
+    local tab_buffers = {}
+    for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            tab_buffers[buf] = true
+        end
+    end
+
+    local total_buffers = 0
+    local deleted = 0
+
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            total_buffers = total_buffers + 1
+            if not tab_buffers[buf] then
+                pcall(vim.api.nvim_buf_delete, buf, { force = true })
+                deleted = deleted + 1
+            end
+        end
+    end
+
+    if deleted > 0 then
+        vim.notify(string.format("Closed %d buffer%s", deleted, deleted == 1 and "" or "s"))
+    else
+        vim.notify("No buffers to close")
+    end
+end, { desc = "Close Other Buffers" })
 
 -- Windows
 map("n", "<C-h>", "<C-w><C-h>", { desc = "Go to Left Window" })
@@ -38,14 +66,22 @@ map("n", "<leader>wh", ":split<CR>", { desc = "Horizontal Split" })
 map("n", "<leader>wv", ":vsplit<CR>", { desc = "Vertical Split" })
 
 -- Tabs
-map("n", "<leader>to", "<Cmd>tabonly<CR>", { desc = "Close Other Tabs" })
 map("n", "<leader>tt", "<Cmd>tabnew<CR>", { desc = "New Tab" })
 map("n", "<leader>tn", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
 map("n", "<leader>tc", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
 map("n", "<leader>tp", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
+map("n", "<leader>to", function()
+    local tab_count = #vim.api.nvim_list_tabpages()
+    if tab_count > 1 then
+        vim.cmd("tabonly")
+        vim.notify(string.format("Closed %d tab%s", tab_count - 1, tab_count - 1 == 1 and "" or "s"))
+    else
+        vim.notify("No tabs to close")
+    end
+end, { desc = "Close Other Tabs" })
 
 -- Terminal
-map("n", "<leader>Tf", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
+map("n", "<leader>TF", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
 map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
 map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
 

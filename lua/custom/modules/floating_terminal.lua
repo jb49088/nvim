@@ -13,7 +13,7 @@ vim.keymap.set({ "n", "i", "v", "t" }, "<C-\\>", function()
 end, { noremap = true, silent = true, desc = "Floating Terminal" })
 
 -- Set up alternate keymap for <leader>tf
-vim.keymap.set("n", "<leader>TF", function()
+vim.keymap.set("n", "<leader>Tf", function()
     require("custom.modules.floating_terminal").toggle_terminal()
 end, { noremap = true, silent = true, desc = "Floating Terminal" })
 
