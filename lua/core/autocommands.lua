@@ -16,6 +16,13 @@ vim.api.nvim_create_autocmd("VimLeave", {
     command = "set guicursor=a:ver25",
 })
 
+-- Automatically check for external file changes and reload buffers
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+    group = "editor_behavior",
+    pattern = "*",
+    command = "if mode() != 'c' | checktime | endif",
+})
+
 --- UI/Visual enhancements ---
 vim.api.nvim_create_augroup("ui_enhancements", { clear = true })
 

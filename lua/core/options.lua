@@ -38,6 +38,7 @@ opt.timeoutlen = 300 -- Timeout for mapped sequence to complete
 opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
+opt.autoread = true -- Enable automatic file reloading (requires checktime triggers to work)
 -- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
 -- opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
 -- cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
