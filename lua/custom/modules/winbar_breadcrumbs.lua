@@ -448,7 +448,11 @@ local function in_range(cursor_pos, range)
     return 0
 end
 
---- Update context data (symbols containing cursor) following navic's approach
+-- Enhanced update_context function for breadcrumbs
+-- This modification makes the breadcrumbs detect when you're on a line that DEFINES a symbol
+-- even if your cursor isn't technically "inside" the symbol yet
+
+--- Update context data (symbols containing cursor) with smart line-based detection
 local function update_context(bufnr, cursor_pos)
     cursor_pos = cursor_pos or vim.api.nvim_win_get_cursor(0)
 
@@ -469,17 +473,72 @@ local function update_context(bufnr, cursor_pos)
         table.insert(new_context_data, curr)
     end
 
-    -- Find larger context that remained same
+    -- UNIVERSAL detection: Check if cursor should be considered "in" a symbol
+    local function is_contextually_in_symbol(cursor_row, cursor_col, symbol_node)
+        -- Standard check: cursor is within the symbol's scope
+        local in_scope = in_range(cursor_pos, symbol_node.scope) == 0
+        if in_scope then
+            return true
+        end
+
+        -- Enhanced check: cursor is on the line where the symbol starts
+        local on_definition_line = cursor_row == symbol_node.scope.start.line
+        if not on_definition_line then
+            return false
+        end
+
+        -- If we're on the definition line, we need to be smart about what to include
+        -- The key insight: distinguish between "structural" symbols (if, for, class, function)
+        -- and "leaf" symbols (parameters, variables)
+
+        -- First, check if we're specifically over this symbol's name range
+        if symbol_node.name_range then
+            local on_name_range = cursor_row >= symbol_node.name_range.start.line
+                and cursor_row <= symbol_node.name_range["end"].line
+                and cursor_col >= symbol_node.name_range.start.character
+                and cursor_col <= symbol_node.name_range["end"].character
+
+            if on_name_range then
+                return true
+            end
+        end
+
+        -- For symbols on their definition line, include them UNLESS they are parameters/variables
+        -- that we're not directly hovering over
+        if on_definition_line then
+            -- Identify "leaf" symbols that should only be included when directly hovered
+            local leaf_kinds = {
+                [13] = true, -- Variable (includes parameters)
+                [14] = true, -- Constant
+                [7] = true, -- Property
+                [8] = true, -- Field
+            }
+
+            if leaf_kinds[symbol_node.kind] then
+                -- For leaf symbols, we need to be specifically over the name
+                -- (this was already checked above, so return false)
+                return false
+            else
+                -- For structural symbols (if, for, class, function, etc.),
+                -- being on the definition line counts as being "in" the symbol
+                return true
+            end
+        end
+
+        return false
+    end
+
+    -- Find larger context that remained same (with smart detection)
     for _, context in ipairs(old_context_data) do
         if curr == nil then
             break
         end
         if
-            in_range(cursor_pos, context.scope) == 0
-            and curr.children ~= nil
+            curr.children ~= nil
             and curr.children[context.index] ~= nil
             and context.name == curr.children[context.index].name
             and context.kind == curr.children[context.index].kind
+            and is_contextually_in_symbol(cursor_pos[1], cursor_pos[2], curr.children[context.index])
         then
             table.insert(new_context_data, curr.children[context.index])
             curr = curr.children[context.index]
@@ -488,25 +547,61 @@ local function update_context(bufnr, cursor_pos)
         end
     end
 
-    -- Fill out context_data using binary search
+    -- Fill out context_data with smart detection and precedence rules
     while curr.children ~= nil do
         local go_deeper = false
-        local l = 1
-        local h = #curr.children
+        local candidates = {}
 
-        while l <= h do
-            local m = bit.rshift(l + h, 1)
-            local comp = in_range(cursor_pos, curr.children[m].scope)
-            if comp == -1 then
-                h = m - 1
-            elseif comp == 1 then
-                l = m + 1
-            else
-                table.insert(new_context_data, curr.children[m])
-                curr = curr.children[m]
-                go_deeper = true
-                break
+        -- Collect all potential candidates
+        for i, child_node in ipairs(curr.children) do
+            if is_contextually_in_symbol(cursor_pos[1], cursor_pos[2], child_node) then
+                table.insert(candidates, { node = child_node, index = i })
             end
+        end
+
+        if #candidates == 0 then
+            break
+        end
+
+        -- Smart precedence: if we have multiple candidates, prefer the most specific one
+        -- But avoid parameters unless we're directly over them
+        local best_candidate = nil
+        local parameter_kinds = {
+            [13] = true, -- Variable (often parameters)
+        }
+
+        for _, candidate in ipairs(candidates) do
+            local node = candidate.node
+            local is_parameter = parameter_kinds[node.kind]
+
+            if is_parameter then
+                -- For parameters, only include if we're directly over the name range
+                if node.name_range then
+                    local over_param = cursor_pos[1] >= node.name_range.start.line
+                        and cursor_pos[1] <= node.name_range["end"].line
+                        and cursor_pos[2] >= node.name_range.start.character
+                        and cursor_pos[2] <= node.name_range["end"].character
+                    if over_param then
+                        best_candidate = candidate
+                        break -- Parameters take highest precedence when directly over them
+                    end
+                end
+            else
+                -- For non-parameters, prefer the smallest scope
+                if
+                    not best_candidate
+                    or (node.scope["end"].line - node.scope.start.line)
+                        < (best_candidate.node.scope["end"].line - best_candidate.node.scope.start.line)
+                then
+                    best_candidate = candidate
+                end
+            end
+        end
+
+        if best_candidate then
+            table.insert(new_context_data, best_candidate.node)
+            curr = best_candidate.node
+            go_deeper = true
         end
 
         if not go_deeper then
