@@ -23,6 +23,7 @@ local M = {
     last_regular_win = nil,
     last_mode = nil,
     enabled = true,
+    disabled_buffers = {}, -- Track buffers that are too large
 }
 
 -- Chunk range return codes
@@ -57,6 +58,11 @@ local node_types = {
         "^return",
     },
 }
+
+-- Check if buffer is disabled due to size
+local function is_buffer_disabled(bufnr)
+    return M.disabled_buffers[bufnr] == true
+end
 
 -- Check if node type is suitable for chunk detection
 local function is_suit_type(node_type)
@@ -408,6 +414,21 @@ local function set_extmarks_batch(bufnr, extmarks)
     end
 end
 
+-- Check if buffer exceeds max file size
+local function check_buffer_size(bufnr)
+    if not api.nvim_buf_is_valid(bufnr) then
+        return false
+    end
+
+    local name = api.nvim_buf_get_name(bufnr)
+    if name == "" then
+        return false -- Don't check size for unnamed buffers
+    end
+
+    local ok, file_size = pcall(fn.getfsize, name)
+    return ok and file_size > config.max_file_size
+end
+
 -- Main rendering function
 local function render_chunk_guides(bufnr)
     if not api.nvim_buf_is_valid(bufnr) then
@@ -421,10 +442,18 @@ local function render_chunk_guides(bufnr)
         return
     end
 
-    -- Quick file size check
-    local file_size = fn.getfsize(fn.expand("%"))
-    if file_size > config.max_file_size then
+    -- Check if this specific buffer is too large
+    if check_buffer_size(bufnr) then
+        if not M.disabled_buffers[bufnr] then
+            M.disabled_buffers[bufnr] = true
+            vim.notify("File is too large, chunk guides disabled for this buffer", vim.log.levels.WARN)
+        end
         return
+    end
+
+    -- Check if this buffer was previously disabled but is now valid
+    if M.disabled_buffers[bufnr] and not check_buffer_size(bufnr) then
+        M.disabled_buffers[bufnr] = nil
     end
 
     local winid = api.nvim_get_current_win()
@@ -587,6 +616,16 @@ end
 
 -- Buffer validation
 local function should_render(bufnr)
+    -- Check if globally disabled
+    if not M.enabled then
+        return false
+    end
+
+    -- Check if this specific buffer is disabled
+    if is_buffer_disabled(bufnr) then
+        return false
+    end
+
     local filetype = vim.bo[bufnr].filetype
     local buftype = vim.bo[bufnr].buftype
 
@@ -638,7 +677,7 @@ local function on_mode_changed()
     if M.last_regular_win and api.nvim_win_is_valid(M.last_regular_win) then
         api.nvim_win_call(M.last_regular_win, function()
             local bufnr = api.nvim_get_current_buf()
-            if M.enabled and should_render(bufnr) then
+            if should_render(bufnr) then
                 render_chunk_guides(bufnr)
             end
         end)
@@ -656,6 +695,13 @@ local function on_change()
     local bufnr = api.nvim_get_current_buf()
     if should_render(bufnr) then
         render_chunk_guides(bufnr)
+    end
+end
+
+-- Clean up disabled buffers when they are deleted
+local function cleanup_disabled_buffer(bufnr)
+    if M.disabled_buffers[bufnr] then
+        M.disabled_buffers[bufnr] = nil
     end
 end
 
@@ -751,15 +797,11 @@ local function setup_autocmds()
         end,
     })
 
-    -- File size check
-    api.nvim_create_autocmd({ "UIEnter", "BufWinEnter" }, {
+    -- Buffer cleanup
+    api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
         group = M.augroup,
-        callback = function()
-            local ok, status = pcall(fn.getfsize, fn.expand("%"))
-            if ok and status >= config.max_file_size then
-                vim.notify("File is too large, chunk guides will not be loaded")
-                M.enabled = false
-            end
+        callback = function(event)
+            cleanup_disabled_buffer(event.buf)
         end,
     })
 
@@ -814,6 +856,30 @@ function M.refresh()
     if should_render(bufnr) then
         render_chunk_guides(bufnr)
     end
+end
+
+-- Enable chunk guides for a specific buffer (removes it from disabled list)
+function M.enable_for_buffer(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    if M.disabled_buffers[bufnr] then
+        M.disabled_buffers[bufnr] = nil
+        if should_render(bufnr) then
+            render_chunk_guides(bufnr)
+        end
+    end
+end
+
+-- Disable chunk guides for a specific buffer
+function M.disable_for_buffer(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    M.disabled_buffers[bufnr] = true
+    clear_highlights(bufnr)
+end
+
+-- Check if chunk guides are enabled for a specific buffer
+function M.is_enabled_for_buffer(bufnr)
+    bufnr = bufnr or api.nvim_get_current_buf()
+    return M.enabled and not M.disabled_buffers[bufnr]
 end
 
 -- Auto-initialize
