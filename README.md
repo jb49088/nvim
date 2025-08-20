@@ -53,11 +53,11 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             58            848            841           5853
+Lua                             60            870            860           5921
 Markdown                         1             17              4            131
-JSON                             1              0              0             38
+JSON                             1              0              0             39
 -------------------------------------------------------------------------------
-SUM:                            60            865            845           6022
+SUM:                            62            887            864           6091
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -99,7 +99,8 @@ nvim
 │   │       ├── status_column.lua
 │   │       ├── terminal_sync.lua
 │   │       ├── venv_selector.lua
-│   │       └── winbar_breadcrumbs.lua
+│   │       ├── winbar_breadcrumbs.lua
+│   │       └── window_swapper.lua
 │   └── plugins
 │       ├── coding
 │       │   ├── autopairs.lua
@@ -138,10 +139,11 @@ nvim
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── trouble.lua
+│           ├── vim-windowswap.lua
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 60 files
+13 directories, 62 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
