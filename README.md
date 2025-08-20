@@ -6,22 +6,27 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 - Lazy loading with [lazy.nvim](https://github.com/folke/lazy.nvim)
 - Extensive use of [snacks.nvim](https://github.com/folke/snacks.nvim) including custom pickers
-- Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
 - Completions with [blink.cmp](https://github.com/Saghen/blink.cmp)
 - Extensive use of [mini.icons](https://github.com/echasnovski/mini.icons) throughout the config for a cohesive appearance 
 - Enhanced syntax highlighting with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) and semantic highlighting
-- Session manager with a built-in session picker
-- Floating terminal window
-- Status column enhancements
-- Python-specific indentation logic
-- Indent guides module
-- Chunk guides module
-- Breadcrumb navigation module
-- Unified code runner
-- [venv-selector.nvim](https://github.com/linux-cultist/venv-selector.nvim) with a custom venv picker
-- [oil.nvim](https://github.com/stevearc/oil.nvim)
-- [flash.nvim](https://github.com/folke/flash.nvim)
-- [trouble.nvim](https://github.com/folke/trouble.nvim)
+- [oil.nvim](https://github.com/stevearc/oil.nvim) for filesystem manipulation
+- [trouble.nvim](https://github.com/folke/trouble.nvim) for everything wrong with your code
+- [flash.nvim](https://github.com/folke/flash.nvim) for buffer navigation
+- LSP integration with [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+- Realtime linting with [nvim-lint](https://github.com/mfussenegger/nvim-lint)
+- Code formatting with [conform.nvim](https://github.com/stevearc/conform.nvim)
+- Git integration with [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) and [snacks.nvim](https://github.com/folke/snacks.nvim)'s lazygit
+- LSP/tool management done with [mason.nvim](https://github.com/mason-org/mason.nvim) including a custom auto-installer using mason's registry directly
+- Custom status column enhancements based on [snacks.nvim](https://github.com/folke/snacks.nvim) status column
+- Custom session manager with built-in session picker
+- Custom floating terminal window module
+- Custom indent guides module improving on current indent plugins within the ecosystem
+- Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
+- Custom chunk guides module based on [hlchunk.nvim](https://github.com/shellRaining/hlchunk.nvim)
+- Custom breadcrumb navigation module based on [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim) and [nvim-navic](https://github.com/SmiteshP/nvim-navic)
+- Custom virtual environment selector with built-in venv picker
+- Python-specific indentation logic improving on GetPythonIndent()
+- Unified code runner that supports multiple languages
 - And much more
 
 ### Known Issues
@@ -49,10 +54,10 @@ UIEnter   28.4ms (+5.4ms)
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             58            835            829           5798
-Markdown                         1             17              4            126
+Markdown                         1             17              4            131
 JSON                             1              0              0             38
 -------------------------------------------------------------------------------
-SUM:                            60            852            833           5962
+SUM:                            60            852            833           5967
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
