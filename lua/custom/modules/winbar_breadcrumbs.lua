@@ -448,11 +448,12 @@ local function in_range(cursor_pos, range)
     return 0
 end
 
--- Enhanced update_context function for breadcrumbs
+--- Enhanced update_context function for breadcrumbs
 -- This modification makes the breadcrumbs detect when you're on a line that DEFINES a symbol
 -- even if your cursor isn't technically "inside" the symbol yet
+-- AND verifies that symbols still exist in the buffer before including them
 
---- Update context data (symbols containing cursor) with smart line-based detection
+--- Update context data (symbols containing cursor) with smart line-based detection and existence verification
 local function update_context(bufnr, cursor_pos)
     cursor_pos = cursor_pos or vim.api.nvim_win_get_cursor(0)
 
@@ -473,8 +474,45 @@ local function update_context(bufnr, cursor_pos)
         table.insert(new_context_data, curr)
     end
 
+    -- Helper function to verify if a symbol still exists at its expected location
+    local function symbol_still_exists(symbol_node)
+        if not symbol_node.name_range then
+            return true -- Can't verify, assume it exists
+        end
+
+        -- Check if the line still exists
+        local line_count = vim.api.nvim_buf_line_count(bufnr)
+        if symbol_node.name_range.start.line > line_count then
+            return false
+        end
+
+        -- Get the line content at the symbol's expected location
+        local line_num = symbol_node.name_range.start.line
+        local ok, line_content = pcall(vim.api.nvim_buf_get_lines, bufnr, line_num - 1, line_num, false)
+        if not ok or not line_content or #line_content == 0 then
+            return false
+        end
+
+        local line = line_content[1]
+        local start_char = symbol_node.name_range.start.character
+        local end_char = symbol_node.name_range["end"].character
+
+        -- Check if we can extract the expected symbol name from the line
+        if start_char < 0 or end_char > #line or start_char >= end_char then
+            return false
+        end
+
+        local symbol_text = line:sub(start_char + 1, end_char)
+        return symbol_text == symbol_node.name
+    end
+
     -- UNIVERSAL detection: Check if cursor should be considered "in" a symbol
     local function is_contextually_in_symbol(cursor_row, cursor_col, symbol_node)
+        -- First, verify the symbol still exists
+        if not symbol_still_exists(symbol_node) then
+            return false
+        end
+
         -- Standard check: cursor is within the symbol's scope
         local in_scope = in_range(cursor_pos, symbol_node.scope) == 0
         if in_scope then
@@ -528,7 +566,7 @@ local function update_context(bufnr, cursor_pos)
         return false
     end
 
-    -- Find larger context that remained same (with smart detection)
+    -- Find larger context that remained same (with smart detection and existence verification)
     for _, context in ipairs(old_context_data) do
         if curr == nil then
             break
