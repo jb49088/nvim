@@ -17,6 +17,7 @@ opt.laststatus = 3 -- Always show statusline
 opt.statuscolumn = "%!v:lua.require'custom.modules.status_column'.get()" -- Custom status column
 opt.statusline = " " -- Show a blank statusline before heirline loads in
 opt.showtabline = 0 -- Disable tabline
+opt.cmdheight = 0 -- Hide command line when not in use (prevents noice.nvim layout shift on startup)
 opt.signcolumn = "yes" -- Always show sign column (gutter)
 opt.termguicolors = true -- Enable true color support
 opt.cursorline = true -- Highlight the current line...

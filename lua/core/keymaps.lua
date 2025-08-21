@@ -25,12 +25,37 @@ map("n", "<leader>bo", function()
         end
     end
 
-    local total_buffers = 0
+    local function is_listable_buffer(buf)
+        if not vim.api.nvim_buf_is_valid(buf) then
+            return false
+        end
+
+        -- Check if buffer is listed (this is the main filter most pickers use)
+        if not vim.bo[buf].buflisted then
+            return false
+        end
+
+        -- Optional: exclude certain buffer types that pickers typically filter out
+        local buftype = vim.bo[buf].buftype
+        if buftype == "quickfix" or buftype == "help" or buftype == "terminal" then
+            return false
+        end
+
+        -- Optional: exclude buffers with no name (scratch buffers)
+        local name = vim.api.nvim_buf_get_name(buf)
+        if name == "" then
+            return false
+        end
+
+        return true
+    end
+
+    local total_listable_buffers = 0
     local deleted = 0
 
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-            total_buffers = total_buffers + 1
+        if is_listable_buffer(buf) then
+            total_listable_buffers = total_listable_buffers + 1
             if not tab_buffers[buf] then
                 pcall(vim.api.nvim_buf_delete, buf, { force = true })
                 deleted = deleted + 1
@@ -55,6 +80,11 @@ map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Go to Left Window from Terminal
 map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Go to Right Window from Terminal" })
 map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Go to Lower Window from Terminal" })
 map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Go to Upper Window from Terminal" })
+
+map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
+map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
+map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
+map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
 
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })

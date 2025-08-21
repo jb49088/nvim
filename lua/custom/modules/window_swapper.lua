@@ -46,7 +46,7 @@ local function swap_window()
     vim.api.nvim_win_set_buf(marked_window.win_id, current_buf)
     vim.api.nvim_win_set_buf(current_win, marked_window.buf_id)
 
-    print("Windows swapped!")
+    print("Windows swapped")
     marked_window = nil
 end
 

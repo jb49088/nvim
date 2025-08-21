@@ -17,7 +17,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Code formatting with [conform.nvim](https://github.com/stevearc/conform.nvim)
 - Git integration with [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) and [snacks.nvim](https://github.com/folke/snacks.nvim)'s lazygit
 - LSP/tool management done with [mason.nvim](https://github.com/mason-org/mason.nvim) including a custom auto-installer using mason's registry directly
-- Custom status column enhancements based on [snacks.nvim](https://github.com/folke/snacks.nvim) status column
+- Custom status column enhancements based on [LazyVim](https://github.com/LazyVim/LazyVim)'s status column
 - Custom session manager with built-in session picker
 - Custom floating terminal window module
 - Custom indent guides module improving on current indent plugins within the ecosystem
@@ -53,11 +53,11 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             60            870            860           5921
-Markdown                         1             17              4            131
+Lua                             59            876            861           5934
+Markdown                         2             19              4            149
 JSON                             1              0              0             39
 -------------------------------------------------------------------------------
-SUM:                            62            887            864           6091
+SUM:                            62            895            865           6122
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -68,6 +68,7 @@ SUM:                            62            887            864           6091
 
 ```
 nvim
+├── commands.md
 ├── init.lua
 ├── lazy-lock.json
 ├── lua
@@ -139,7 +140,6 @@ nvim
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── trouble.lua
-│           ├── vim-windowswap.lua
 │           └── whichkey.lua
 └── README.md
 
