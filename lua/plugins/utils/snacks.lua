@@ -125,7 +125,7 @@ return {
         { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
         { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
-        { "<leader>ts", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
+        { "<leader><Tab>s", function() Snacks.picker.pick("tabs") end, desc = "Search Tabs" },
         -- other
         { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
     },

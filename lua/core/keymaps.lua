@@ -86,6 +86,11 @@ map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
 map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
 map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
 
+map("t", "<A-h>", "<C-\\><C-n><C-w>Hi", { desc = "Move Window to Far Left from Terminal" })
+map("t", "<A-j>", "<C-\\><C-n><C-w>Ji", { desc = "Move Window to Far Bottom from Terminal" })
+map("t", "<A-k>", "<C-\\><C-n><C-w>Ki", { desc = "Move Window to Far Top from Terminal" })
+map("t", "<A-l>", "<C-\\><C-n><C-w>Li", { desc = "Move Window to Far Right from Terminal" })
+
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
 map("n", "<leader>wo", "<C-w>o", { desc = "Close Other Windows" })
@@ -96,11 +101,11 @@ map("n", "<leader>wh", ":split<CR>", { desc = "Horizontal Split" })
 map("n", "<leader>wv", ":vsplit<CR>", { desc = "Vertical Split" })
 
 -- Tabs
-map("n", "<leader>tt", "<Cmd>tabnew<CR>", { desc = "New Tab" })
-map("n", "<leader>tn", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
-map("n", "<leader>tc", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
-map("n", "<leader>tp", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
-map("n", "<leader>to", function()
+map("n", "<leader><Tab><Tab>", "<Cmd>tabnew<CR>", { desc = "New Tab" })
+map("n", "<leader><Tab>n", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
+map("n", "<leader><Tab>c", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
+map("n", "<leader><Tab>p", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
+map("n", "<leader><Tab>o", function()
     local tab_count = #vim.api.nvim_list_tabpages()
     if tab_count > 1 then
         vim.cmd("tabonly")

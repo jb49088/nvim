@@ -53,11 +53,11 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             59            876            861           5934
+Lua                             60            885            856           5931
 Markdown                         2             19              4            149
 JSON                             1              0              0             39
 -------------------------------------------------------------------------------
-SUM:                            62            895            865           6122
+SUM:                            63            904            860           6119
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -91,6 +91,7 @@ nvim
 │   │   └── modules
 │   │       ├── chunk_guides.lua
 │   │       ├── code_runner.lua
+│   │       ├── code_tester.lua
 │   │       ├── eof_padding.lua
 │   │       ├── floating_terminal.lua
 │   │       ├── indent_guides.lua
@@ -143,7 +144,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 62 files
+13 directories, 63 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
