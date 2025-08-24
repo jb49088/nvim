@@ -1,3 +1,5 @@
+local venv_picker = require("custom.extensions.venv_picker")
+
 local M = {}
 
 local VENV_SEARCH_PATH = "~/venvs" -- Change this to your venvs directory
@@ -12,8 +14,8 @@ local function expand_path(path)
     return vim.fn.expand(path)
 end
 
--- Helper function to extract venv name from python path and split the path
-local function extract_venv_name_parts(python_path)
+-- Helper function to extract venv name from python path (simple version for state tracking)
+local function extract_venv_name(python_path)
     local parts = {}
     for part in string.gmatch(python_path, "[^/]+") do
         table.insert(parts, part)
@@ -23,29 +25,17 @@ local function extract_venv_name_parts(python_path)
     for i = 1, #parts - 1 do
         if parts[i] == "venvs" or parts[i] == "envs" or parts[i] == ".venv" or parts[i] == "virtualenvs" then
             if parts[i + 1] and parts[i + 1] ~= "bin" then
-                local venv_name = parts[i + 1]
-                local before_venv = string.sub(python_path, 1, string.find(python_path, venv_name) - 1)
-                local after_venv = string.sub(python_path, string.find(python_path, venv_name) + string.len(venv_name))
-                return venv_name, before_venv, after_venv
+                return parts[i + 1]
             end
         end
     end
 
     -- Fallback: look for pattern where second-to-last directory might be venv name
     if #parts >= 3 and parts[#parts] == "python" and parts[#parts - 1] == "bin" then
-        local venv_name = parts[#parts - 2]
-        local before_venv = string.sub(python_path, 1, string.find(python_path, venv_name) - 1)
-        local after_venv = string.sub(python_path, string.find(python_path, venv_name) + string.len(venv_name))
-        return venv_name, before_venv, after_venv
+        return parts[#parts - 2]
     end
 
-    return nil, python_path, ""
-end
-
--- Helper function to extract venv name from python path (simple version for state tracking)
-local function extract_venv_name(python_path)
-    local venv_name, _, _ = extract_venv_name_parts(python_path)
-    return venv_name or python_path
+    return python_path
 end
 
 -- Update Python path for LSP servers (basedpyright only)
@@ -109,6 +99,7 @@ local function clear_env_vars()
     vim.fn.setenv("VIRTUAL_ENV", nil)
     vim.fn.setenv("PROMPT_COMMAND", nil)
 end
+
 -- Send activation command to all terminal buffers
 local function activate_in_terminals(venv_path, venv_name)
     local activation_script = venv_path .. "/bin/activate"
@@ -157,7 +148,7 @@ local function deactivate_in_terminals()
 end
 
 -- Find all Python executables in the venv directory
-local function find_venvs()
+function M.find_venvs()
     local search_path = expand_path(VENV_SEARCH_PATH)
 
     if vim.fn.isdirectory(search_path) == 0 then
@@ -195,7 +186,7 @@ local function find_venvs()
 end
 
 -- Activate a virtual environment
-local function activate_venv(venv_info)
+function M.activate(venv_info)
     if not venv_info then
         return false
     end
@@ -235,7 +226,7 @@ local function activate_venv(venv_info)
 end
 
 -- Deactivate current virtual environment
-local function deactivate_venv()
+function M.deactivate()
     if not current_venv then
         vim.notify("No virtual environment is tracked as active", vim.log.levels.INFO)
         return
@@ -264,98 +255,26 @@ local function deactivate_venv()
     vim.notify(message, vim.log.levels.INFO)
 end
 
--- Show venv picker using Snacks
-local function show_picker()
-    -- Check if Snacks is available
-    local ok, snacks = pcall(require, "snacks")
-    if not ok then
-        vim.notify("Snacks picker not available", vim.log.levels.ERROR)
-        return
-    end
-
-    local venvs = find_venvs()
-
-    if #venvs == 0 then
-        vim.notify("No virtual environments found in " .. VENV_SEARCH_PATH, vim.log.levels.WARN)
-        return
-    end
-
-    -- Prepare items for Snacks picker
-    local items = {}
-    for _, venv in ipairs(venvs) do
-        table.insert(items, {
-            text = venv.python_path, -- Use full path for display
-            venv_info = venv,
-        })
-    end
-
-    snacks.picker.pick({
-        title = "Virtual Environments",
-        items = items,
-        layout = { preset = "select" },
-        format = function(item)
-            local is_active = current_python == item.venv_info.python_path
-            local icon = "󰌠"
-            local icon_hl = is_active and "VenvPickerActive" or "SnacksPickerDir"
-
-            -- Extract path parts for highlighting
-            local venv_name, before_venv, after_venv = extract_venv_name_parts(item.venv_info.python_path)
-
-            local result = {
-                { icon .. " ", icon_hl },
-            }
-
-            if venv_name then
-                if before_venv ~= "" then
-                    table.insert(result, { before_venv, "SnacksPickerDir" })
-                end
-                table.insert(result, { venv_name, "SnacksPickerFile" })
-                if after_venv ~= "" then
-                    table.insert(result, { after_venv, "SnacksPickerDir" })
-                end
-            else
-                table.insert(result, { item.venv_info.python_path, "SnacksPickerDir" })
-            end
-
-            return result
-        end,
-        confirm = function(picker, item)
-            if item then
-                local is_active = current_python == item.venv_info.python_path
-
-                if is_active then
-                    -- Deactivate if already active
-                    deactivate_venv()
-                else
-                    -- Activate the selected venv
-                    activate_venv(item.venv_info)
-                end
-            end
-            picker:close()
-        end,
-    })
+-- Show venv picker using external picker module
+function M.show_picker()
+    venv_picker(M)
 end
-
--- Public API
-M.activate = activate_venv
-M.deactivate = deactivate_venv
-M.show_picker = show_picker
-M.find_venvs = find_venvs
 
 -- Expose current state
-M.current_python = function()
+function M.current_python()
     return current_python
 end
-M.current_venv = function()
+
+function M.current_venv()
     return current_venv
 end
 
 -- Create user command
 vim.api.nvim_create_user_command("VenvSelect", function()
-    show_picker()
+    M.show_picker()
 end, { desc = "Select virtual environment" })
 
 -- Create keymap
-vim.keymap.set("n", "<leader>v", show_picker, { desc = "Virtual Environments" })
+vim.keymap.set("n", "<leader>v", M.show_picker, { desc = "Virtual Environments" })
 
 return M
