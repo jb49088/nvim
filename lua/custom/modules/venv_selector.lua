@@ -1,11 +1,9 @@
--- :echo $VIRTUAL_ENV
-
 local M = {}
 
 local VENV_SEARCH_PATH = "~/venvs" -- Change this to your venvs directory
 local FD_PATTERN = "/bin/python$" -- Pattern to find Python executables
 
--- State tracking
+-- State tracking (for LSP only)
 local current_python = nil
 local current_venv = nil
 
@@ -70,9 +68,25 @@ local function update_lsp_servers(python_path)
     return updated_count
 end
 
--- Set environment variables with dynamic prompt command
+-- Set environment variables for new terminals
 local function set_env_vars(venv_path, venv_name)
     if venv_path then
+        local venv_bin_path = venv_path .. "/bin"
+
+        -- Store original PATH if not already stored
+        local original_path = vim.fn.getenv("_NVIM_ORIGINAL_PATH")
+        if original_path == vim.NIL or not original_path then
+            original_path = vim.fn.getenv("PATH")
+            -- Handle case where PATH might be nil/userdata
+            if original_path == vim.NIL then
+                original_path = "/usr/local/bin:/usr/bin:/bin"
+            end
+            vim.fn.setenv("_NVIM_ORIGINAL_PATH", original_path)
+        end
+
+        -- Prepend venv bin path to PATH
+        local new_path = venv_bin_path .. ":" .. original_path
+        vim.fn.setenv("PATH", new_path)
         vim.fn.setenv("VIRTUAL_ENV", venv_path)
         vim.fn.setenv("CONDA_PREFIX", nil) -- Clear conda prefix
 
@@ -80,25 +94,66 @@ local function set_env_vars(venv_path, venv_name)
         local prompt_cmd =
             'if [[ -n "$VIRTUAL_ENV" ]]; then venv_name=$(basename "$VIRTUAL_ENV"); if [[ "$PS1" != *"($venv_name)"* ]]; then if [[ -z "$_NVIM_ORIGINAL_PS1" ]]; then export _NVIM_ORIGINAL_PS1="$PS1"; fi; PS1="($venv_name) $_NVIM_ORIGINAL_PS1"; fi; elif [[ -n "$_NVIM_ORIGINAL_PS1" ]]; then PS1="$_NVIM_ORIGINAL_PS1"; fi'
         vim.fn.setenv("PROMPT_COMMAND", prompt_cmd)
-
-        -- Fire custom event for venv activation
-        vim.api.nvim_exec_autocmds("User", {
-            pattern = "VenvActivated",
-            data = { venv_path = venv_path, venv_name = venv_name },
-        })
     end
 end
 
 -- Clear environment variables
 local function clear_env_vars()
+    -- Restore original PATH
+    local original_path = vim.fn.getenv("_NVIM_ORIGINAL_PATH")
+    if original_path ~= vim.NIL and original_path then
+        vim.fn.setenv("PATH", original_path)
+        vim.fn.setenv("_NVIM_ORIGINAL_PATH", nil)
+    end
+
     vim.fn.setenv("VIRTUAL_ENV", nil)
     vim.fn.setenv("PROMPT_COMMAND", nil)
+end
+-- Send activation command to all terminal buffers
+local function activate_in_terminals(venv_path, venv_name)
+    local activation_script = venv_path .. "/bin/activate"
+    local activation_cmd = "source " .. activation_script
 
-    -- Fire custom event for venv deactivation
-    vim.api.nvim_exec_autocmds("User", {
-        pattern = "VenvDeactivated",
-        data = {},
-    })
+    local term_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            local ok, buf_type = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
+            if ok and buf_type == "terminal" then
+                table.insert(term_buffers, buf)
+            end
+        end
+    end
+
+    for _, buf in ipairs(term_buffers) do
+        local ok, chan = pcall(vim.api.nvim_buf_get_var, buf, "terminal_job_id")
+        if ok and chan then
+            vim.api.nvim_chan_send(chan, activation_cmd .. "\n")
+        end
+    end
+
+    return #term_buffers
+end
+
+-- Send deactivation command to all terminal buffers
+local function deactivate_in_terminals()
+    local term_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            local ok, buf_type = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
+            if ok and buf_type == "terminal" then
+                table.insert(term_buffers, buf)
+            end
+        end
+    end
+
+    for _, buf in ipairs(term_buffers) do
+        local ok, chan = pcall(vim.api.nvim_buf_get_var, buf, "terminal_job_id")
+        if ok and chan then
+            vim.api.nvim_chan_send(chan, "deactivate\n")
+        end
+    end
+
+    return #term_buffers
 end
 
 -- Find all Python executables in the venv directory
@@ -154,15 +209,24 @@ local function activate_venv(venv_info)
         return false
     end
 
-    -- Try to update LSP servers
+    -- Update LSP servers
     local lsp_count = update_lsp_servers(python_path)
 
-    -- Update environment
+    -- Set environment variables for new terminals
     set_env_vars(venv_path, venv_info.name)
 
-    -- Update state
+    -- Send activation commands to existing terminals
+    local term_count = activate_in_terminals(venv_path, venv_info.name)
+
+    -- Update state (for LSP tracking only)
     current_python = python_path
     current_venv = venv_path
+
+    -- Fire custom event for venv activation
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "VenvActivated",
+        data = { venv_path = venv_path, venv_name = venv_info.name },
+    })
 
     local message = string.format("Activated venv: %s", venv_info.name)
 
@@ -173,19 +237,31 @@ end
 -- Deactivate current virtual environment
 local function deactivate_venv()
     if not current_venv then
-        vim.notify("No virtual environment is active", vim.log.levels.INFO)
+        vim.notify("No virtual environment is tracked as active", vim.log.levels.INFO)
         return
     end
 
-    -- Clear state first
     local old_name = extract_venv_name(current_python or "")
+
+    -- Clear environment variables for new terminals
+    clear_env_vars()
+
+    -- Send deactivation commands to existing terminals
+    local term_count = deactivate_in_terminals()
+
+    -- Clear state
     current_python = nil
     current_venv = nil
 
-    -- Clear environment variables
-    clear_env_vars()
+    -- Fire custom event for venv deactivation
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "VenvDeactivated",
+        data = {},
+    })
 
-    vim.notify("Deactivated venv: " .. old_name, vim.log.levels.INFO)
+    local message = "Deactivated venv: " .. old_name
+
+    vim.notify(message, vim.log.levels.INFO)
 end
 
 -- Show venv picker using Snacks
