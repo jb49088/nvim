@@ -5,7 +5,7 @@ local M = {}
 local VENV_SEARCH_PATH = "~/venvs" -- Change this to your venvs directory
 local FD_PATTERN = "/bin/python$" -- Pattern to find Python executables
 
--- State tracking (for LSP only)
+-- State tracking
 local current_python = nil
 local current_venv = nil
 
@@ -209,7 +209,7 @@ function M.activate(venv_info)
     -- Send activation commands to existing terminals
     local term_count = activate_in_terminals(venv_path, venv_info.name)
 
-    -- Update state (for LSP tracking only)
+    -- Update state
     current_python = python_path
     current_venv = venv_path
 
@@ -260,7 +260,7 @@ function M.show_picker()
     venv_picker(M)
 end
 
--- Expose current state
+-- Expose current state (these are the key functions for session integration)
 function M.current_python()
     return current_python
 end
