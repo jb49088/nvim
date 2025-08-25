@@ -222,7 +222,7 @@ function M.load_session(name)
         -- Load and apply venv info after a longer delay to ensure session and LSP are fully loaded
         vim.defer_fn(function()
             load_venv_info(name)
-        end, 250)
+        end, 1000)
 
         -- Different message for last session vs named sessions
         if name == nil or name == config.last_session then

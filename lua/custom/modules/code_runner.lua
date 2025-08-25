@@ -87,7 +87,7 @@ function M.run_background()
     if runner_function then
         -- Get just the filename without path for display
         local display_name = vim.fn.fnamemodify(filename, ":t")
-        print("Running " .. display_name .. " silently")
+        print("Running " .. display_name .. " detached")
 
         local cmd = runner_function(filename)
         vim.cmd("silent !" .. cmd)
@@ -98,8 +98,8 @@ end
 
 -- Setup keymaps
 function M.setup_keymaps()
-    vim.keymap.set("n", "<leader>rr", M.run_file, { desc = "Run" })
-    vim.keymap.set("n", "<leader>rs", M.run_background, { desc = "Run Silently" })
+    vim.keymap.set("n", "<leader>rt", M.run_file, { desc = "Run in Terminal" })
+    vim.keymap.set("n", "<leader>rd", M.run_background, { desc = "Run Detached" })
 end
 
 -- Setup function to configure and initialize

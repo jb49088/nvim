@@ -11,6 +11,11 @@ map("n", "<leader>l", "<Cmd>Lazy<CR>", { desc = "Lazy" })
 map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })
 
+-- Black hole registers
+map({ "n", "v" }, "d", '"_d', { noremap = true })
+map({ "n", "v" }, "c", '"_c', { noremap = true })
+map({ "n", "v" }, "x", '"_x', { noremap = true })
+
 -- Buffers
 map("n", "<leader>.", "<Cmd>e #<CR>", { desc = "Alternate Buffer" })
 map("n", "<leader>bn", "<Cmd>bnext<CR>", { desc = "Next Buffer" })

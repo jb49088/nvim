@@ -10,6 +10,7 @@ return {
         show_help = true,
         spec = {
             -- individual keymaps
+            { "<leader>rt", icon = { icon = "", hl = "MiniIconsRed" } },
             { "<leader>ta", icon = { icon = "󰱑", hl = "MiniIconsGreen" } },
             { "<leader>tf", icon = { icon = "󰱑", hl = "MiniIconsGreen" } },
             { "<leader>K", icon = { icon = "󰋽", hl = "MiniIconsBlue" } },
