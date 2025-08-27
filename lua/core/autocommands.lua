@@ -39,6 +39,19 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
     group = "ui_enhancements",
     callback = function()
         if vim.bo.filetype == "help" then
+            -- Check if we're in a picker/preview window
+            local win_config = vim.api.nvim_win_get_config(0)
+            if win_config.relative ~= "" then
+                -- This is a floating window (likely a picker preview), skip the repositioning
+                return
+            end
+
+            -- Check if the current window is part of a picker by looking at buffer name or other indicators
+            local buf_name = vim.api.nvim_buf_get_name(0)
+            if buf_name:match("snacks://") or buf_name:match("picker://") then
+                return
+            end
+
             vim.cmd("wincmd L")
             -- Recalculate scrolloff based on the new window size
             vim.opt_local.scrolloff = 10

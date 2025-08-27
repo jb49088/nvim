@@ -8,18 +8,20 @@ return function(session_manager)
             return string.char(tonumber(hex, 16))
         end)
     end
-    -- Get the currently active session name
+
+    -- Get the currently active session name using session manager
     local function get_active_session()
-        -- Check if we have a current session loaded
-        local this_session = vim.v.this_session
-        return this_session and this_session ~= "" and extract_session_name(this_session) or nil
+        -- Use the session manager's tracking instead of vim.v.this_session
+        return session_manager.get_current_session()
     end
+
     -- Get list of available sessions (excluding "last" session)
     local function get_sessions()
         -- Use the session directory from our config
         local session_dir = vim.fn.stdpath("data") .. "/sessions/"
         local sessions = {}
         local session_files = vim.fn.glob(session_dir .. "*.vim", false, true)
+
         for _, file in ipairs(session_files) do
             local name = extract_session_name(file)
             -- Exclude the "last" session from the picker - it's only accessible via <leader>Sr
@@ -31,9 +33,11 @@ return function(session_manager)
                 })
             end
         end
+
         table.sort(sessions, function(a, b)
             return a.name < b.name
         end)
+
         return sessions
     end
 
@@ -46,6 +50,7 @@ return function(session_manager)
     end
 
     local current_session = get_active_session()
+
     return Snacks.picker.pick({
         title = "Sessions",
         finder = function()
@@ -56,7 +61,9 @@ return function(session_manager)
         },
         layout = { preset = "select" },
         format = function(item)
-            local is_active = current_session and item.name == current_session
+            -- Get fresh active session state for each format call
+            local active_session = get_active_session()
+            local is_active = active_session and item.name == active_session
             return {
                 { " ", is_active and "SessionPickerActive" or "SnacksPickerDir" }, -- Session icon
                 { item.name, "SnacksPickerFile" },
@@ -78,9 +85,12 @@ return function(session_manager)
                     vim.notify('Cannot delete "last" session', vim.log.levels.WARN)
                     return
                 end
-                vim.fn.delete(item.path)
-                sessions = get_sessions()
-                picker:find()
+
+                -- Use session manager's delete function instead of direct file deletion
+                if session_manager.delete_session(item.name) then
+                    sessions = get_sessions()
+                    picker:find()
+                end
             end,
         },
         win = {

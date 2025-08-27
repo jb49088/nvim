@@ -12,8 +12,6 @@ map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })
 
 -- Black hole registers
-map({ "n", "v" }, "d", '"_d', { noremap = true })
-map({ "n", "v" }, "c", '"_c', { noremap = true })
 map({ "n", "v" }, "x", '"_x', { noremap = true })
 
 -- Buffers
@@ -34,30 +32,21 @@ map("n", "<leader>bo", function()
         if not vim.api.nvim_buf_is_valid(buf) then
             return false
         end
-
         -- Check if buffer is listed (this is the main filter most pickers use)
         if not vim.bo[buf].buflisted then
             return false
         end
-
         -- Optional: exclude certain buffer types that pickers typically filter out
         local buftype = vim.bo[buf].buftype
         if buftype == "quickfix" or buftype == "help" or buftype == "terminal" then
             return false
         end
-
-        -- Optional: exclude buffers with no name (scratch buffers)
-        local name = vim.api.nvim_buf_get_name(buf)
-        if name == "" then
-            return false
-        end
-
+        -- Now includes unnamed buffers (removed the name == "" check)
         return true
     end
 
     local total_listable_buffers = 0
     local deleted = 0
-
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if is_listable_buffer(buf) then
             total_listable_buffers = total_listable_buffers + 1

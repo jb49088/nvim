@@ -27,6 +27,7 @@ opt.sidescrolloff = 10 -- Horizontal scroll offset
 -- opt.winborder = "rounded" -- Rounded borders for floating windows (off until https://github.com/folke/which-key.nvim/pull/964)
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
 -- cmd("syntax on")
+opt.shortmess:append("I") -- Dont show intro message
 
 -- Behavior
 opt.swapfile = false -- Disable swap files

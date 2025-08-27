@@ -8,6 +8,9 @@ local auto_save = true
 -- Flag to control auto-restore on startup
 local auto_restore = false
 
+-- Track the currently active session
+local current_session = nil
+
 -- Configuration
 local config = {
     session_dir = vim.fn.stdpath("data") .. "/sessions/",
@@ -159,6 +162,28 @@ local function load_venv_info(name)
     return false
 end
 
+-- Clear everything to return to a clean Neovim state
+local function clear_session()
+    current_session = nil
+
+    if venv_manager and venv_manager.deactivate then
+        venv_manager.deactivate()
+    end
+
+    vim.v.this_session = ""
+    vim.cmd("clearjumps")
+    vim.cmd("delmarks!")
+    vim.cmd("nohlsearch")
+    vim.cmd("cd ~")
+
+    vim.schedule(function()
+        vim.cmd("silent! %bdelete!")
+        vim.cmd("silent! tabonly!")
+        vim.cmd("silent! only!")
+        vim.cmd("enew")
+    end)
+end
+
 -- Get list of available sessions (for internal use)
 local function get_available_sessions()
     ensure_session_dir()
@@ -206,18 +231,32 @@ function M.save_session(name)
         -- Save venv info along with the session
         save_venv_info(name)
 
+        -- Update current session tracking
+        current_session = name or config.last_session
+
         local display_name = name or config.last_session
         print('Saved session "' .. display_name .. '"')
     end
 end
 
--- Load session
+-- Load session with toggle behavior for same session
 function M.load_session(name)
+    local session_name = name or config.last_session
+
+    -- If trying to load the same session that's currently active, clear instead
+    if current_session == session_name then
+        clear_session()
+        return
+    end
+
     local session_path = get_session_path(name)
     if vim.fn.filereadable(session_path) == 1 then
         -- Close all current buffers without prompting
         vim.cmd("silent! %bdelete!")
         vim.cmd("source " .. vim.fn.fnameescape(session_path))
+
+        -- Update current session tracking
+        current_session = session_name
 
         -- Load and apply venv info after a longer delay to ensure session and LSP are fully loaded
         vim.defer_fn(function()
@@ -239,6 +278,16 @@ end
 function M.session_exists(name)
     local session_path = get_session_path(name)
     return vim.fn.filereadable(session_path) == 1
+end
+
+-- Get current session name (for external use)
+function M.get_current_session()
+    return current_session
+end
+
+-- Check if a session is currently active
+function M.is_session_active(name)
+    return current_session == (name or config.last_session)
 end
 
 -- Toggle autosave
@@ -270,6 +319,11 @@ function M.delete_session(name)
         vim.fn.delete(venv_info_path)
     end
 
+    -- Clear current session tracking if we deleted the active session
+    if current_session == name then
+        current_session = nil
+    end
+
     if deleted then
         print('Deleted session "' .. name .. '"')
         return true
@@ -277,6 +331,11 @@ function M.delete_session(name)
         print('Session "' .. name .. '" not found')
         return false
     end
+end
+
+-- Manual clear session function (exposed for session picker highlight updates)
+function M.clear_session()
+    clear_session()
 end
 
 -- Setup function to initialize the session manager
@@ -325,11 +384,12 @@ function M.setup(opts)
         })
         :map("<leader>Sa")
 
-    -- Auto-save on exit and optionally auto-restore on startup
+    -- Auto-save on exit - save to current active session or fallback to "last"
     vim.api.nvim_create_autocmd("VimLeavePre", {
         callback = function()
             if auto_save then
-                M.save_session()
+                -- If we have an active session, update it; otherwise save to "last"
+                M.save_session(current_session)
             end
         end,
     })
@@ -343,6 +403,8 @@ function M.setup(opts)
                 if vim.fn.argc(-1) == 0 then
                     if M.session_exists() then
                         M.load_session()
+                        -- Set current session after auto-restore
+                        current_session = config.last_session
                     end
                 end
             end,

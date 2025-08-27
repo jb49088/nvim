@@ -31,7 +31,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 ### Known Issues
 
-- Tabs picker throwing an error when hovering over help buffers
 - Sometimes opening whichkey has a delay even when on delay = 0
 - Indent guides and winbar breadcrumbs may not be perfect yet
 
@@ -53,12 +52,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             61            931            886           6139
-Markdown                         2             19              4            152
-JSON                             1              0              0             39
+Lua                             61            952            904           6186
+Markdown                         2             19              4            151
+JSON                             1              0              0             38
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            65            950            890           6333
+SUM:                            65            971            908           6378
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->

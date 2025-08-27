@@ -118,8 +118,11 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
 
-                -- Hide component if in a floating window
-                return not is_floating
+                -- Check if buffer has no name
+                local bufname = vim.api.nvim_buf_get_name(0)
+
+                -- Hide component if in a floating window or no name buffer
+                return not is_floating and bufname ~= ""
             end,
             provider = function()
                 local enc = (vim.bo.fenc ~= "" and vim.bo.fenc) or vim.o.enc
@@ -133,8 +136,12 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
 
-                -- Hide component if in a floating window
-                return not is_floating
+                -- Check if buffer has no name
+                local bufname = vim.api.nvim_buf_get_name(0)
+                local is_no_name = bufname == ""
+
+                -- Hide component if in a floating window or no name buffer
+                return not is_floating and not is_no_name
             end,
             provider = function()
                 local fileformat_symbols = {
@@ -413,7 +420,9 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
 
-                return not is_floating
+                local bufname = vim.api.nvim_buf_get_name(0)
+
+                return not is_floating and bufname ~= ""
             end,
             provider = function()
                 return string.format("%d:%d", vim.fn.line("."), vim.fn.col("."))
@@ -426,8 +435,10 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
 
-                -- Hide component if in a floating window
-                return not is_floating
+                local bufname = vim.api.nvim_buf_get_name(0)
+
+                -- Hide component if in a floating window or no name buffer
+                return not is_floating and bufname ~= ""
             end,
             provider = function()
                 local line, total = vim.fn.line("."), vim.fn.line("$")
