@@ -133,6 +133,7 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations
+        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 
         -- toggles
         -- stylua: ignore start

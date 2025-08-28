@@ -5,8 +5,8 @@ local config = {
     left = { "mark", "sign" }, -- priority of signs on the left (high to low)
     right = { "fold", "git" }, -- priority of signs on the right (high to low)
     folds = {
-        open = false, -- show open fold icons
-        git_hl = false, -- use Git Signs hl for fold icons
+        open = true, -- show open fold icons
+        git_hl = true, -- use Git Signs hl for fold icons
     },
     git = {
         patterns = { "GitSign", "MiniDiffSign" }, -- patterns to match Git signs
@@ -92,13 +92,14 @@ local function line_signs(win, buf, lnum)
     vim.api.nvim_win_call(win, function()
         if vim.fn.foldclosed(lnum) >= 0 then
             signs[#signs + 1] = {
-                text = vim.opt.fillchars:get().foldclose or "",
-                texthl = "Folded",
+                text = vim.opt.fillchars:get().foldclose or "",
+                texthl = "FoldColumn",
                 type = "fold",
             }
         elseif config.folds.open and vim.fn.foldlevel(lnum) > vim.fn.foldlevel(lnum - 1) then
             signs[#signs + 1] = {
-                text = vim.opt.fillchars:get().foldopen or "",
+                text = vim.opt.fillchars:get().foldopen or "",
+                texthl = "FoldColumn",
                 type = "fold",
             }
         end
