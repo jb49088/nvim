@@ -5,7 +5,7 @@ return {
         "williamboman/mason-lspconfig.nvim",
     },
     config = function()
-        -- mason
+        -- Mason
         require("mason").setup({
             ui = {
                 border = "rounded",
@@ -13,7 +13,7 @@ return {
             },
         })
 
-        -- mason lsp config
+        -- Mason lsp config
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls", -- lua lsp

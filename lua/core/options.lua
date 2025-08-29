@@ -7,7 +7,7 @@ g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
 g.have_nerd_font = true -- Enable nerd font
 opt.number = true -- Show absolute line numbers
 opt.relativenumber = true -- Show relative line numbers
-opt.numberwidth = 5 -- Set line number column width
+opt.numberwidth = 4 -- Set line number column width
 opt.mouse = "a" -- Enable mouse in all modes
 opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu

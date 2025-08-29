@@ -31,7 +31,8 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 ### Known Issues
 
-- Sometimes opening whichkey has a delay even when on delay = 0
+- nvim-lspconfig auto-spawns duplicate LSP instances with empty settings for supported filetypes
+- gitsigns.nvim's conditional keymaps are causing a whichkey delay (fixes itself upon certain actions)
 - Indent guides and winbar breadcrumbs may not be perfect yet
 
 ### Startup Time
@@ -53,11 +54,11 @@ UIEnter   28.4ms (+5.4ms)
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             62            956            909           6215
-Markdown                         2             19              4            151
+Markdown                         2             19              4            153
 JSON                             1              0              0             40
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            66            975            913           6409
+SUM:                            66            975            913           6411
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
