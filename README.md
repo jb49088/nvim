@@ -31,7 +31,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 
 ### Known Issues
 
-- nvim-lspconfig auto-spawns duplicate LSP instances with empty settings for supported filetypes
 - gitsigns.nvim's conditional keymaps are causing a whichkey delay (fixes itself upon certain actions)
 - Indent guides and winbar breadcrumbs may not be perfect yet
 
@@ -54,11 +53,11 @@ UIEnter   28.4ms (+5.4ms)
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             62            954            908           6203
-Markdown                         2             19              4            153
+Markdown                         2             19              4            152
 JSON                             1              0              0             40
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            66            973            912           6399
+SUM:                            66            973            912           6398
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
