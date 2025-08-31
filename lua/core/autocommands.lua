@@ -34,6 +34,22 @@ vim.api.nvim_create_autocmd("TextYankPost", {
     end,
 })
 
+-- Hide diagnostics in insert mode
+vim.api.nvim_create_autocmd("InsertEnter", {
+    group = "ui_enhancements",
+    callback = function()
+        vim.diagnostic.hide()
+    end,
+})
+
+-- Show diagnostics when leaving insert mode
+vim.api.nvim_create_autocmd("InsertLeave", {
+    group = "ui_enhancements",
+    callback = function()
+        vim.diagnostic.show()
+    end,
+})
+
 -- Always open help in vertical split
 vim.api.nvim_create_autocmd("BufWinEnter", {
     group = "ui_enhancements",

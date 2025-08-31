@@ -340,7 +340,15 @@ return {
         }
 
         local Diagnostics = {
-            condition = conditions.has_diagnostics,
+            condition = function()
+                -- Hide diagnostics in insert mode
+                local mode = vim.api.nvim_get_mode().mode
+                if mode == "i" or mode == "ic" or mode == "ix" then
+                    return false
+                end
+
+                return conditions.has_diagnostics
+            end,
             static = {
                 error_icon = vim.diagnostic.config().signs.text[vim.diagnostic.severity.ERROR],
                 warn_icon = vim.diagnostic.config().signs.text[vim.diagnostic.severity.WARN],
@@ -356,6 +364,7 @@ return {
             update = {
                 "DiagnosticChanged",
                 "BufEnter",
+                "ModeChanged", -- Add this to update when mode changes
                 callback = vim.schedule_wrap(function()
                     vim.cmd("redrawstatus")
                     vim.cmd("redrawtabline")
