@@ -16,3 +16,4 @@
 - `:version` — show Neovim version and compile info
 - `:lua local ft=vim.bo.filetype; local tools={}; for _,s in ipairs(vim.lsp.get_clients({bufnr=0})) do table.insert(tools,s.name) end; local lint=require("lint"); for _,l in ipairs(lint.linters_by_ft[ft] or {}) do table.insert(tools,l) end; local conform=require("conform"); for _,f in ipairs(conform.list_formatters(0)) do table.insert(tools,f.name) end; print(vim.inspect(tools))` — show all active LSPs, linters, and formatters for the current buffer
 - `:set scrolloff?` — show current scrolloff value
+- `:echo len(getbufinfo())` — see buffer count

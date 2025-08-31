@@ -100,7 +100,7 @@ return {
                     return {
                         bg = get_mode_color(),
                         fg = "black",
-                        bold = true,
+                        bold = false,
                     }
                 end,
             },
@@ -467,7 +467,7 @@ return {
                     return {
                         bg = get_mode_color(),
                         fg = "black",
-                        bold = true,
+                        bold = false,
                     }
                 end,
             },

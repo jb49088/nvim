@@ -14,7 +14,7 @@ return {
         -- Ensure install directory is in runtimepath
         vim.opt.runtimepath:prepend(install_dir)
 
-        -- Install parsers (same as your ensure_installed list)
+        -- Install parsers
         require("nvim-treesitter").install({
             "bash",
             "c",
@@ -30,7 +30,7 @@ return {
             "python",
         })
 
-        -- Enable treesitter features
+        -- Enable highlighting
         vim.api.nvim_create_autocmd("FileType", {
             pattern = { "python", "lua", "bash", "c", "html", "markdown", "vim", "ruby" },
             callback = function()
