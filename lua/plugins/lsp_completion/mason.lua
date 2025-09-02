@@ -18,6 +18,7 @@ return {
             ensure_installed = {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
+                "bashls", -- bash lsp
             },
             automatic_enable = true,
         })
@@ -27,6 +28,8 @@ return {
             "luacheck", -- lua linter
             "stylua", -- lua formatter
             "ruff", -- python linter/formatter
+            "shellcheck", -- bash linter
+            "shfmt", -- bash formatter
         }
 
         local registry = require("mason-registry")

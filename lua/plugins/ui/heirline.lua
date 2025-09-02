@@ -250,13 +250,11 @@ return {
             local lazy_config_avail, lazy_config = pcall(require, "lazy.core.config")
             return lazy_config_avail and lazy_config.spec.plugins[plugin] ~= nil
         end
-
         -- Check plugin availability once during setup
         local integrations = {
             conform = is_available("conform.nvim"),
             lint = is_available("nvim-lint"),
         }
-
         local ActiveTooling = {
             condition = function()
                 -- Quick LSP check
@@ -264,7 +262,6 @@ return {
                 if has_lsp then
                     return true
                 end
-
                 -- Check linters (only if plugin is available and loaded)
                 if integrations.lint and package.loaded["lint"] then
                     local lint = require("lint")
@@ -273,7 +270,6 @@ return {
                         return true
                     end
                 end
-
                 -- Check formatters (only if plugin is available and loaded)
                 if integrations.conform and package.loaded["conform"] then
                     local conform = require("conform")
@@ -282,22 +278,17 @@ return {
                         return true
                     end
                 end
-
                 return false
             end,
-
             update = { "LspAttach", "LspDetach", "BufEnter", "FileType" },
-
             provider = function()
                 local bufnr = 0
                 local all_tools = {}
                 local seen_tools = {}
-
                 -- Helper to normalize ruff variants
                 local function normalize_name(name)
                     return name:match("^ruff") and "ruff" or name
                 end
-
                 -- Add LSPs
                 for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
                     local normalized = normalize_name(server.name)
@@ -307,10 +298,24 @@ return {
                     end
                 end
 
+                -- Add shellcheck for bash files when bashls is active
+                local ft = vim.bo[bufnr].filetype
+                if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
+                    -- Check if bashls is attached
+                    for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+                        if server.name == "bashls" then
+                            if not seen_tools["shellcheck"] then
+                                table.insert(all_tools, "shellcheck")
+                                seen_tools["shellcheck"] = true
+                            end
+                            break
+                        end
+                    end
+                end
+
                 -- Add linters (only if available and loaded)
                 if integrations.lint and package.loaded["lint"] then
                     local lint = require("lint")
-                    local ft = vim.bo[bufnr].filetype
                     if lint.linters_by_ft[ft] then
                         for _, linter in ipairs(lint.linters_by_ft[ft]) do
                             local normalized = normalize_name(linter)
@@ -321,7 +326,6 @@ return {
                         end
                     end
                 end
-
                 -- Add formatters (only if available and loaded)
                 if integrations.conform and package.loaded["conform"] then
                     local conform = require("conform")
@@ -334,7 +338,6 @@ return {
                         end
                     end
                 end
-
                 return #all_tools > 0 and table.concat(all_tools, ", ") or ""
             end,
         }

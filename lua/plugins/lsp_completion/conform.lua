@@ -29,6 +29,7 @@ return {
                 lua = { "stylua" },
                 python = { "ruff_format", "ruff_organize_imports" },
                 markdown = { "injected" },
+                sh = { "shfmt" },
             },
             -- Custom formatter configurations
             formatters = {

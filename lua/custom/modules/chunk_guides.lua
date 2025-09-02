@@ -1,4 +1,5 @@
 -- TODO: test what other chunk plugins do with markdown and implement something similar
+-- figure out what to do with chunk when folding code
 
 local treesitter = vim.treesitter
 local api = vim.api

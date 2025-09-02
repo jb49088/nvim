@@ -32,7 +32,7 @@ return {
 
         -- Enable highlighting
         vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "python", "lua", "bash", "c", "html", "markdown", "vim", "ruby" },
+            pattern = { "python", "lua", "sh", "c", "html", "markdown", "vim", "ruby" },
             callback = function()
                 vim.treesitter.start()
             end,
