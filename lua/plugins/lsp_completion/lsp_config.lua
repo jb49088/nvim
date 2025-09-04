@@ -64,6 +64,7 @@ return {
                             globals = {
                                 "vim",
                                 "Snacks",
+                                "rep",
                             },
                         },
                     },

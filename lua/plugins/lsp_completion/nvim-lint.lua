@@ -11,6 +11,7 @@ return {
             "--globals",
             "vim",
             "Snacks",
+            "rep",
             "--formatter",
             "plain",
             "--codes",

@@ -70,9 +70,6 @@ return {
                 tabs = tabs_picker,
             },
         },
-
-        --- SCROLL ---
-        scroll = { enabled = true },
     },
     -- stylua: ignore
     keys = {
