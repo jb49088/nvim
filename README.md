@@ -53,12 +53,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             64            960            930           6500
+Lua                             61            968            779           6545
 Markdown                         2             19              4            156
 JSON                             1              0              0             42
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            68            979            934           6701
+SUM:                            65            987            783           6746
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -108,10 +108,8 @@ nvim
 │   └── plugins
 │       ├── coding
 │       │   ├── autopairs.lua
-│       │   ├── dropbar.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
-│       │   ├── navic.lua
 │       │   ├── surround.lua
 │       │   ├── treesitter.lua
 │       │   └── treesj.lua
@@ -141,7 +139,6 @@ nvim
 │           ├── indent_blankline.lua
 │           ├── noice.lua
 │           ├── oil.lua
-│           ├── profile.lua
 │           ├── scrolleof.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua
@@ -149,7 +146,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 67 files
+13 directories, 64 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
