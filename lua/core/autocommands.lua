@@ -34,19 +34,19 @@ vim.api.nvim_create_autocmd("TextYankPost", {
     end,
 })
 
--- Hide diagnostics in insert mode
+-- Hide diagnostics in insert mode for current buffer only
 vim.api.nvim_create_autocmd("InsertEnter", {
     group = "ui_enhancements",
     callback = function()
-        vim.diagnostic.hide()
+        vim.diagnostic.hide(nil, vim.api.nvim_get_current_buf())
     end,
 })
 
--- Show diagnostics when leaving insert mode
+-- Show diagnostics when leaving insert mode for current buffer only
 vim.api.nvim_create_autocmd("InsertLeave", {
     group = "ui_enhancements",
     callback = function()
-        vim.diagnostic.show()
+        vim.diagnostic.show(nil, vim.api.nvim_get_current_buf())
     end,
 })
 

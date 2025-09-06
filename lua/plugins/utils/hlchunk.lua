@@ -14,8 +14,8 @@ return {
                     right_arrow = "─",
                 },
                 error_sign = false,
-                duration = 0,
-                delay = 0,
+                duration = 200,
+                delay = 300,
             },
             indent = {
                 enable = false,
