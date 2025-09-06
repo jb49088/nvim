@@ -81,11 +81,8 @@ local M = {
     pre_virt_text_list = {},
     pre_row_list = {},
     pre_virt_text_win_col_list = {},
-    -- Track the last regular window to only show chunks on focused buffer
+    -- NEW: Track the last regular window to only show chunks on focused buffer
     last_regular_win = nil,
-    -- NEW: Track extmarks created during animation
-    current_animation_extmarks = {},
-    current_bufnr = nil,
 }
 
 -- Chunk range return codes
@@ -120,13 +117,13 @@ local node_types = {
     },
 }
 
--- Check if window is floating
+-- NEW: Check if window is floating
 local function is_floating_win(winid)
     local win_config = api.nvim_win_get_config(winid or 0)
     return win_config.relative ~= ""
 end
 
--- Disable chunks for buffer
+-- NEW: Disable chunks for buffer
 local function disable_chunks_for_buffer(bufnr)
     if api.nvim_buf_is_valid(bufnr) then
         clear_highlights(bufnr)
@@ -554,7 +551,7 @@ local function should_render(bufnr)
         return false
     end
 
-    -- Only render for current window
+    -- NEW: Only render for current window
     local current_win = api.nvim_get_current_win()
     local current_buf = api.nvim_get_current_buf()
     if bufnr ~= current_buf then
@@ -574,13 +571,7 @@ local function clear_highlights(bufnr, start_row, end_row)
     end
 
     if M.ns_id ~= -1 then
-        -- More aggressive clearing - clear entire namespace first
-        api.nvim_buf_clear_namespace(bufnr, M.ns_id, 0, -1)
-
-        -- Then clear the specific range if provided
-        if start_row or end_row then
-            api.nvim_buf_clear_namespace(bufnr, M.ns_id, start, finish)
-        end
+        api.nvim_buf_clear_namespace(bufnr, M.ns_id, start, finish)
     end
 end
 
@@ -597,15 +588,6 @@ local function stop_render()
         M.animation_task:stop()
         M.animation_task = nil
     end
-
-    -- Clean up any extmarks from the current animation
-    if M.current_bufnr and api.nvim_buf_is_valid(M.current_bufnr) then
-        for _, extmark_id in ipairs(M.current_animation_extmarks) do
-            pcall(api.nvim_buf_del_extmark, M.current_bufnr, M.ns_id, extmark_id)
-        end
-    end
-    M.current_animation_extmarks = {}
-    M.current_bufnr = nil
 end
 
 -- Get chunk data for rendering
@@ -676,58 +658,45 @@ local function render_animated(chunk_range)
         return
     end
 
-    -- Stop any existing animation and clear highlights BEFORE starting new one
     stop_render()
+    update_pre_state(virt_text_list, row_list, virt_text_win_col_list)
     clear_highlights(chunk_range.bufnr)
 
-    -- Give a small delay to ensure cleanup is complete
-    vim.schedule(function()
-        update_pre_state(virt_text_list, row_list, virt_text_win_col_list)
+    local text_hl = update_mode_highlight()
 
-        -- Set current buffer for tracking
-        M.current_bufnr = chunk_range.bufnr
-        M.current_animation_extmarks = {}
-
-        local text_hl = update_mode_highlight()
-
-        if config.animation_duration > 0 then
-            M.animation_task = create_loop_task(function(vt, row, vt_win_col)
-                local row_opts = {
-                    virt_text = { { vt, text_hl } },
-                    virt_text_pos = "overlay",
-                    virt_text_win_col = vt_win_col,
-                    hl_mode = "combine",
-                    priority = 100,
-                }
-                if api.nvim_buf_is_valid(chunk_range.bufnr) and api.nvim_buf_line_count(chunk_range.bufnr) > row then
-                    -- Track the extmark ID
-                    local extmark_id = api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
-                    table.insert(M.current_animation_extmarks, extmark_id)
-                end
-            end, "linear", config.animation_duration, virt_text_list, row_list, virt_text_win_col_list)
-            M.animation_task:start()
-        else
-            -- Non-animated version also tracks extmarks
-            for i, vt in ipairs(virt_text_list) do
-                local row_opts = {
-                    virt_text = { { vt, text_hl } },
-                    virt_text_pos = "overlay",
-                    virt_text_win_col = virt_text_win_col_list[i],
-                    hl_mode = "combine",
-                    priority = 100,
-                }
-                local row = row_list[i]
-                if
-                    row
-                    and api.nvim_buf_is_valid(chunk_range.bufnr)
-                    and api.nvim_buf_line_count(chunk_range.bufnr) > row
-                then
-                    local extmark_id = api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
-                    table.insert(M.current_animation_extmarks, extmark_id)
-                end
+    if config.animation_duration > 0 then
+        M.animation_task = create_loop_task(function(vt, row, vt_win_col)
+            local row_opts = {
+                virt_text = { { vt, text_hl } },
+                virt_text_pos = "overlay",
+                virt_text_win_col = vt_win_col,
+                hl_mode = "combine",
+                priority = 100,
+            }
+            if api.nvim_buf_is_valid(chunk_range.bufnr) and api.nvim_buf_line_count(chunk_range.bufnr) > row then
+                api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
+            end
+        end, "linear", config.animation_duration, virt_text_list, row_list, virt_text_win_col_list)
+        M.animation_task:start()
+    else
+        for i, vt in ipairs(virt_text_list) do
+            local row_opts = {
+                virt_text = { { vt, text_hl } },
+                virt_text_pos = "overlay",
+                virt_text_win_col = virt_text_win_col_list[i],
+                hl_mode = "combine",
+                priority = 100,
+            }
+            local row = row_list[i]
+            if
+                row
+                and api.nvim_buf_is_valid(chunk_range.bufnr)
+                and api.nvim_buf_line_count(chunk_range.bufnr) > row
+            then
+                api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
             end
         end
-    end)
+    end
 end
 
 -- Main render function with debouncing
@@ -768,10 +737,11 @@ local function on_render()
         }
         render_chunk_guides(range_with_bufnr)
     elseif ret_code == CHUNK_RANGE_RET.NO_CHUNK then
-        -- Properly stop animation and clear when no chunk is found
-        stop_render()
-        clear_highlights(bufnr)
         update_pre_state({}, {}, {})
+        if M.animation_task then
+            M.animation_task:stop()
+        end
+        clear_highlights(bufnr)
     elseif ret_code == CHUNK_RANGE_RET.NO_TS then
         if config.notify then
             vim.notify("[chunk_guides]: no parser for " .. vim.bo[bufnr].ft, vim.log.levels.INFO, { once = true })
@@ -783,8 +753,8 @@ end
 local function setup_autocmds()
     M.augroup = api.nvim_create_augroup("ChunkGuides", { clear = true })
 
-    -- Window management - only show chunks on focused buffer
-    api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "BufEnter" }, {
+    -- NEW: Window management - only show chunks on focused buffer
+    api.nvim_create_autocmd(config.fire_events, {
         group = M.augroup,
         callback = function()
             local current_win = api.nvim_get_current_win()
