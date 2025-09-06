@@ -26,13 +26,11 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
 --- UI/Visual enhancements ---
 vim.api.nvim_create_augroup("ui_enhancements", { clear = true })
 
--- Highlight text on yank in current window only
+-- Highlight text on yank
 vim.api.nvim_create_autocmd("TextYankPost", {
     group = "ui_enhancements",
     callback = function()
-        vim.hl.on_yank({
-            winid = vim.api.nvim_get_current_win(),
-        })
+        vim.hl.on_yank()
     end,
 })
 
@@ -83,24 +81,6 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
     callback = function()
         vim.o.cursorline = false
         vim.o.cursorline = true
-    end,
-})
-
--- Show visual selection in active windows
-vim.api.nvim_create_autocmd("WinEnter", {
-    group = "ui_enhancements",
-    pattern = "*",
-    callback = function()
-        vim.wo.winhighlight = ""
-    end,
-})
-
--- Hide visual selection in inactive windows
-vim.api.nvim_create_autocmd("WinLeave", {
-    group = "ui_enhancements",
-    pattern = "*",
-    callback = function()
-        vim.wo.winhighlight = "Visual:NONE,VisualNOS:NONE"
     end,
 })
 

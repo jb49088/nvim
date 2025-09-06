@@ -106,18 +106,21 @@ local function get_line(bufnr, lnum)
     return lines[1] or ""
 end
 
--- NEW: Check if a row is in the current viewport
+-- UPDATED: Check if a row is in the current viewport
 local function is_row_in_viewport(row)
-    local win_height = api.nvim_win_get_height(0)
     local top_line = fn.line("w0") - 1
     local bottom_line = fn.line("w$") - 1
 
     return row >= top_line and row <= bottom_line
 end
 
--- NEW: Check if any part of chunk is in viewport
+-- UPDATED: Check if any part of chunk intersects with viewport
 local function is_chunk_in_viewport(start_row, end_row)
-    return is_row_in_viewport(start_row) or is_row_in_viewport(end_row)
+    local top_line = fn.line("w0") - 1
+    local bottom_line = fn.line("w$") - 1
+
+    -- Check if chunk intersects with viewport (any overlap)
+    return not (end_row < top_line or start_row > bottom_line)
 end
 
 -- NEW: Calculate adaptive animation duration based on total character length (no max cap)
@@ -254,18 +257,7 @@ local function utf8_split(inputstr)
     return list
 end
 
-local function transpose(matrix)
-    local res = {}
-    for i = 1, #matrix[1] do
-        res[i] = {}
-        for j = 1, #matrix do
-            res[i][j] = matrix[j][i]
-        end
-    end
-    return res
-end
-
--- NEW: Viewport-aware animation task
+-- UPDATED: Viewport-aware animation task with immediate drawing for visible portions
 local function create_viewport_aware_task(
     fn_callback,
     strategy,
@@ -304,11 +296,30 @@ local function create_viewport_aware_task(
             return
         end
 
+        -- NEW: Find the first visible row in the chunk
+        local first_visible_index = 1
+        for i = 1, #self.data do
+            local row = self.data[i][2]
+            if is_row_in_viewport(row) then
+                first_visible_index = i
+                break
+            end
+        end
+
+        -- NEW: If we're starting from a visible row that's not the first one,
+        -- instantly render everything up to this point
+        if first_visible_index > 1 then
+            for i = 1, first_visible_index - 1 do
+                self.fn_callback(unpack(self.data[i]))
+            end
+            self.progress = first_visible_index
+        end
+
         local f
         f = function()
-            -- Check if chunk is still in viewport
+            -- Check if any part of chunk is still in viewport
             if not is_chunk_in_viewport(self.chunk_start_row, self.chunk_end_row) then
-                -- Chunk went off-screen, complete instantly
+                -- Chunk completely off-screen, complete instantly
                 for i = self.progress, #self.data do
                     self.fn_callback(unpack(self.data[i]))
                 end
@@ -316,7 +327,7 @@ local function create_viewport_aware_task(
                 return
             end
 
-            -- Normal animation step
+            -- Render the current step
             self.fn_callback(unpack(self.data[self.progress]))
             self.progress = self.progress + 1
 
@@ -334,10 +345,14 @@ local function create_viewport_aware_task(
                 end
             end
         end
-        self.timer = set_timeout(f, self.time_intervals[self.progress])
-        if not self.timer then
-            self:stop()
-            return
+
+        -- Start from the current progress (which might be after instant rendering)
+        if self.progress <= #self.time_intervals then
+            self.timer = set_timeout(f, self.time_intervals[self.progress])
+            if not self.timer then
+                self:stop()
+                return
+            end
         end
     end
 
@@ -645,7 +660,6 @@ local function should_render(bufnr)
     end
 
     -- NEW: Only render for current window
-    local current_win = api.nvim_get_current_win()
     local current_buf = api.nvim_get_current_buf()
     if bufnr ~= current_buf then
         return false
@@ -1034,21 +1048,21 @@ api.nvim_create_user_command("ToggleChunkGuides", function()
     M.toggle()
 end, { desc = "Toggle chunk guides" })
 
--- Snacks toggle integration
-if Snacks and Snacks.toggle then
-    Snacks.toggle({
-        name = "Chunk Guides",
-        get = function()
-            return M.enabled
-        end,
-        set = function(enabled)
-            if enabled then
-                M.enable()
-            else
-                M.disable()
-            end
-        end,
-    }):map("<leader>uC")
-end
+-- Snacks toggle integration (commented out since Snacks might not be available)
+-- if Snacks and Snacks.toggle then
+--     Snacks.toggle({
+--         name = "Chunk Guides",
+--         get = function()
+--             return M.enabled
+--         end,
+--         set = function(enabled)
+--             if enabled then
+--                 M.enable()
+--             else
+--                 M.disable()
+--             end
+--         end,
+--     }):map("<leader>uC")
+-- end
 
 return M
