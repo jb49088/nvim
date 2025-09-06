@@ -16,6 +16,13 @@ local config = {
     textobject = "",
     max_file_size = 1024 * 1024,
     animation_duration = 200,
+    -- NEW: Adaptive animation configuration - now character-based, no max duration
+    adaptive_animation = {
+        enabled = true,
+        min_duration = 80, -- ms for very small chunks (few characters)
+        base_multiplier = 8, -- ms per character (instead of per line)
+        min_chunk_size = 3, -- chunks with this many chars or less use min_duration
+    },
     fire_events = { "CursorHold", "CursorHoldI" },
     notify = true,
     exclude_filetypes = {
@@ -85,6 +92,72 @@ local M = {
     last_regular_win = nil,
 }
 
+-- Get indentation and line utilities
+local function get_indent(bufnr, lnum)
+    return fn.indent(lnum + 1)
+end
+
+local function get_sw(bufnr)
+    return fn.shiftwidth()
+end
+
+local function get_line(bufnr, lnum)
+    local lines = api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, false)
+    return lines[1] or ""
+end
+
+-- NEW: Check if a row is in the current viewport
+local function is_row_in_viewport(row)
+    local win_height = api.nvim_win_get_height(0)
+    local top_line = fn.line("w0") - 1
+    local bottom_line = fn.line("w$") - 1
+
+    return row >= top_line and row <= bottom_line
+end
+
+-- NEW: Check if any part of chunk is in viewport
+local function is_chunk_in_viewport(start_row, end_row)
+    return is_row_in_viewport(start_row) or is_row_in_viewport(end_row)
+end
+
+-- NEW: Calculate adaptive animation duration based on total character length (no max cap)
+local function calculate_adaptive_duration(chunk_range)
+    if not config.adaptive_animation.enabled then
+        return config.animation_duration
+    end
+
+    -- Calculate the total character length of the guide
+    local total_chars = 0
+
+    -- Top horizontal line characters
+    local beg_blank_len = get_indent(chunk_range.bufnr, chunk_range.start_row)
+    local start_col = math.max(beg_blank_len - M.shiftwidth, 0)
+    if beg_blank_len > 0 then
+        local virt_text_len = beg_blank_len - start_col
+        total_chars = total_chars + virt_text_len -- corner_top + horizontal_line:rep(virt_text_len - 1)
+    end
+
+    -- Vertical line characters (one per middle line)
+    local mid_char_nums = chunk_range.end_row - chunk_range.start_row - 1
+    if mid_char_nums > 0 then
+        total_chars = total_chars + mid_char_nums -- vertical_line for each middle line
+    end
+
+    -- Bottom horizontal line characters
+    local end_blank_len = get_indent(chunk_range.bufnr, chunk_range.end_row)
+    if end_blank_len > 0 then
+        local virt_text_len = end_blank_len - start_col
+        total_chars = total_chars + virt_text_len -- corner_bottom + horizontal_line:rep(virt_text_len - 1)
+    end
+
+    -- Calculate duration based on character count
+    if total_chars <= config.adaptive_animation.min_chunk_size then
+        return config.adaptive_animation.min_duration
+    end
+
+    return config.adaptive_animation.min_duration + (total_chars * config.adaptive_animation.base_multiplier)
+end
+
 -- Chunk range return codes
 local CHUNK_RANGE_RET = {
     OK = 0,
@@ -123,10 +196,17 @@ local function is_floating_win(winid)
     return win_config.relative ~= ""
 end
 
--- NEW: Disable chunks for buffer
-local function disable_chunks_for_buffer(bufnr)
-    if api.nvim_buf_is_valid(bufnr) then
-        clear_highlights(bufnr)
+-- Clear highlights
+local function clear_highlights(bufnr, start_row, end_row)
+    local start = start_row or 0
+    local finish = end_row and (end_row + 1) or -1
+
+    if finish == api.nvim_buf_line_count(bufnr) then
+        finish = -1
+    end
+
+    if M.ns_id ~= -1 then
+        api.nvim_buf_clear_namespace(bufnr, M.ns_id, start, finish)
     end
 end
 
@@ -185,9 +265,22 @@ local function transpose(matrix)
     return res
 end
 
--- Animation loop task
-local function create_loop_task(fn_callback, strategy, duration, ...)
-    local data = transpose({ ... })
+-- NEW: Viewport-aware animation task
+local function create_viewport_aware_task(
+    fn_callback,
+    strategy,
+    duration,
+    virt_text_list,
+    row_list,
+    virt_text_win_col_list,
+    chunk_start_row,
+    chunk_end_row
+)
+    local data = {}
+    for i = 1, #virt_text_list do
+        table.insert(data, { virt_text_list[i], row_list[i], virt_text_win_col_list[i] })
+    end
+
     local timer = nil
     local time_intervals = {}
     for _ = 1, #data do
@@ -202,6 +295,8 @@ local function create_loop_task(fn_callback, strategy, duration, ...)
         strategy = strategy,
         time_intervals = time_intervals,
         progress = progress,
+        chunk_start_row = chunk_start_row,
+        chunk_end_row = chunk_end_row,
     }
 
     function task:start()
@@ -211,8 +306,20 @@ local function create_loop_task(fn_callback, strategy, duration, ...)
 
         local f
         f = function()
+            -- Check if chunk is still in viewport
+            if not is_chunk_in_viewport(self.chunk_start_row, self.chunk_end_row) then
+                -- Chunk went off-screen, complete instantly
+                for i = self.progress, #self.data do
+                    self.fn_callback(unpack(self.data[i]))
+                end
+                self:stop()
+                return
+            end
+
+            -- Normal animation step
             self.fn_callback(unpack(self.data[self.progress]))
             self.progress = self.progress + 1
+
             if self.progress > #self.time_intervals then
                 if self.timer then
                     self.timer:stop()
@@ -276,7 +383,7 @@ local function has_treesitter(bufnr)
 end
 
 -- Enhanced context-based detection for end-of-line cursors
-local function get_chunk_range_by_context(bufnr, row, _)
+local function get_chunk_range_by_context(bufnr, row, col)
     local base_flag = "nWz"
     local cur_row_val = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1]
     if not cur_row_val then
@@ -437,25 +544,11 @@ local function calc_virt_text_pos(str, col, leftcol)
     local len = vim.api.nvim_strwidth(str)
     if col < leftcol then
         local byte_idx = math.min(leftcol - col, len)
-        local utf_beg = vim.str_byteindex(str, byte_idx, true) -- Fix: Add third parameter for strict mode
+        local utf_beg = vim.str_byteindex(str, byte_idx, true)
         str = str:sub(utf_beg + 1)
     end
     col = math.max(col - leftcol, 0)
     return str, col
-end
-
--- Get indentation and line utilities
-local function get_indent(_, lnum)
-    return fn.indent(lnum + 1)
-end
-
-local function get_sw(_)
-    return fn.shiftwidth()
-end
-
-local function get_line(bufnr, lnum)
-    local lines = api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, false)
-    return lines[1] or ""
 end
 
 -- Mode-based color functionality
@@ -561,20 +654,6 @@ local function should_render(bufnr)
     return true
 end
 
--- Clear highlights
-local function clear_highlights(bufnr, start_row, end_row)
-    local start = start_row or 0
-    local finish = end_row and (end_row + 1) or -1
-
-    if finish == api.nvim_buf_line_count(bufnr) then
-        finish = -1
-    end
-
-    if M.ns_id ~= -1 then
-        api.nvim_buf_clear_namespace(bufnr, M.ns_id, start, finish)
-    end
-end
-
 -- Update previous state
 local function update_pre_state(virt_text_list, row_list, virt_text_win_col_list)
     M.pre_virt_text_list = virt_text_list
@@ -664,19 +743,31 @@ local function render_animated(chunk_range)
 
     local text_hl = update_mode_highlight()
 
-    if config.animation_duration > 0 then
-        M.animation_task = create_loop_task(function(vt, row, vt_win_col)
-            local row_opts = {
-                virt_text = { { vt, text_hl } },
-                virt_text_pos = "overlay",
-                virt_text_win_col = vt_win_col,
-                hl_mode = "combine",
-                priority = 100,
-            }
-            if api.nvim_buf_is_valid(chunk_range.bufnr) and api.nvim_buf_line_count(chunk_range.bufnr) > row then
-                api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
-            end
-        end, "linear", config.animation_duration, virt_text_list, row_list, virt_text_win_col_list)
+    -- NEW: Use adaptive duration based on character length (no max cap)
+    local animation_duration = calculate_adaptive_duration(chunk_range)
+
+    if animation_duration > 0 then
+        M.animation_task = create_viewport_aware_task(
+            function(vt, row, vt_win_col)
+                local row_opts = {
+                    virt_text = { { vt, text_hl } },
+                    virt_text_pos = "overlay",
+                    virt_text_win_col = vt_win_col,
+                    hl_mode = "combine",
+                    priority = 100,
+                }
+                if api.nvim_buf_is_valid(chunk_range.bufnr) and api.nvim_buf_line_count(chunk_range.bufnr) > row then
+                    api.nvim_buf_set_extmark(chunk_range.bufnr, M.ns_id, row, 0, row_opts)
+                end
+            end,
+            "linear",
+            animation_duration,
+            virt_text_list,
+            row_list,
+            virt_text_win_col_list,
+            chunk_range.start_row,
+            chunk_range.end_row
+        )
         M.animation_task:start()
     else
         for i, vt in ipairs(virt_text_list) do

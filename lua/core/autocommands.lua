@@ -26,11 +26,13 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
 --- UI/Visual enhancements ---
 vim.api.nvim_create_augroup("ui_enhancements", { clear = true })
 
--- Highlight text on yank
+-- Highlight text on yank in current window only
 vim.api.nvim_create_autocmd("TextYankPost", {
     group = "ui_enhancements",
     callback = function()
-        vim.hl.on_yank()
+        vim.hl.on_yank({
+            winid = vim.api.nvim_get_current_win(),
+        })
     end,
 })
 
@@ -84,6 +86,24 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
     end,
 })
 
+-- Show visual selection in active windows
+vim.api.nvim_create_autocmd("WinEnter", {
+    group = "ui_enhancements",
+    pattern = "*",
+    callback = function()
+        vim.wo.winhighlight = ""
+    end,
+})
+
+-- Hide visual selection in inactive windows
+vim.api.nvim_create_autocmd("WinLeave", {
+    group = "ui_enhancements",
+    pattern = "*",
+    callback = function()
+        vim.wo.winhighlight = "Visual:NONE,VisualNOS:NONE"
+    end,
+})
+
 --- Terminal settings ---
 vim.api.nvim_create_augroup("terminal_settings", { clear = true })
 
@@ -125,5 +145,25 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
             vim.wo.scrolloff = 0
             vim.cmd("redraw!")
         end
+    end,
+})
+
+-- Hide visual selection in inactive windows without affecting syntax highlighting
+vim.api.nvim_create_augroup("VisualActiveOnly", { clear = true })
+
+vim.api.nvim_create_autocmd("WinEnter", {
+    group = "VisualActiveOnly",
+    pattern = "*",
+    callback = function()
+        vim.wo.winhighlight = ""
+    end,
+})
+
+vim.api.nvim_create_autocmd("WinLeave", {
+    group = "VisualActiveOnly",
+    pattern = "*",
+    callback = function()
+        -- Only hide Visual and VisualNOS, preserve other highlighting
+        vim.wo.winhighlight = "Visual:NONE,VisualNOS:NONE"
     end,
 })
