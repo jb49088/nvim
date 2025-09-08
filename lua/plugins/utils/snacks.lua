@@ -12,7 +12,7 @@ return {
         indent = {
             enabled = false,
             scope = {
-                enabled = false,
+                enabled = true,
             },
             chunk = {
                 enabled = true,

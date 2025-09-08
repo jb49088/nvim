@@ -1,7 +1,3 @@
--- TODO: test what other chunk plugins do with markdown and implement something similar
--- figure out what to do with chunk when folding code
-
-local treesitter = vim.treesitter
 local api = vim.api
 local fn = vim.fn
 
@@ -13,336 +9,603 @@ local config = {
         corner_top = "╭",
         corner_bottom = "╰",
     },
-    use_treesitter = true,
     max_file_size = 1024 * 1024, -- 1MB
+    -- Scope configuration
+    scope = {
+        min_size = 2,
+        max_size = nil,
+        cursor = true,
+        edge = true,
+        siblings = false,
+        filter = function(buf)
+            return vim.bo[buf].buftype == "" and vim.b[buf].snacks_scope ~= false and vim.g.snacks_scope ~= false
+        end,
+        debounce = 30,
+        treesitter = {
+            enabled = true,
+            injections = true,
+            blocks = {
+                enabled = false,
+                "function_declaration",
+                "function_definition",
+                "method_declaration",
+                "method_definition",
+                "class_declaration",
+                "class_definition",
+                "do_statement",
+                "while_statement",
+                "repeat_statement",
+                "if_statement",
+                "for_statement",
+            },
+            field_blocks = {
+                "local_declaration",
+            },
+        },
+    },
 }
 
 -- Module state
 local M = {
     ns_id = api.nvim_create_namespace("custom_chunk_guides"),
-    augroup = nil,
-    last_regular_win = nil,
-    last_mode = nil,
     enabled = true,
-    disabled_buffers = {}, -- Track buffers that are too large
-    -- NEW: Cache for chunk ranges
-    chunk_cache = {}, -- { [bufnr] = { [row] = {chunk_range, buffer_changedtick} } }
-    session_loading = false,
+    disabled_buffers = {},
+    current_scope = nil,
+    scope_listener = nil,
+    last_regular_win = nil,
 }
 
--- Chunk range return codes
-local CHUNK_RANGE_RET = {
-    OK = 0,
-    CHUNK_ERR = 1,
-    NO_CHUNK = 2,
-    NO_TS = 3,
-}
-
--- Pre-compiled node type patterns
-local node_types = {
-    default = {
-        "^class",
-        "^func",
-        "^method",
-        "^if",
-        "^while",
-        "^for",
-        "^with",
-        "^try",
-        "^match",
-        "^arguments",
-        "^argument_list",
-        "^object",
-        "^dictionary",
-        "^list",
-        "^element",
-        "^table",
-        "^tuple",
-        "^do_block",
-        "^return",
+-- Scope logic
+local defaults = {
+    min_size = 2,
+    max_size = nil,
+    cursor = true,
+    edge = true,
+    siblings = false,
+    filter = function(buf)
+        return vim.bo[buf].buftype == "" and vim.b[buf].snacks_scope ~= false and vim.g.snacks_scope ~= false
+    end,
+    debounce = 30,
+    treesitter = {
+        enabled = true,
+        injections = true,
+        blocks = {
+            enabled = false,
+            "function_declaration",
+            "function_definition",
+            "method_declaration",
+            "method_definition",
+            "class_declaration",
+            "class_definition",
+            "do_statement",
+            "while_statement",
+            "repeat_statement",
+            "if_statement",
+            "for_statement",
+        },
+        field_blocks = {
+            "local_declaration",
+        },
     },
 }
 
--- NEW: Clear cache for buffer
-local function clear_cache_for_buffer(bufnr)
-    if M.chunk_cache[bufnr] then
-        M.chunk_cache[bufnr] = nil
+---@class snacks.scope.Scope
+local Scope = {}
+Scope.__index = Scope
+
+function Scope:new(scope, opts)
+    local ret = setmetatable(scope, { __index = self, __eq = self.__eq, __tostring = self.__tostring })
+    ret.opts = opts
+    return ret
+end
+
+function Scope:__eq(other)
+    return other
+        and self.buf == other.buf
+        and self.from == other.from
+        and self.to == other.to
+        and self.indent == other.indent
+end
+
+function Scope.get_indent(line)
+    local ret = vim.fn.indent(line)
+    return ret == -1 and nil or ret, line
+end
+
+function Scope:with(opts)
+    opts = vim.tbl_extend("keep", opts, self)
+    return setmetatable(opts, getmetatable(self))
+end
+
+function Scope:size()
+    return self.to - self.from + 1
+end
+
+function Scope:size_with_edge()
+    return self:with_edge():size()
+end
+
+function Scope:expand(line)
+    local ret = self
+    while ret do
+        if line >= ret.from and line <= ret.to then
+            return ret
+        end
+        ret = ret:parent()
     end
 end
 
--- NEW: Get cached chunk range if valid
-local function get_cached_chunk_range(bufnr, row)
-    local buffer_cache = M.chunk_cache[bufnr]
-    if not buffer_cache then
-        return nil
-    end
-
-    local cached_entry = buffer_cache[row]
-    if not cached_entry then
-        return nil
-    end
-
-    -- Check if buffer has changed since cache entry
-    local current_changedtick = api.nvim_buf_get_changedtick(bufnr)
-    if cached_entry.changedtick ~= current_changedtick then
-        -- Buffer changed, invalidate this cache entry
-        buffer_cache[row] = nil
-        return nil
-    end
-
-    return cached_entry.result
+function Scope:__tostring()
+    local meta = getmetatable(self)
+    return ("%s(buf=%d, from=%d, to=%d, indent=%d)"):format(
+        rawequal(meta, TSScope) and "TSScope" or rawequal(meta, IndentScope) and "IndentScope" or "Scope",
+        self.buf or -1,
+        self.from or -1,
+        self.to or -1,
+        self.indent or 0
+    )
 end
 
--- Modified cache function to respect session loading
-local function cache_chunk_range(bufnr, row, result)
-    -- Don't cache during session loading - results might be unreliable
-    if M.session_loading then
+-- IndentScope class
+---@class IndentScope : snacks.scope.Scope
+local IndentScope = setmetatable({}, Scope)
+IndentScope.__index = IndentScope
+
+function IndentScope._expand(line, indent, up)
+    local next = up and vim.fn.prevnonblank or vim.fn.nextnonblank
+    while line do
+        local i, l = IndentScope.get_indent(next(line + (up and -1 or 1)))
+        if (i or 0) == 0 or i < indent or l == 0 then
+            return line
+        end
+        line = l
+    end
+    return line
+end
+
+function IndentScope:inner()
+    local from, to, indent = nil, nil, math.huge
+    for l = self.from, self.to do
+        local i, il = IndentScope.get_indent(vim.fn.nextnonblank(l))
+        if il == l then
+            if i > self.indent then
+                from = from or l
+                to = l
+                indent = math.min(indent, i)
+            end
+        end
+    end
+    return from and to and self:with({ from = from, to = to, indent = indent }) or self
+end
+
+function IndentScope:with_edge()
+    if self.indent == 0 then
+        return self
+    end
+    local before_i, before_l = Scope.get_indent(vim.fn.prevnonblank(self.from - 1))
+    local after_i, after_l = Scope.get_indent(vim.fn.nextnonblank(self.to + 1))
+    local indent = math.min(math.max(before_i or self.indent, after_i or self.indent), self.indent)
+    local from = before_i and before_i == indent and before_l or self.from
+    local to = after_i and after_i == indent and after_l or self.to
+    if from == 0 or to == 0 or indent < 0 then
+        return self
+    end
+    return self:with({ from = from, to = to, indent = indent })
+end
+
+function IndentScope:find(opts)
+    local indent, line = Scope.get_indent(opts.pos[1])
+    local prev_i, prev_l = Scope.get_indent(vim.fn.prevnonblank(line - 1))
+    local next_i, next_l = Scope.get_indent(vim.fn.nextnonblank(line + 1))
+
+    if vim.fn.prevnonblank(line) ~= line then
+        indent, line = Scope.get_indent(prev_i > next_i and prev_l or next_l)
+        prev_i, prev_l = Scope.get_indent(vim.fn.prevnonblank(line - 1))
+        next_i, next_l = Scope.get_indent(vim.fn.nextnonblank(line + 1))
+    end
+
+    if line == 0 then
         return
     end
 
-    if not M.chunk_cache[bufnr] then
-        M.chunk_cache[bufnr] = {}
+    if prev_i <= indent and next_i > indent then
+        line = next_l
+        indent = next_i
+    elseif next_i <= indent and prev_i > indent then
+        line = prev_l
+        indent = prev_i
+    elseif next_i > indent and prev_i > indent then
+        line = next_l
+        indent = next_i
     end
 
-    local current_changedtick = api.nvim_buf_get_changedtick(bufnr)
-    M.chunk_cache[bufnr][row] = {
-        result = result,
-        changedtick = current_changedtick,
-    }
+    if opts.cursor then
+        indent = math.min(indent, vim.fn.virtcol(opts.pos) + 1)
+    end
+
+    return IndentScope:new({
+        buf = opts.buf,
+        from = IndentScope._expand(line, indent, true),
+        to = IndentScope._expand(line, indent, false),
+        indent = indent,
+    }, opts)
 end
 
--- Check if buffer is disabled due to size
-local function is_buffer_disabled(bufnr)
-    return M.disabled_buffers[bufnr] == true
-end
-
--- Check if node type is suitable for chunk detection
-local function is_suit_type(node_type)
-    local ft = vim.bo.filetype
-    local is_spec_ft = node_types[ft]
-
-    if is_spec_ft then
-        return is_spec_ft[node_type] == true
-    else
-        -- Use patterns for default types
-        for _, pattern in ipairs(node_types.default) do
-            if pattern:sub(1, 1) == "^" then
-                local compiled = "^" .. pattern:sub(2)
-                if node_type:find(compiled) then
-                    return true
-                end
-            else
-                if node_type:find(pattern) then
-                    return true
-                end
-            end
+function IndentScope:parent()
+    for i = self.indent - 1, 1, -1 do
+        local u, d = IndentScope._expand(self.from, i, true), IndentScope._expand(self.to, i, false)
+        if u ~= self.from or d ~= self.to then
+            return self:with({ from = u, to = d, indent = i })
         end
     end
-
-    return false
 end
 
--- Check if treesitter is available for current buffer
-local function has_treesitter(bufnr)
-    local ft = vim.bo[bufnr].filetype
-    local has_lang, lang = pcall(treesitter.language.get_lang, ft)
-    if not has_lang then
+-- TSScope class
+---@class TSScope : snacks.scope.Scope
+local TSScope = setmetatable({}, Scope)
+TSScope.__index = TSScope
+
+function TSScope:fill()
+    local n = self.node
+    local u, _, d = n:range()
+    while n do
+        local uu, _, dd = n:range()
+        if uu == u and dd == d and not self:is_field(n) then
+            self.node = n
+        else
+            break
+        end
+        n = n:parent()
+    end
+end
+
+function TSScope:fix()
+    self:fill()
+    self.from, _, self.to = self.node:range()
+    self.from, self.to = self.from + 1, self.to + 1
+    self.indent = math.min(vim.fn.indent(self.from), vim.fn.indent(self.to))
+    return self
+end
+
+function TSScope:is_field(node)
+    node = node or self.node
+    local parent = node:parent()
+    parent = parent ~= node:tree():root() and parent or nil
+    if not parent then
         return false
     end
-
-    local has, parser = pcall(treesitter.get_parser, bufnr, lang)
-    return has and parser ~= nil
+    for child, field in parent:iter_children() do
+        if child == node then
+            return not (field == nil or vim.tbl_contains(self.opts.treesitter.field_blocks, field))
+        end
+    end
+    error("node not found in parent")
 end
 
--- Enhanced context-based detection for end-of-line cursors
-local function get_chunk_range_by_context(bufnr, row, col)
-    local base_flag = "nWz"
-    local cur_row_val = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1]
-    if not cur_row_val then
-        return CHUNK_RANGE_RET.NO_CHUNK, nil
+function TSScope:with_edge()
+    local ret = self
+    while ret do
+        if ret:size() >= 1 and not ret:is_field() then
+            return ret
+        end
+        ret = ret:parent()
+    end
+    return self
+end
+
+function TSScope:root()
+    if type(self.opts.treesitter.blocks) ~= "table" or not self.opts.treesitter.blocks.enabled then
+        return self:fix()
+    end
+    local root = self.node
+    while root do
+        if vim.tbl_contains(self.opts.treesitter.blocks, root:type()) then
+            return self:with({ node = root })
+        end
+        root = root:parent()
+    end
+    return self:fix()
+end
+
+function TSScope:with(opts)
+    local ret = Scope.with(self, opts)
+    return ret:fix()
+end
+
+function TSScope:parser(opts)
+    local lang = vim.bo[opts.buf].filetype
+    local has_parser, parser = pcall(vim.treesitter.get_parser, opts.buf, lang, { error = false })
+    return has_parser and parser or nil
+end
+
+-- Utility function for treesitter parsing
+local function parse_ts(parser, injections, cb)
+    if not parser then
+        return cb()
     end
 
-    local line_len = #cur_row_val
-
-    -- Smart position selection for end-of-line cases
-    local search_positions = {}
-
-    if col >= line_len then
-        -- Cursor at or past end of line - work backwards through meaningful positions
-        if line_len > 0 then
-            for i = line_len - 1, 0, -1 do
-                table.insert(search_positions, i)
-            end
+    local function do_parse()
+        if injections then
+            parser:parse()
         end
-        table.insert(search_positions, 0) -- Beginning of line fallback
+        cb()
+    end
+
+    if parser:is_valid() then
+        do_parse()
     else
-        -- Normal position
-        table.insert(search_positions, col)
-        if col > 0 then
-            table.insert(search_positions, col - 1)
-        end
+        vim.schedule(do_parse)
     end
-
-    -- Save current cursor position
-    local save_cursor = api.nvim_win_get_cursor(0)
-
-    for _, search_col in ipairs(search_positions) do
-        -- Ensure search_col is within bounds
-        search_col = math.max(0, math.min(search_col, line_len - 1))
-        local cur_char = cur_row_val:sub(search_col + 1, search_col + 1)
-
-        -- Set cursor to search position
-        api.nvim_win_set_cursor(0, { row + 1, search_col })
-
-        local beg_row = fn.searchpair("{", "", "}", base_flag .. "b" .. (cur_char == "{" and "c" or ""))
-        local end_row = fn.searchpair("{", "", "}", base_flag .. (cur_char == "}" and "c" or ""))
-
-        if beg_row > 0 and end_row > 0 and beg_row < end_row then
-            -- Restore cursor position before returning
-            api.nvim_win_set_cursor(0, save_cursor)
-            return CHUNK_RANGE_RET.OK,
-                {
-                    start_row = beg_row - 1, -- Convert to 0-indexed
-                    end_row = end_row - 1,
-                }
-        end
-    end
-
-    -- Restore cursor position
-    api.nvim_win_set_cursor(0, save_cursor)
-    return CHUNK_RANGE_RET.NO_CHUNK, nil
 end
 
--- Simplified treesitter chunk detection that prioritizes nodes starting on current line
-local function get_chunk_range_by_treesitter(bufnr, row, col)
-    if not has_treesitter(bufnr) then
-        return CHUNK_RANGE_RET.NO_TS, nil
+function TSScope:init(cb, opts)
+    local parser = self:parser(opts)
+    if not parser then
+        return cb()
     end
+    parse_ts(parser, opts.treesitter.injections, cb)
+end
 
-    -- Try different positions on the line to get all possible nodes
-    local line = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] or ""
-    local line_len = #line
+function TSScope:find(opts)
+    local lang = vim.treesitter.language.get_lang(vim.bo[opts.buf].filetype)
+    local line = vim.fn.nextnonblank(opts.pos[1])
+    line = line == 0 and vim.fn.prevnonblank(opts.pos[1]) or line
 
-    local all_candidates = {}
-
-    -- Try positions across the line to collect all possible nodes
-    local positions_to_check = { 0 } -- Always check beginning of line
-    if line_len > 0 then
-        -- Add middle and end positions
-        table.insert(positions_to_check, math.floor(line_len / 2))
-        table.insert(positions_to_check, line_len - 1)
-    end
-
-    for _, check_col in ipairs(positions_to_check) do
-        check_col = math.max(0, math.min(check_col, line_len > 0 and line_len - 1 or 0))
-
-        local cursor_node = treesitter.get_node({
-            ignore_injections = false,
-            bufnr = bufnr,
-            pos = { row, check_col },
-        })
-
-        -- When cursor_node is comment content (source), find by tree
-        if cursor_node and cursor_node:type() == "source" then
-            cursor_node = treesitter.get_node({
-                bufnr = bufnr,
-                pos = { row, check_col },
-            })
-        end
-
-        -- Walk up the tree and collect candidates
-        local current_node = cursor_node
-        while current_node do
-            local node_type = current_node:type()
-            local node_start, _, node_end, _ = current_node:range()
-
-            if node_start ~= node_end and is_suit_type(node_type) then
-                -- Check if we already have this node
-                local already_added = false
-                for _, existing in ipairs(all_candidates) do
-                    if existing.start_row == node_start and existing.end_row == node_end then
-                        already_added = true
-                        break
-                    end
-                end
-
-                if not already_added then
-                    table.insert(all_candidates, {
-                        node = current_node,
-                        start_row = node_start,
-                        end_row = node_end,
-                        size = node_end - node_start,
-                        starts_on_cursor_row = node_start == row,
-                    })
-                end
-            end
-
-            local parent_node = current_node:parent()
-            if parent_node == current_node then
-                break
-            end
-            current_node = parent_node
-        end
-    end
-
-    if #all_candidates == 0 then
-        return CHUNK_RANGE_RET.NO_CHUNK, nil
-    end
-
-    -- Find the best candidate: prioritize nodes that start on current row, then smallest
-    local best_candidate = nil
-
-    -- First, look for nodes that start on the cursor row
-    for _, candidate in ipairs(all_candidates) do
-        if candidate.starts_on_cursor_row then
-            if not best_candidate or candidate.size < best_candidate.size then
-                best_candidate = candidate
-            end
-        end
-    end
-
-    -- If no node starts on cursor row, fall back to smallest containing node
-    if not best_candidate then
-        for _, candidate in ipairs(all_candidates) do
-            if not best_candidate or candidate.size < best_candidate.size then
-                best_candidate = candidate
-            end
-        end
-    end
-
-    local ret_code = best_candidate.node:has_error() and CHUNK_RANGE_RET.CHUNK_ERR or CHUNK_RANGE_RET.OK
-    return ret_code, {
-        start_row = best_candidate.start_row,
-        end_row = best_candidate.end_row,
+    local pos = {
+        math.max(line - 1, 0),
+        (vim.fn.getline(line):find("%S") or 1) - 1,
     }
-end
 
--- NEW: Main chunk range function with caching
-local function get_chunk_range(bufnr, row, col, use_treesitter)
-    -- Check cache first - this is the key optimization!
-    local cached_result = get_cached_chunk_range(bufnr, row)
-    if cached_result then
-        return cached_result.ret_code, cached_result.chunk_range
-    end
-
-    -- Cache miss - do the expensive computation
-    local ret_code, chunk_range
-    if use_treesitter then
-        ret_code, chunk_range = get_chunk_range_by_treesitter(bufnr, row, col)
-    else
-        ret_code, chunk_range = get_chunk_range_by_context(bufnr, row, col)
-    end
-
-    -- Cache the result
-    cache_chunk_range(bufnr, row, {
-        ret_code = ret_code,
-        chunk_range = chunk_range,
+    local node = vim.treesitter.get_node({
+        pos = pos,
+        bufnr = opts.buf,
+        lang = lang,
+        ignore_injections = not opts.treesitter.injections,
     })
 
-    return ret_code, chunk_range
+    if not node then
+        return
+    end
+
+    if opts.cursor then
+        local n = node
+        local virtcol = vim.fn.virtcol(opts.pos)
+        while n and n ~= n:tree():root() do
+            local r, c = n:range()
+            local virtcol_n = vim.fn.virtcol({ r + 1, c })
+            if virtcol_n > virtcol then
+                node, n = n, n:parent()
+            else
+                break
+            end
+        end
+    end
+
+    return TSScope:new({ buf = opts.buf, node = node }, opts):root()
 end
 
--- Get indentation level for a line
+function TSScope:parent()
+    local parent = self.node:parent()
+    return parent and parent ~= self.node:tree():root() and self:with({ node = parent }):root() or nil
+end
+
+function TSScope:inner()
+    local from, to, indent = nil, nil, math.huge
+    for l = self.from + 1, self.to do
+        if l == vim.fn.nextnonblank(l) then
+            local col = (vim.fn.getline(l):find("%S") or 1) - 1
+            local node = vim.treesitter.get_node({ pos = { l - 1, col }, bufnr = self.buf })
+            local s = TSScope:new({ buf = self.buf, node = node }, self.opts):fix()
+            if s and s.from > self.from and s.to <= self.to then
+                from = from or l
+                to = l
+                indent = math.min(indent, vim.fn.indent(l))
+            end
+        end
+    end
+    return from and to and IndentScope:new({ from = from, to = to, indent = indent }, self.opts) or self
+end
+
+-- Main scope detection function
+local function get_scope(cb, opts)
+    opts = vim.tbl_extend("keep", opts or {}, config.scope)
+    opts.buf = (opts.buf == nil or opts.buf == 0) and vim.api.nvim_get_current_buf() or opts.buf
+    if not opts.pos then
+        assert(opts.buf == vim.api.nvim_win_get_buf(0), "missing pos")
+        opts.pos = vim.api.nvim_win_get_cursor(0)
+    end
+
+    -- Run in the context of the buffer if not current
+    if vim.api.nvim_get_current_buf() ~= opts.buf then
+        vim.api.nvim_buf_call(opts.buf, function()
+            get_scope(cb, opts)
+        end)
+        return
+    end
+
+    local function get_lang(bufnr)
+        local ft = vim.bo[bufnr].filetype
+        local has_lang, lang = pcall(vim.treesitter.language.get_lang, ft)
+        return has_lang and lang or nil
+    end
+
+    local Class = (opts.treesitter.enabled and get_lang(opts.buf)) and TSScope or IndentScope
+    if rawequal(Class, TSScope) and opts.parse ~= false then
+        TSScope:init(function()
+            opts.parse = false
+            get_scope(cb, opts)
+        end, opts)
+        return
+    end
+
+    local scope = Class:find(opts)
+
+    -- Fallback to indent based detection
+    if not scope and rawequal(Class, TSScope) then
+        Class = IndentScope
+        scope = Class:find(opts)
+    end
+
+    -- When end_pos is provided, get its scope and expand the current scope
+    if scope and opts.end_pos and not vim.deep_equal(opts.pos, opts.end_pos) then
+        local end_scope = Class:find(vim.tbl_extend("keep", { pos = opts.end_pos }, opts))
+        if end_scope and end_scope.from < scope.from then
+            scope = scope:expand(end_scope.from) or scope
+        end
+        if end_scope and end_scope.to > scope.to then
+            scope = scope:expand(end_scope.to) or scope
+        end
+    end
+
+    local min_size = opts.min_size or 2
+    local max_size = opts.max_size or min_size
+
+    -- Expand block with ancestors until min_size is reached or max_size is reached
+    if scope then
+        local s = scope
+        while s do
+            if opts.edge and scope:size_with_edge() >= min_size and s:size_with_edge() > max_size then
+                break
+            elseif not opts.edge and scope:size() >= min_size and s:size() > max_size then
+                break
+            end
+            scope, s = s, s:parent()
+        end
+        -- Expand with edge
+        if opts.edge then
+            scope = scope:with_edge()
+        end
+    end
+
+    -- Expand single line blocks with single line siblings
+    if opts.siblings and scope and scope:size() == 1 then
+        while scope and scope:size() < min_size do
+            local prev, next = vim.fn.prevnonblank(scope.from - 1), vim.fn.nextnonblank(scope.to + 1)
+            local prev_dist, next_dist = math.abs(opts.pos[1] - prev), math.abs(opts.pos[1] - next)
+            local prev_s = prev > 0 and Class:find(vim.tbl_extend("keep", { pos = { prev, 0 } }, opts))
+            local next_s = next > 0 and Class:find(vim.tbl_extend("keep", { pos = { next, 0 } }, opts))
+            prev_s = prev_s and prev_s:size() == 1 and prev_s
+            next_s = next_s and next_s:size() == 1 and next_s
+            local s = prev_dist < next_dist and prev_s or next_s or prev_s
+            if s and (s.from < scope.from or s.to > scope.to) then
+                scope = Scope.with(scope, { from = math.min(scope.from, s.from), to = math.max(scope.to, s.to) })
+            else
+                break
+            end
+        end
+    end
+    cb(scope)
+end
+
+-- Scope listener
+local Listener = {}
+local id = 0
+
+function Listener.new(cb, opts)
+    local self = setmetatable({}, { __index = Listener })
+    self.cb = cb
+    self.dirty = {}
+    self.timer = assert((vim.uv or vim.loop).new_timer())
+    self.enabled = false
+    self.opts = vim.tbl_extend("keep", opts or {}, defaults)
+    id = id + 1
+    self.id = id
+    self.active = {}
+    return self
+end
+
+function Listener:check(win)
+    local buf = vim.api.nvim_win_get_buf(win)
+    if not self.opts.filter(buf) then
+        if self.active[win] then
+            local prev = self.active[win]
+            self.active[win] = nil
+            self.cb(win, buf, nil, prev)
+        end
+        return
+    end
+
+    get_scope(
+        function(scope)
+            local prev = self.active[win]
+            if prev == scope then
+                return -- no change
+            end
+            self.active[win] = scope
+            self.cb(win, buf, scope, prev)
+        end,
+        vim.tbl_extend("keep", {
+            buf = buf,
+            pos = vim.api.nvim_win_get_cursor(win),
+        }, self.opts)
+    )
+end
+
+function Listener:get(win)
+    local scope = self.active[win]
+    return scope and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == scope.buf and scope or nil
+end
+
+function Listener:clean()
+    for win in pairs(self.active) do
+        self.active[win] = self:get(win)
+    end
+end
+
+function Listener:update(wins, opts)
+    wins = type(wins) == "number" and { wins } or wins or vim.api.nvim_list_wins()
+    for _, b in ipairs(wins) do
+        self.dirty[b] = true
+    end
+    local function update()
+        self:_update()
+    end
+    if opts and opts.now then
+        update()
+    end
+    self.timer:start(self.opts.debounce, 0, vim.schedule_wrap(update))
+end
+
+function Listener:_update()
+    for win in pairs(self.dirty) do
+        if vim.api.nvim_win_is_valid(win) then
+            self:check(win)
+        end
+    end
+    self.dirty = {}
+end
+
+function Listener:enable()
+    assert(not self.enabled, "already enabled")
+    self.enabled = true
+    self.augroup = vim.api.nvim_create_augroup("snacks_scope_" .. self.id, { clear = true })
+    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+        group = self.augroup,
+        callback = function(ev)
+            for _, win in ipairs(vim.fn.win_findbuf(ev.buf)) do
+                self:update(win)
+            end
+        end,
+    })
+    vim.api.nvim_create_autocmd({ "WinClosed", "BufDelete", "BufWipeout" }, {
+        group = self.augroup,
+        callback = function()
+            self:clean()
+        end,
+    })
+    self:update(nil, { now = true })
+end
+
+function Listener:disable()
+    assert(self.enabled, "already disabled")
+    self.enabled = false
+    vim.api.nvim_del_augroup_by_id(self.augroup)
+    self.timer:stop()
+    self.active = {}
+    self.dirty = {}
+end
+
+-- Rendering logic
 local function get_indent_level(bufnr, row)
     local line = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1]
     if not line then
@@ -368,32 +631,15 @@ local function get_indent_level(bufnr, row)
     return indent
 end
 
--- Calculate virtual text position
-local function calc_virt_text_pos(text, start_col, leftcol)
-    local len = api.nvim_strwidth(text)
-    if start_col < leftcol then
-        local byte_idx = math.min(leftcol - start_col, len)
-        local utf_beg = vim.str_byteindex(text, byte_idx)
-        text = text:sub(utf_beg + 1)
+local function clear_highlights(bufnr)
+    if api.nvim_buf_is_valid(bufnr) then
+        api.nvim_buf_clear_namespace(bufnr, M.ns_id, 0, -1)
     end
-
-    local win_col = math.max(start_col - leftcol, 0)
-    return text, win_col
-end
-
--- Split UTF-8 string into characters
-local function utf8_split(str)
-    local chars = {}
-    for char in str:gmatch("[^\128-\191][\128-\191]*") do
-        chars[#chars + 1] = char
-    end
-    return chars
 end
 
 -- Simple highlight color cache
 local highlight_cache = {}
 
--- Optimized highlight color retrieval with caching
 local function get_highlight_color(group_name)
     local cached = highlight_cache[group_name]
     if cached then
@@ -411,7 +657,6 @@ local function get_highlight_color(group_name)
     return color
 end
 
--- Pre-defined mode color mapping for better performance
 local mode_color_map = {
     ["n"] = "ModeColorNormal",
     ["i"] = "ModeColorInsert",
@@ -420,269 +665,164 @@ local mode_color_map = {
     ["\22"] = "ModeColorVisual",
     ["c"] = "ModeColorCommand",
     ["R"] = "ModeColorReplace",
-    ["Rc"] = "ModeColorReplace",
-    ["Rx"] = "ModeColorReplace",
-    ["Rv"] = "ModeColorReplace",
-    ["Rvc"] = "ModeColorReplace",
-    ["Rvx"] = "ModeColorReplace",
-    ["r"] = "ModeColorReplace",
     ["t"] = "ModeColorTerminal",
 }
 
--- Optimized mode color detection
 local function get_mode_color()
     local mode_code = api.nvim_get_mode().mode
     local color_group = mode_color_map[mode_code] or "ModeColorNormal"
     return get_highlight_color(color_group) or "#ffffff"
 end
 
--- Create or update highlight group for current mode
 local function update_mode_highlight()
     local color = get_mode_color()
     if color then
         api.nvim_set_hl(0, "ChunkGuidesMode", { fg = color })
         return "ChunkGuidesMode"
     end
-    return "Comment" -- Fallback
+    return "Comment"
 end
 
--- Clear highlights
-local function clear_highlights(bufnr)
-    if api.nvim_buf_is_valid(bufnr) then
-        api.nvim_buf_clear_namespace(bufnr, M.ns_id, 0, -1)
+-- Render chunk guides based on scope
+local function render_chunk_guides(scope)
+    if not scope then
+        local bufnr = api.nvim_get_current_buf()
+        clear_highlights(bufnr)
+        return
     end
-end
 
--- Set extmarks with bounds checking
-local function set_extmarks_batch(bufnr, extmarks)
-    if not api.nvim_buf_is_valid(bufnr) then
+    local bufnr = scope.buf
+    if not api.nvim_buf_is_valid(bufnr) or bufnr ~= api.nvim_get_current_buf() then
+        return
+    end
+
+    clear_highlights(bufnr)
+
+    local highlight_group = update_mode_highlight()
+    local start_row, end_row = scope.from - 1, scope.to - 1 -- Convert to 0-indexed
+    local leftcol = fn.winsaveview().leftcol
+    local shiftwidth = fn.shiftwidth()
+
+    local start_indent = get_indent_level(bufnr, start_row)
+    local end_indent = get_indent_level(bufnr, end_row)
+    local guide_col = math.max(math.min(start_indent, end_indent) - shiftwidth, 0)
+
+    -- Safety check for content overlap
+    local min_content_start = math.huge
+    for r = start_row, end_row do
+        local line = api.nvim_buf_get_lines(bufnr, r, r + 1, false)[1] or ""
+        if line:match("%S") then
+            local content_start = line:find("%S") - 1
+            min_content_start = math.min(min_content_start, content_start)
+        end
+    end
+
+    if min_content_start ~= math.huge and guide_col >= min_content_start then
+        guide_col = math.max(min_content_start - 1, 0)
+    end
+
+    -- Only render if guide is visible
+    if guide_col < leftcol then
         return
     end
 
     local line_count = api.nvim_buf_line_count(bufnr)
 
-    for _, mark in ipairs(extmarks) do
-        if mark.row >= 0 and mark.row < line_count then
-            pcall(api.nvim_buf_set_extmark, bufnr, M.ns_id, mark.row, mark.col, mark.opts)
-        end
-    end
-end
-
--- Check if buffer exceeds max file size
-local function check_buffer_size(bufnr)
-    if not api.nvim_buf_is_valid(bufnr) then
-        return false
-    end
-
-    local name = api.nvim_buf_get_name(bufnr)
-    if name == "" then
-        return false -- Don't check size for unnamed buffers
-    end
-
-    local ok, file_size = pcall(fn.getfsize, name)
-    return ok and file_size > config.max_file_size
-end
-
--- Main rendering function
-local function render_chunk_guides(bufnr)
-    if not api.nvim_buf_is_valid(bufnr) then
-        return
-    end
-
-    -- Only render for current window
-    local current_win = api.nvim_get_current_win()
-    local current_buf = api.nvim_get_current_buf()
-    if bufnr ~= current_buf then
-        return
-    end
-
-    -- Check if this specific buffer is too large
-    if check_buffer_size(bufnr) then
-        if not M.disabled_buffers[bufnr] then
-            M.disabled_buffers[bufnr] = true
-            vim.notify("File is too large, chunk guides disabled for this buffer", vim.log.levels.WARN)
-        end
-        return
-    end
-
-    -- Check if this buffer was previously disabled but is now valid
-    if M.disabled_buffers[bufnr] and not check_buffer_size(bufnr) then
-        M.disabled_buffers[bufnr] = nil
-    end
-
-    local winid = api.nvim_get_current_win()
-    local cursor = api.nvim_win_get_cursor(winid)
-    local row, col = cursor[1] - 1, cursor[2] -- Convert to 0-indexed
-
-    clear_highlights(bufnr)
-
-    -- This is where the magic happens - cache will avoid most treesitter work!
-    local ret_code, chunk_range = get_chunk_range(bufnr, row, col, config.use_treesitter)
-
-    if ret_code ~= CHUNK_RANGE_RET.OK and ret_code ~= CHUNK_RANGE_RET.CHUNK_ERR then
-        return
-    end
-
-    if not chunk_range then
-        return
-    end
-
-    -- Update highlight group based on current mode
-    local highlight_group = update_mode_highlight()
-
-    local start_row, end_row = chunk_range.start_row, chunk_range.end_row
-    local leftcol = fn.winsaveview().leftcol
-    local shiftwidth = fn.shiftwidth()
-
-    -- Get indentation levels
-    local start_indent = get_indent_level(bufnr, start_row)
-    local end_indent = get_indent_level(bufnr, end_row)
-
-    -- Calculate guide position with safety checks
-    local guide_col = math.max(math.min(start_indent, end_indent) - shiftwidth, 0)
-
-    -- SAFETY CHECK: Ensure guide doesn't overlap with actual text content
-    local min_content_start = math.huge
-    for r = start_row, end_row do
-        local line = api.nvim_buf_get_lines(bufnr, r, r + 1, false)[1] or ""
-        if line:match("%S") then -- line contains non-whitespace
-            local content_start = line:find("%S") - 1 -- Convert to 0-indexed
-            min_content_start = math.min(min_content_start, content_start)
+    -- Helper function to place character overlay
+    local function place_char_overlay(row, char, win_col)
+        if row >= 0 and row < line_count and win_col >= 0 then
+            pcall(api.nvim_buf_set_extmark, bufnr, M.ns_id, row, 0, {
+                virt_text = { { char, highlight_group } },
+                virt_text_pos = "overlay",
+                virt_text_win_col = win_col,
+                hl_mode = "combine",
+                priority = 100,
+            })
         end
     end
 
-    -- If guide would overlap with content, move it to a safe position
-    if min_content_start ~= math.huge and guide_col >= min_content_start then
-        guide_col = math.max(min_content_start - 1, 0)
-    end
-
-    local extmarks = {}
-
-    -- Render top corner
-    if start_indent > 0 and guide_col < start_indent and guide_col >= leftcol then
+    -- Render top corner with horizontal line
+    if start_indent > 0 and guide_col < start_indent then
         local start_line = api.nvim_buf_get_lines(bufnr, start_row, start_row + 1, false)[1] or ""
         local start_char_at_guide = start_line:sub(guide_col + 1, guide_col + 1)
 
         if start_char_at_guide:match("%s") or start_char_at_guide == "" then
-            local virt_text_len = start_indent - guide_col
-            local top_line = config.chars.corner_top
-                .. config.chars.horizontal_line:rep(math.max(0, virt_text_len - 2))
-                .. config.chars.horizontal_line
+            place_char_overlay(start_row, config.chars.corner_top, guide_col - leftcol)
 
-            local virt_text, win_col = calc_virt_text_pos(top_line, guide_col, leftcol)
-
-            if win_col >= 0 and #virt_text > 0 then
-                local chars = utf8_split(virt_text)
-                for i, char in ipairs(chars) do
-                    local char_pos = guide_col + i - 1
-                    local actual_char = start_line:sub(char_pos + 1, char_pos + 1)
-                    if actual_char:match("%s") or actual_char == "" then
-                        extmarks[#extmarks + 1] = {
-                            row = start_row,
-                            col = 0,
-                            opts = {
-                                virt_text = { { char, highlight_group } },
-                                virt_text_pos = "overlay",
-                                virt_text_win_col = win_col + i - 1,
-                                hl_mode = "combine",
-                                priority = 100,
-                            },
-                        }
+            -- Add horizontal line extending right from the top corner
+            for col_offset = 1, start_indent - guide_col - 1 do
+                local target_col = guide_col + col_offset
+                if target_col < #start_line then
+                    local char_at_pos = start_line:sub(target_col + 1, target_col + 1)
+                    if char_at_pos:match("%s") or char_at_pos == "" then
+                        place_char_overlay(start_row, config.chars.horizontal_line, target_col - leftcol)
+                    else
+                        break -- Stop if we hit non-whitespace
                     end
+                else
+                    break -- Stop if we exceed line length
                 end
             end
         end
     end
 
-    -- Render vertical lines for middle rows
-    if guide_col >= leftcol then
-        for r = start_row + 1, end_row - 1 do
-            local line = api.nvim_buf_get_lines(bufnr, r, r + 1, false)[1] or ""
-            local char_at_pos = ""
+    -- Render vertical lines
+    for r = start_row + 1, end_row - 1 do
+        local line = api.nvim_buf_get_lines(bufnr, r, r + 1, false)[1] or ""
+        local char_at_pos = guide_col < #line and line:sub(guide_col + 1, guide_col + 1) or ""
 
-            if guide_col < #line then
-                char_at_pos = line:sub(guide_col + 1, guide_col + 1)
-            end
-
-            -- Only place guide if position is whitespace or beyond line end
-            if char_at_pos:match("%s") or char_at_pos == "" then
-                extmarks[#extmarks + 1] = {
-                    row = r,
-                    col = 0,
-                    opts = {
-                        virt_text = { { config.chars.vertical_line, highlight_group } },
-                        virt_text_pos = "overlay",
-                        virt_text_win_col = guide_col - leftcol,
-                        hl_mode = "combine",
-                        priority = 100,
-                    },
-                }
-            end
+        if char_at_pos:match("%s") or char_at_pos == "" then
+            place_char_overlay(r, config.chars.vertical_line, guide_col - leftcol)
         end
     end
 
-    -- Render bottom corner
-    if end_indent > 0 and guide_col < end_indent and guide_col >= leftcol then
+    -- Render bottom corner with horizontal line
+    if end_indent > 0 and guide_col < end_indent then
         local end_line = api.nvim_buf_get_lines(bufnr, end_row, end_row + 1, false)[1] or ""
         local end_char_at_guide = end_line:sub(guide_col + 1, guide_col + 1)
 
         if end_char_at_guide:match("%s") or end_char_at_guide == "" then
-            local virt_text_len = end_indent - guide_col
-            local bottom_line = config.chars.corner_bottom
-                .. config.chars.horizontal_line:rep(math.max(0, virt_text_len - 2))
-                .. config.chars.horizontal_line
+            place_char_overlay(end_row, config.chars.corner_bottom, guide_col - leftcol)
 
-            local virt_text, win_col = calc_virt_text_pos(bottom_line, guide_col, leftcol)
-
-            if win_col >= 0 and #virt_text > 0 then
-                local chars = utf8_split(virt_text)
-                for i, char in ipairs(chars) do
-                    local char_pos = guide_col + i - 1
-                    local actual_char = end_line:sub(char_pos + 1, char_pos + 1)
-                    if actual_char:match("%s") or actual_char == "" then
-                        extmarks[#extmarks + 1] = {
-                            row = end_row,
-                            col = 0,
-                            opts = {
-                                virt_text = { { char, highlight_group } },
-                                virt_text_pos = "overlay",
-                                virt_text_win_col = win_col + i - 1,
-                                hl_mode = "combine",
-                                priority = 100,
-                            },
-                        }
+            -- Add horizontal line extending right from the bottom corner
+            for col_offset = 1, end_indent - guide_col - 1 do
+                local target_col = guide_col + col_offset
+                if target_col < #end_line then
+                    local char_at_pos = end_line:sub(target_col + 1, target_col + 1)
+                    if char_at_pos:match("%s") or char_at_pos == "" then
+                        place_char_overlay(end_row, config.chars.horizontal_line, target_col - leftcol)
+                    else
+                        break -- Stop if we hit non-whitespace
                     end
+                else
+                    break -- Stop if we exceed line length
                 end
             end
         end
     end
-
-    -- Set all extmarks
-    set_extmarks_batch(bufnr, extmarks)
 end
 
--- Buffer validation
+-- Main module logic
 local function should_render(bufnr)
-    -- Check if globally disabled
-    if not M.enabled then
-        return false
-    end
-
-    -- Check if this specific buffer is disabled
-    if is_buffer_disabled(bufnr) then
+    if not M.enabled or M.disabled_buffers[bufnr] then
         return false
     end
 
     local filetype = vim.bo[bufnr].filetype
     local buftype = vim.bo[bufnr].buftype
 
-    -- Skip special buffer types
-    if buftype ~= "" then
+    if buftype ~= "" or filetype == "" or fn.shiftwidth() == 0 then
         return false
-    elseif filetype == "" then
-        return false
-    elseif fn.shiftwidth() == 0 then
-        return false
+    end
+
+    -- Check file size
+    local name = api.nvim_buf_get_name(bufnr)
+    if name ~= "" then
+        local ok, file_size = pcall(fn.getfsize, name)
+        if ok and file_size > config.max_file_size then
+            M.disabled_buffers[bufnr] = true
+            return false
+        end
     end
 
     return true
@@ -694,29 +834,72 @@ local function is_floating_win(winid)
     return win_config.relative ~= ""
 end
 
--- Enable chunks with immediate rendering
-local function enable_chunks()
-    local bufnr = api.nvim_get_current_buf()
-    if should_render(bufnr) then
-        vim.schedule(function()
-            if api.nvim_buf_is_valid(bufnr) and should_render(bufnr) then
-                render_chunk_guides(bufnr)
-            end
-        end)
-    end
-end
-
--- Disable chunks for buffer
+-- Disable chunks for a specific buffer
 local function disable_chunks_for_buffer(bufnr)
     if api.nvim_buf_is_valid(bufnr) then
         clear_highlights(bufnr)
     end
 end
 
+-- Immediate rendering function for buffer switches
+local function render_immediately_for_current_buffer()
+    local current_win = api.nvim_get_current_win()
+    local current_buf = api.nvim_get_current_buf()
+
+    -- Skip floating windows
+    if is_floating_win(current_win) then
+        return
+    end
+
+    if not should_render(current_buf) then
+        clear_highlights(current_buf)
+        return
+    end
+
+    -- Get scope immediately without debouncing
+    get_scope(
+        function(scope)
+            if scope and should_render(current_buf) then
+                M.current_scope = scope
+                render_chunk_guides(scope)
+            else
+                M.current_scope = nil
+                clear_highlights(current_buf)
+            end
+        end,
+        vim.tbl_extend("keep", {
+            buf = current_buf,
+            pos = api.nvim_win_get_cursor(current_win),
+        }, config.scope)
+    )
+end
+
+-- Scope change callback
+local function on_scope_change(win, buf, scope)
+    -- Only render for current window/buffer
+    if win == api.nvim_get_current_win() and buf == api.nvim_get_current_buf() then
+        if scope and should_render(buf) then
+            M.current_scope = scope
+            render_chunk_guides(scope)
+        else
+            M.current_scope = nil
+            clear_highlights(buf)
+        end
+    end
+end
+
+-- Initialize the scope listener
+local function init_scope_listener()
+    if M.scope_listener then
+        M.scope_listener:disable()
+    end
+
+    M.scope_listener = Listener.new(on_scope_change, config.scope)
+    M.scope_listener:enable()
+end
+
 -- Mode change handler
 local function on_mode_changed()
-    local current_mode = api.nvim_get_mode().mode
-
     -- Update the highlight group for the new mode
     update_mode_highlight()
 
@@ -724,198 +907,11 @@ local function on_mode_changed()
     if M.last_regular_win and api.nvim_win_is_valid(M.last_regular_win) then
         api.nvim_win_call(M.last_regular_win, function()
             local bufnr = api.nvim_get_current_buf()
-            if should_render(bufnr) then
-                render_chunk_guides(bufnr)
+            if should_render(bufnr) and M.current_scope then
+                render_chunk_guides(M.current_scope)
             end
         end)
     end
-
-    M.last_mode = current_mode
-end
-
--- Handle cursor/text changes
-local function on_change()
-    if not M.enabled then
-        return
-    end
-
-    local bufnr = api.nvim_get_current_buf()
-    if should_render(bufnr) then
-        render_chunk_guides(bufnr)
-    end
-end
-
--- Clean up disabled buffers when they are deleted
-local function cleanup_disabled_buffer(bufnr)
-    if M.disabled_buffers[bufnr] then
-        M.disabled_buffers[bufnr] = nil
-    end
-    -- NEW: Also clear cache for deleted buffer
-    clear_cache_for_buffer(bufnr)
-end
-
--- Setup autocmds
-local function setup_autocmds()
-    M.augroup = api.nvim_create_augroup("CustomChunkGuides", { clear = true })
-
-    -- Double vim.schedule() ensures treesitter is ready before caching during session restore
-    api.nvim_create_autocmd({ "SessionLoadPost" }, {
-        group = M.augroup,
-        callback = function()
-            if M.enabled then
-                M.chunk_cache = {}
-                M.session_loading = true
-
-                vim.schedule(function()
-                    vim.schedule(function()
-                        M.session_loading = false
-                        enable_chunks()
-                    end)
-                end)
-            end
-        end,
-    })
-
-    api.nvim_create_autocmd({ "VimEnter" }, {
-        group = M.augroup,
-        callback = function()
-            -- Only handle VimEnter if we're not in a session (SessionLoadPost didn't fire)
-            if not M.session_loading and M.enabled then
-                vim.schedule(enable_chunks)
-            end
-        end,
-    })
-
-    -- Window management
-    api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "BufEnter" }, {
-        group = M.augroup,
-        callback = function()
-            local current_win = api.nvim_get_current_win()
-
-            if is_floating_win(current_win) then
-                return
-            end
-
-            -- Disable chunks on previous regular window if different
-            if
-                M.last_regular_win
-                and M.last_regular_win ~= current_win
-                and api.nvim_win_is_valid(M.last_regular_win)
-            then
-                api.nvim_win_call(M.last_regular_win, function()
-                    local prev_bufnr = api.nvim_get_current_buf()
-                    disable_chunks_for_buffer(prev_bufnr)
-                end)
-            end
-
-            -- Enable chunks immediately if the module is enabled
-            if M.enabled then
-                enable_chunks()
-            end
-
-            M.last_regular_win = current_win
-        end,
-    })
-
-    -- Updated: Use the same events as the working plugin
-    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-        group = M.augroup,
-        callback = function()
-            if not M.enabled then
-                return
-            end
-            local bufnr = api.nvim_get_current_buf()
-            if should_render(bufnr) then
-                render_chunk_guides(bufnr)
-            end
-        end,
-    })
-
-    -- Additional events for immediate updates
-    api.nvim_create_autocmd({
-        "CursorMoved",
-        "CursorMovedI",
-        "TextChanged",
-        "TextChangedI",
-        "TextChangedP", -- Added: handles completion changes
-        "InsertLeave", -- Added: when leaving insert mode
-        "InsertEnter", -- Added: when entering insert mode
-    }, {
-        group = M.augroup,
-        callback = function()
-            if not M.enabled then
-                return
-            end
-            local bufnr = api.nvim_get_current_buf()
-            if should_render(bufnr) then
-                -- Use vim.schedule to avoid issues with events firing during text changes
-                vim.schedule(function()
-                    if api.nvim_buf_is_valid(bufnr) and should_render(bufnr) then
-                        render_chunk_guides(bufnr)
-                    end
-                end)
-            end
-        end,
-    })
-
-    -- NEW: Clear cache when buffer content changes
-    api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "TextChangedP" }, {
-        group = M.augroup,
-        callback = function(event)
-            -- Clear cache for the changed buffer
-            clear_cache_for_buffer(event.buf)
-        end,
-    })
-
-    -- Mode changes
-    api.nvim_create_autocmd({ "ModeChanged", "CmdlineEnter", "CmdlineLeave" }, {
-        group = M.augroup,
-        callback = on_mode_changed,
-    })
-
-    -- Session and startup
-    api.nvim_create_autocmd({ "SessionLoadPost", "VimEnter" }, {
-        group = M.augroup,
-        callback = function()
-            if M.enabled then
-                vim.schedule(enable_chunks)
-            end
-        end,
-    })
-
-    -- Buffer cleanup
-    api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
-        group = M.augroup,
-        callback = function(event)
-            cleanup_disabled_buffer(event.buf)
-        end,
-    })
-
-    -- Cleanup
-    api.nvim_create_autocmd({ "VimLeavePre" }, {
-        group = M.augroup,
-        callback = function()
-            for _, bufnr in pairs(api.nvim_list_bufs()) do
-                if api.nvim_buf_is_valid(bufnr) then
-                    clear_highlights(bufnr)
-                end
-            end
-            -- NEW: Clear all caches on exit
-            M.chunk_cache = {}
-        end,
-    })
-end
-
--- Initialize
-local function init()
-    setup_autocmds()
-
-    vim.schedule(function()
-        local bufnr = api.nvim_get_current_buf()
-        if should_render(bufnr) then
-            render_chunk_guides(bufnr)
-        end
-    end)
 end
 
 -- Public API
@@ -927,33 +923,41 @@ end
 
 function M.enable()
     M.enabled = true
-    enable_chunks()
+    if not M.scope_listener then
+        init_scope_listener()
+    elseif not M.scope_listener.enabled then
+        M.scope_listener:enable()
+    end
+    -- Force immediate update on enable
+    render_immediately_for_current_buffer()
 end
 
 function M.disable()
     M.enabled = false
+    if M.scope_listener then
+        M.scope_listener:disable()
+    end
+    -- Clear all highlights
     for _, bufnr in pairs(api.nvim_list_bufs()) do
         if api.nvim_buf_is_valid(bufnr) then
             clear_highlights(bufnr)
         end
     end
+    M.current_scope = nil
 end
 
 function M.refresh()
-    local bufnr = api.nvim_get_current_buf()
-    if should_render(bufnr) then
-        render_chunk_guides(bufnr)
+    if M.scope_listener then
+        M.scope_listener:update(nil, { now = true })
     end
 end
 
--- Enable chunk guides for a specific buffer (removes it from disabled list)
+-- Enable chunk guides for a specific buffer
 function M.enable_for_buffer(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
     if M.disabled_buffers[bufnr] then
         M.disabled_buffers[bufnr] = nil
-        if should_render(bufnr) then
-            render_chunk_guides(bufnr)
-        end
+        render_immediately_for_current_buffer()
     end
 end
 
@@ -970,25 +974,68 @@ function M.is_enabled_for_buffer(bufnr)
     return M.enabled and not M.disabled_buffers[bufnr]
 end
 
--- NEW: Cache management functions for debugging/manual control
-function M.clear_cache(bufnr)
-    if bufnr then
-        clear_cache_for_buffer(bufnr)
-    else
-        M.chunk_cache = {}
-    end
+-- Get current scope (for debugging)
+function M.get_current_scope()
+    return M.current_scope
 end
 
-function M.get_cache_stats()
-    local stats = {}
-    for bufnr, buffer_cache in pairs(M.chunk_cache) do
-        local count = 0
-        for _ in pairs(buffer_cache) do
-            count = count + 1
-        end
-        stats[bufnr] = count
+-- Initialize on module load
+local function init()
+    -- Set up mode change tracking for color updates
+    local augroup = api.nvim_create_augroup("CustomChunkGuides", { clear = true })
+
+    -- Mode change handling
+    api.nvim_create_autocmd({ "ModeChanged", "CmdlineEnter", "CmdlineLeave" }, {
+        group = augroup,
+        callback = on_mode_changed,
+    })
+
+    -- Window focus management - immediate rendering without debounce
+    api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "BufEnter" }, {
+        group = augroup,
+        callback = function()
+            local current_win = api.nvim_get_current_win()
+
+            -- Skip floating windows
+            if is_floating_win(current_win) then
+                return
+            end
+
+            -- Disable chunks on previous regular window if different
+            if
+                M.last_regular_win
+                and M.last_regular_win ~= current_win
+                and api.nvim_win_is_valid(M.last_regular_win)
+            then
+                api.nvim_win_call(M.last_regular_win, function()
+                    local prev_bufnr = api.nvim_get_current_buf()
+                    disable_chunks_for_buffer(prev_bufnr)
+                end)
+            end
+
+            -- Render immediately for buffer switches
+            if M.enabled then
+                render_immediately_for_current_buffer()
+            end
+
+            M.last_regular_win = current_win
+        end,
+    })
+
+    -- Clean up on exit
+    api.nvim_create_autocmd({ "VimLeavePre" }, {
+        group = augroup,
+        callback = function()
+            if M.scope_listener then
+                M.scope_listener:disable()
+            end
+        end,
+    })
+
+    -- Auto-enable if enabled
+    if M.enabled then
+        init_scope_listener()
     end
-    return stats
 end
 
 -- Auto-initialize
