@@ -22,8 +22,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Custom floating terminal window module
 - Custom indent guides module improving on current indent plugins within the ecosystem
 - Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
-- Custom chunk guides module based on [hlchunk.nvim](https://github.com/shellRaining/hlchunk.nvim)
-- Custom breadcrumb navigation module based on [dropbar.nvim](https://github.com/Bekaboo/dropbar.nvim) and [nvim-navic](https://github.com/SmiteshP/nvim-navic)
 - Custom virtual environment selector with built-in venv picker
 - Python-specific indentation logic improving on GetPythonIndent()
 - Unified code runner that supports multiple languages
@@ -32,8 +30,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 ### Known Issues
 
 - gitsigns.nvim's conditional keymaps are causing a whichkey delay (fixes itself upon certain actions)
-- Performance issues on aged sessions related to nvim-treesitter
-- Indent guides and winbar breadcrumbs may not be perfect yet
 
 ### Startup Time
 
@@ -53,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             62            957            737           6680
-Markdown                         2             19              4            154
+Lua                             57            602            571           4499
+Markdown                         2             19              4            150
 JSON                             1              0              0             40
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            66            976            741           6877
+SUM:                            61            621            575           4692
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -91,7 +87,6 @@ nvim
 │   │   │   ├── init.lua
 │   │   │   └── python.lua
 │   │   └── modules
-│   │       ├── chunk_guides.lua
 │   │       ├── code_runner.lua
 │   │       ├── code_tester.lua
 │   │       ├── eof_padding.lua
@@ -103,7 +98,6 @@ nvim
 │   │       ├── status_column.lua
 │   │       ├── terminal_sync.lua
 │   │       ├── venv_manager.lua
-│   │       ├── winbar_breadcrumbs.lua
 │   │       └── window_swapper.lua
 │   └── plugins
 │       ├── coding
@@ -132,12 +126,9 @@ nvim
 │       │   ├── nvim-ufo.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
-│           ├── cool-chunk.lua
 │           ├── flash.lua
 │           ├── grug_far.lua
 │           ├── guess_indent.lua
-│           ├── hlchunk.lua
-│           ├── indent_blankline.lua
 │           ├── noice.lua
 │           ├── oil.lua
 │           ├── scrolleof.lua
@@ -147,7 +138,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-13 directories, 65 files
+13 directories, 60 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
