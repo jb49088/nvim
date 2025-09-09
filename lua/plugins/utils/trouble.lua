@@ -74,8 +74,8 @@ return {
     keys = {
         { "<leader>xx", "<Cmd>Trouble diagnostics toggle<CR>", desc = "Diagnostics (Trouble)" },
         { "<leader>xX", "<Cmd>Trouble diagnostics toggle filter.buf=0<CR>", desc = "Buffer Diagnostics (Trouble)" },
-        { "<leader>cs", "<Cmd>Trouble lsp_document_symbols toggle<CR>", desc = "Symbols (Trouble)" },
-        { "<leader>cS", "<Cmd>Trouble lsp toggle<CR>", desc = "LSP References/Definitions/... (Trouble)" },
+        -- { "<leader>cs", "<Cmd>Trouble lsp_document_symbols toggle<CR>", desc = "Symbols (Trouble)" },
+        -- { "<leader>cS", "<Cmd>Trouble lsp toggle<CR>", desc = "LSP References/Definitions/... (Trouble)" },
         { "<leader>xL", "<Cmd>Trouble loclist toggle<CR>", desc = "Location List (Trouble)" },
         { "<leader>xQ", "<Cmd>Trouble qflist toggle<CR>", desc = "Quickfix List (Trouble)" },
         {

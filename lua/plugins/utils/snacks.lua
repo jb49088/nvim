@@ -8,23 +8,6 @@ return {
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
-        --- INDENT ---
-        indent = {
-            enabled = false,
-            scope = {
-                enabled = true,
-            },
-            chunk = {
-                enabled = false,
-                only_current = true,
-                char = {
-                    corner_top = "╭",
-                    corner_bottom = "╰",
-                    arrow = "─",
-                },
-            },
-        },
-
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
@@ -73,13 +56,12 @@ return {
     },
     -- stylua: ignore
     keys = {
-        -- Top Pickers & Explorer
+        -- top pickers
         { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
-        -- { "<leader>bo", function() local visible_bufs = {} for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do local buf = vim.api.nvim_win_get_buf(win) visible_bufs[buf] = true end Snacks.bufdelete.delete({ filter = function(buf) return not visible_bufs[buf] end }) end, desc = "Close Other Buffers" },
         -- find
         { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config"), title = "Config Files" }) end, desc = "Config Files" },
         { "<leader>fe",  function() Snacks.explorer() end, desc = "File Explorer" },
@@ -130,7 +112,6 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations
-        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 
         -- toggles
         -- stylua: ignore start
