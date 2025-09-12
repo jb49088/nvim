@@ -15,44 +15,100 @@ return {
         notifier = { enabled = true },
 
         --- PICKER ---
-        picker = {
-            enabled = true,
-            layouts = {
-                default = {
-                    layout = {
-                        -- backdrop = false,
+        picker = (function()
+            -- Get MiniIcons LSP configuration if available
+            local has_miniicons, miniicons = pcall(require, "mini.icons")
+            local kinds = {}
+
+            if has_miniicons then
+                -- Map MiniIcons LSP kind names to Snacks Picker's expected names
+                local kind_mapping = {
+                    array = "Array",
+                    boolean = "Boolean",
+                    class = "Class",
+                    color = "Color",
+                    constant = "Constant",
+                    constructor = "Constructor",
+                    enum = "Enum",
+                    enummember = "EnumMember",
+                    event = "Event",
+                    field = "Field",
+                    file = "File",
+                    ["function"] = "Function",
+                    interface = "Interface",
+                    key = "Key",
+                    keyword = "Keyword",
+                    method = "Method",
+                    module = "Module",
+                    namespace = "Namespace",
+                    null = "Null",
+                    number = "Number",
+                    object = "Object",
+                    operator = "Operator",
+                    package = "Package",
+                    property = "Property",
+                    reference = "Reference",
+                    snippet = "Snippet",
+                    string = "String",
+                    struct = "Struct",
+                    text = "Text",
+                    typeparameter = "TypeParameter",
+                    unit = "Unit",
+                    value = "Value",
+                    variable = "Variable",
+                }
+
+                -- Extract icons from MiniIcons
+                for mini_kind, snacks_kind in pairs(kind_mapping) do
+                    local icon = miniicons.get("lsp", mini_kind)
+                    if icon then
+                        kinds[snacks_kind] = icon
+                    end
+                end
+            end
+
+            return {
+                enabled = true,
+                layouts = {
+                    default = {
+                        layout = {
+                            -- backdrop = false,
+                        },
                     },
+                    select = {},
                 },
-                select = {},
-            },
-            win = {
-                preview = {
-                    wo = {
-                        wrap = false,
+                win = {
+                    preview = {
+                        wo = {
+                            wrap = false,
+                        },
                     },
-                },
-                input = {
-                    keys = {
-                        ["<Esc>"] = { "close", mode = { "i", "n" } },
+                    input = {
+                        keys = {
+                            ["<Esc>"] = { "close", mode = { "i", "n" } },
+                        },
                     },
-                },
-            },
-            sources = {
-                buffers = {
-                    sort_lastused = false,
-                },
-                command_history = {
-                    layout = { preset = "select" },
-                },
-                search_history = {
-                    layout = { preset = "select" },
                 },
                 icons = {
-                    layout = { preset = "select" },
+                    kinds = kinds, -- Will use MiniIcons glyphs or fall back to defaults
                 },
-                tabs = tabs_picker,
-            },
-        },
+                sources = {
+                    buffers = {
+                        sort_lastused = false,
+                    },
+                    command_history = {
+                        layout = { preset = "select" },
+                    },
+                    search_history = {
+                        layout = { preset = "select" },
+                    },
+                    icons = {
+                        layout = { preset = "select" },
+                    },
+                    tabs = tabs_picker,
+                },
+            }
+        end)(),
     },
     -- stylua: ignore
     keys = {
