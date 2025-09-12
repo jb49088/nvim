@@ -6,7 +6,7 @@ local opts = {
     pattern = "*",
     insert_mode = true,
     floating = true,
-    disabled_filetypes = {},
+    disabled_filetypes = { "snipe-menu" },
     disabled_modes = { "t", "nt" },
 }
 

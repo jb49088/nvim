@@ -57,7 +57,7 @@ return {
     -- stylua: ignore
     keys = {
         -- top pickers
-        { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
+        { "<leader><space>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
         { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
         -- buffer

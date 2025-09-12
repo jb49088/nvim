@@ -127,23 +127,3 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
         end
     end,
 })
-
--- Hide visual selection in inactive windows without affecting syntax highlighting
-vim.api.nvim_create_augroup("VisualActiveOnly", { clear = true })
-
-vim.api.nvim_create_autocmd("WinEnter", {
-    group = "VisualActiveOnly",
-    pattern = "*",
-    callback = function()
-        vim.wo.winhighlight = ""
-    end,
-})
-
-vim.api.nvim_create_autocmd("WinLeave", {
-    group = "VisualActiveOnly",
-    pattern = "*",
-    callback = function()
-        -- Only hide Visual and VisualNOS, preserve other highlighting
-        vim.wo.winhighlight = "Visual:NONE,VisualNOS:NONE"
-    end,
-})

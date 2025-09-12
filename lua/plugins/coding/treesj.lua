@@ -1,5 +1,6 @@
 return {
     "Wansmer/treesj",
+    -- enabled = false,
     keys = {
         { "J", "<cmd>TSJToggle<cr>", desc = "Join Toggle" },
     },

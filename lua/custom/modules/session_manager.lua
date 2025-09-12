@@ -96,7 +96,7 @@ end
 -- Load and apply venv info from file (respects activation state)
 local function load_venv_info(name)
     if not venv_manager then
-        return
+        return false
     end
 
     local venv_info_path = get_venv_info_path(name)
@@ -160,6 +160,54 @@ local function load_venv_info(name)
         end
     end
     return false
+end
+
+-- Silent deactivation function (doesn't show messages)
+local function silent_deactivate_venv()
+    if not venv_manager then
+        return
+    end
+
+    local current_venv = venv_manager.current_venv()
+    if not current_venv then
+        return -- Nothing to deactivate
+    end
+
+    -- Manually perform the deactivation steps without messages
+    -- (This replicates the venv_manager.deactivate() logic but silently)
+
+    -- Clear environment variables for new terminals
+    local original_path = vim.fn.getenv("_NVIM_ORIGINAL_PATH")
+    if original_path ~= vim.NIL and original_path then
+        vim.fn.setenv("PATH", original_path)
+        vim.fn.setenv("_NVIM_ORIGINAL_PATH", nil)
+    end
+    vim.fn.setenv("VIRTUAL_ENV", nil)
+    vim.fn.setenv("PROMPT_COMMAND", nil)
+
+    -- Send deactivation commands to existing terminals
+    local term_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+            local ok, buf_type = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
+            if ok and buf_type == "terminal" then
+                table.insert(term_buffers, buf)
+            end
+        end
+    end
+
+    for _, buf in ipairs(term_buffers) do
+        local ok, chan = pcall(vim.api.nvim_buf_get_var, buf, "terminal_job_id")
+        if ok and chan then
+            vim.api.nvim_chan_send(chan, "deactivate\n")
+        end
+    end
+
+    -- Fire custom event for venv deactivation (but silently)
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "VenvDeactivated",
+        data = {},
+    })
 end
 
 -- Clear everything to return to a clean Neovim state
@@ -251,6 +299,10 @@ function M.load_session(name)
 
     local session_path = get_session_path(name)
     if vim.fn.filereadable(session_path) == 1 then
+        -- Silently deactivate current venv before loading new session
+        -- This ensures we start fresh and only activate the new session's venv if it has one
+        silent_deactivate_venv()
+
         -- Close all current buffers without prompting
         vim.cmd("silent! %bdelete!")
         vim.cmd("source " .. vim.fn.fnameescape(session_path))
@@ -260,15 +312,18 @@ function M.load_session(name)
 
         -- Load and apply venv info after a longer delay to ensure session and LSP are fully loaded
         vim.defer_fn(function()
-            load_venv_info(name)
+            local venv_restored = load_venv_info(name)
+            -- Only show session loaded message after venv processing is complete
+            vim.schedule(function()
+                if name == nil or name == config.last_session then
+                    local venv_msg = venv_restored and " (with venv)" or ""
+                    print("Loaded last session" .. venv_msg)
+                else
+                    local venv_msg = venv_restored and " (with venv)" or ""
+                    print('Loaded session "' .. name .. '"' .. venv_msg)
+                end
+            end)
         end, 1000)
-
-        -- Different message for last session vs named sessions
-        if name == nil or name == config.last_session then
-            print("Loaded last session")
-        else
-            print('Loaded session "' .. name .. '"')
-        end
     else
         print("No session found: " .. session_path)
     end
