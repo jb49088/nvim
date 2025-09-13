@@ -299,6 +299,28 @@ function M.load_session(name)
 
     local session_path = get_session_path(name)
     if vim.fn.filereadable(session_path) == 1 then
+        -- SAVE CURRENT SESSION STATE before switching (if we have an active session)
+        if current_session and auto_save then
+            -- Check if we have buffers with actual files before saving
+            local has_files = false
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_loaded(buf) then
+                    local bufname = vim.api.nvim_buf_get_name(buf)
+                    if bufname ~= "" and vim.fn.filereadable(bufname) == 1 then
+                        has_files = true
+                        break
+                    end
+                end
+            end
+
+            if has_files then
+                local current_session_path = get_session_path(current_session)
+                vim.cmd("mksession! " .. vim.fn.fnameescape(current_session_path))
+                -- Save current venv state before deactivating
+                save_venv_info(current_session)
+            end
+        end
+
         -- ALWAYS deactivate current venv before loading new session
         -- This ensures clean state regardless of whether new session has venv
         if venv_manager and venv_manager.current_venv() then
