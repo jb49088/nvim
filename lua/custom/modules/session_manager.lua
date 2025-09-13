@@ -299,9 +299,11 @@ function M.load_session(name)
 
     local session_path = get_session_path(name)
     if vim.fn.filereadable(session_path) == 1 then
-        -- Silently deactivate current venv before loading new session
-        -- This ensures we start fresh and only activate the new session's venv if it has one
-        silent_deactivate_venv()
+        -- ALWAYS deactivate current venv before loading new session
+        -- This ensures clean state regardless of whether new session has venv
+        if venv_manager and venv_manager.current_venv() then
+            venv_manager.deactivate()
+        end
 
         -- Close all current buffers without prompting
         vim.cmd("silent! %bdelete!")
