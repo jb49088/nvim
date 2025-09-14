@@ -77,17 +77,11 @@ return {
         snippets = { preset = "luasnip" },
         fuzzy = { implementation = "prefer_rust_with_warning" },
         signature = {
-            enabled = true,
+            enabled = false, -- using lsp_signature.nvim currently
             window = {
-                show_documentation = true,
+                show_documentation = false, -- this causes lag inside signature's for basedpyright
                 border = "rounded",
             },
         },
     },
 }
-
--- return {
---     "saghen/blink.cmp",
---     version = "1.*",
---     opts = {},
--- }
