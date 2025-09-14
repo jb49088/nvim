@@ -1,7 +1,5 @@
--- TODO: figure out why sometimes there is a delay even with delay = 0
-
 return {
-    "folke/which-key.nvim",
+    "cameronr/which-key.nvim", -- using fork until https://github.com/folke/which-key.nvim/pull/964 / https://github.com/folke/which-key.nvim/pull/974
     event = "VeryLazy",
     opts = {
         preset = "helix",

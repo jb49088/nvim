@@ -16,7 +16,7 @@ return {
                 enabled = false, -- using blinkcmp signatures
             },
             hover = {
-                enabled = true, -- better than default (adds scrollbar, less obtrusive positioning)
+                enabled = false, -- using default vim.lsp.buf.hover()
             },
             override = {
                 ["vim.lsp.util.convert_input_to_markdown_lines"] = true,

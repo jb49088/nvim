@@ -24,7 +24,7 @@ opt.cursorline = true -- Highlight the current line...
 opt.wrap = false -- Disable line wrapping
 opt.scrolloff = 10 -- Vertical scroll offset
 opt.sidescrolloff = 10 -- Horizontal scroll offset
--- opt.winborder = "rounded" -- Rounded borders for floating windows (off until https://github.com/folke/which-key.nvim/pull/964)
+opt.winborder = "rounded" -- Rounded borders for floating windows
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
 -- cmd("syntax on")
 opt.shortmess:append("I") -- Dont show intro message

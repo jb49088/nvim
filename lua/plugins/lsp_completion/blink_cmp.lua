@@ -77,7 +77,7 @@ return {
         snippets = { preset = "luasnip" },
         fuzzy = { implementation = "prefer_rust_with_warning" },
         signature = {
-            enabled = false, -- using lsp_signature.nvim currently
+            enabled = true,
             window = {
                 show_documentation = false, -- this causes lag inside signature's for basedpyright
                 border = "rounded",

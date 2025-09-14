@@ -2,7 +2,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     -- enabled = false,
     branch = "main",
-    event = "VeryLazy",
+    lazy = false,
     build = ":TSUpdate",
     config = function()
         -- Setup with proper install directory
@@ -20,6 +20,7 @@ return {
             "c",
             "diff",
             "html",
+            "json",
             "lua",
             "luadoc",
             "markdown",
@@ -32,7 +33,7 @@ return {
 
         -- Enable highlighting
         vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "python", "lua", "sh", "c", "html", "markdown", "vim", "ruby" },
+            pattern = { "python", "json", "lua", "sh", "c", "html", "markdown", "vim", "ruby" },
             callback = function()
                 vim.treesitter.start()
             end,
