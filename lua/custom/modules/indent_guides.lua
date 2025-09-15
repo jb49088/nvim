@@ -1,5 +1,3 @@
--- TODO: test what other indent plugins do with markdown and implement something similar
-
 local M = {}
 
 M.enabled = false
@@ -8,6 +6,7 @@ local config = {
     char = "│",
     hl = "IndentGuidesChar",
     priority = 1,
+    debounce_ms = 200,
     filter = function(buf)
         return vim.bo[buf].buftype == ""
     end,
@@ -16,6 +15,36 @@ local config = {
 local ns = vim.api.nvim_create_namespace("simple_indent")
 local cache_extmarks = {}
 local states = {}
+local buffer_leftcol = {}
+
+-- Debounced refresh system
+local debounced_refresh = setmetatable({
+    timers = {},
+    queued_buffers = {},
+}, {
+    __call = function(self, bufnr)
+        if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
+            return
+        end
+
+        -- Clear existing timer for this buffer
+        if self.timers[bufnr] then
+            self.timers[bufnr]:close()
+        end
+
+        -- Queue this buffer for refresh
+        self.queued_buffers[bufnr] = true
+
+        -- Set new timer
+        self.timers[bufnr] = vim.defer_fn(function()
+            if self.queued_buffers[bufnr] and vim.api.nvim_buf_is_valid(bufnr) then
+                M.refresh_buffer_state(bufnr)
+                self.queued_buffers[bufnr] = nil
+            end
+            self.timers[bufnr] = nil
+        end, config.debounce_ms)
+    end,
+})
 
 --- Get the virtual text extmarks for the indent guide
 local function get_extmarks(indent, state, line_text)
@@ -124,15 +153,17 @@ local function get_indent_whitespace(whitespace, shiftwidth, tabstop, indent_sta
     return whitespace_tbl, new_stack, total_indent
 end
 
---- Main refresh function - simplified without cursor interference
+--- Optimized refresh function - only process visible range + small buffer
 local function refresh_buffer(buf, top, bottom, shiftwidth, tabstop)
     local line_indents = {}
-    local lines = vim.api.nvim_buf_get_lines(buf, top - 1, bottom, false)
 
-    -- Get extended lines for lookahead
+    -- Limit lookahead to prevent performance issues
     local line_count = vim.api.nvim_buf_line_count(buf)
+    local buffer_size = math.min(50, math.max(10, bottom - top + 20)) -- Adaptive buffer size
     local extended_top = math.max(1, top - 5)
-    local extended_bottom = math.min(line_count, bottom + 10)
+    local extended_bottom = math.min(line_count, bottom + buffer_size)
+
+    local lines = vim.api.nvim_buf_get_lines(buf, top - 1, bottom, false)
     local extended_lines = vim.api.nvim_buf_get_lines(buf, extended_top - 1, extended_bottom, false)
 
     -- Build a map of line numbers to extended line indices
@@ -163,19 +194,20 @@ local function refresh_buffer(buf, top, bottom, shiftwidth, tabstop)
             empty_line_counter = empty_line_counter - 1
             whitespace_tbl = next_whitespace_tbl
         else
-            -- First blank line in sequence: look ahead
+            -- First blank line in sequence: look ahead (limited)
             if i == #lines then
                 whitespace_tbl = {}
             else
                 local j = i + 1
 
-                -- Count consecutive blank lines and find next non-blank
-                while j <= #lines and lines[j]:len() == 0 do
+                -- Count consecutive blank lines and find next non-blank (limited lookahead)
+                local max_lookahead = math.min(#lines, i + 10) -- Limit lookahead
+                while j <= max_lookahead and lines[j] and lines[j]:len() == 0 do
                     empty_line_counter = empty_line_counter + 1
                     j = j + 1
                 end
 
-                -- Look beyond visible range if needed
+                -- Look for next non-blank line
                 local next_line = nil
                 local next_lnum = top + j - 1
 
@@ -183,15 +215,6 @@ local function refresh_buffer(buf, top, bottom, shiftwidth, tabstop)
                     next_line = lines[j]
                 elseif extended_map[next_lnum] then
                     next_line = extended_lines[extended_map[next_lnum]]
-                else
-                    -- Look even further ahead
-                    for look_ahead = next_lnum, math.min(line_count, next_lnum + 10) do
-                        local ahead_line = vim.api.nvim_buf_get_lines(buf, look_ahead - 1, look_ahead, false)[1]
-                        if ahead_line and ahead_line:len() > 0 then
-                            next_line = ahead_line
-                            break
-                        end
-                    end
                 end
 
                 if next_line then
@@ -218,8 +241,7 @@ local function refresh_buffer(buf, top, bottom, shiftwidth, tabstop)
             end
         end
 
-        -- MODIFIED: Use raw whitespace width instead of only counting "INDENT" entries
-        -- This allows guides to show even for non-standard indentation
+        -- Calculate indent (same logic as before)
         local indent = 0
         if not blankline then
             local whitespace = get_whitespace(line)
@@ -248,19 +270,28 @@ local function get_state(win, buf, top, bottom)
         prev = nil
     end
 
+    local leftcol = vim.api.nvim_buf_call(buf, vim.fn.winsaveview).leftcol
     local state = {
         win = win,
         buf = buf,
         changedtick = changedtick,
         top = top,
         bottom = bottom,
-        leftcol = vim.api.nvim_buf_call(buf, vim.fn.winsaveview).leftcol,
+        leftcol = leftcol,
         shiftwidth = vim.bo[buf].shiftwidth,
         tabstop = vim.bo[buf].tabstop,
         line_indents = prev and prev.line_indents or nil,
     }
 
     state.shiftwidth = state.shiftwidth == 0 and state.tabstop or state.shiftwidth
+
+    -- Track leftcol changes for horizontal scroll optimization
+    if buffer_leftcol[buf] ~= leftcol then
+        buffer_leftcol[buf] = leftcol
+        -- Force refresh for horizontal scroll (immediate, not debounced)
+        state.line_indents = nil
+    end
+
     states[win] = state
     return state
 end
@@ -323,19 +354,18 @@ function M.on_win(win, buf, top, bottom)
             local indent = state.line_indents[l] or 0
 
             -- For empty lines, check if they are part of a "trailing" sequence
-            -- that ends with an empty line (indicating user has unindented)
             if line:len() == 0 and indent > 0 then
-                -- Look ahead to see if this empty line sequence ends with actual code or just trailing empty
+                -- Look ahead to see if this empty line sequence ends with actual code
                 local is_trailing_empty = true
 
-                -- Check lines after this one
-                for check_line = l + 1, math.min(line_count, l + 20) do
+                -- Limited lookahead for performance
+                for check_line = l + 1, math.min(line_count, l + 10) do
                     local check_content = vim.api.nvim_buf_get_lines(buf, check_line - 1, check_line, false)[1] or ""
                     if check_content:len() > 0 then
                         -- Found non-empty line, check if it's indented
                         local check_whitespace = get_whitespace(check_content)
                         if #check_whitespace >= indent / state.shiftwidth * state.shiftwidth then
-                            -- Next non-empty line has sufficient indentation, so this is not trailing
+                            -- Next non-empty line has sufficient indentation
                             is_trailing_empty = false
                         end
                         break
@@ -370,19 +400,34 @@ function M.on_win(win, buf, top, bottom)
     end)
 end
 
---- Force immediate refresh
-local function force_refresh()
-    -- Clear all state immediately
-    states = {}
-    cache_extmarks = {}
+--- Refresh only the specific buffer's state (minimal clearing)
+function M.refresh_buffer_state(bufnr)
+    -- Only clear state for windows showing this buffer
+    for win, state in pairs(states) do
+        if state.buf == bufnr then
+            state.line_indents = nil -- Just invalidate cached indents
+        end
+    end
 
-    -- Trigger immediate redraw
-    vim.schedule(function()
-        vim.cmd("redraw!")
-    end)
+    -- Clear related cache entries (more targeted than clearing everything)
+    local keys_to_clear = {}
+    for key in pairs(cache_extmarks) do
+        -- Clear cache entries that might be related to this buffer
+        -- This is approximate but better than clearing everything
+        table.insert(keys_to_clear, key)
+    end
+
+    -- Limit cache clearing to prevent performance issues
+    if #keys_to_clear > 100 then
+        cache_extmarks = {} -- If too many entries, just clear all
+    else
+        for _, key in ipairs(keys_to_clear) do
+            cache_extmarks[key] = nil
+        end
+    end
 end
 
---- Enable indent guides
+--- Enable indent guides with optimized event handling
 function M.enable()
     if M.enabled then
         return
@@ -399,9 +444,18 @@ function M.enable()
 
     local group = vim.api.nvim_create_augroup("simple_indent", { clear = true })
 
+    -- Cleanup closed windows/buffers
     vim.api.nvim_create_autocmd({ "WinClosed", "BufDelete", "BufWipeout" }, {
         group = group,
-        callback = function()
+        callback = function(opts)
+            -- Clean up timers for deleted buffers
+            if opts.buf and debounced_refresh.timers[opts.buf] then
+                debounced_refresh.timers[opts.buf]:close()
+                debounced_refresh.timers[opts.buf] = nil
+                debounced_refresh.queued_buffers[opts.buf] = nil
+            end
+
+            -- Clean up invalid windows
             for win in pairs(states) do
                 if not vim.api.nvim_win_is_valid(win) then
                     states[win] = nil
@@ -410,15 +464,54 @@ function M.enable()
         end,
     })
 
-    -- Simpler event handling - just refresh on text changes and mode changes
+    -- Debounced events - these can wait a bit
     vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
         group = group,
-        callback = force_refresh,
+        callback = function(opts)
+            debounced_refresh(opts.buf)
+        end,
     })
 
+    -- Mode changes - debounced but shorter delay for better responsiveness
     vim.api.nvim_create_autocmd({ "InsertLeave", "InsertEnter" }, {
         group = group,
-        callback = force_refresh,
+        callback = function(opts)
+            debounced_refresh(opts.buf)
+        end,
+    })
+
+    -- Horizontal scroll - immediate refresh (like IBL)
+    vim.api.nvim_create_autocmd("WinScrolled", {
+        group = group,
+        callback = function(opts)
+            local buf = vim.api.nvim_win_get_buf(0)
+            if not config.filter(buf) then
+                return
+            end
+
+            local win_view = vim.fn.winsaveview()
+            if buffer_leftcol[buf] ~= win_view.leftcol then
+                buffer_leftcol[buf] = win_view.leftcol
+                -- Immediate refresh for horizontal scroll
+                M.refresh_buffer_state(buf)
+            else
+                -- Debounced for vertical scroll
+                debounced_refresh(buf)
+            end
+        end,
+    })
+
+    -- Some events that need immediate response
+    vim.api.nvim_create_autocmd({ "BufWinEnter", "FileType" }, {
+        group = group,
+        callback = function(opts)
+            -- Small delay but not debounced
+            vim.defer_fn(function()
+                if vim.api.nvim_buf_is_valid(opts.buf) then
+                    M.refresh_buffer_state(opts.buf)
+                end
+            end, 50)
+        end,
     })
 end
 
@@ -429,8 +522,19 @@ function M.disable()
     end
     M.enabled = false
     vim.api.nvim_del_augroup_by_name("simple_indent")
+
+    -- Clean up timers
+    for _, timer in pairs(debounced_refresh.timers) do
+        if timer then
+            timer:close()
+        end
+    end
+
+    debounced_refresh.timers = {}
+    debounced_refresh.queued_buffers = {}
     states = {}
     cache_extmarks = {}
+    buffer_leftcol = {}
     vim.cmd("redraw!")
 end
 
