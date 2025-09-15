@@ -193,16 +193,65 @@ function IndentScope:with_edge()
     return self:with({ from = from, to = to, indent = indent })
 end
 
+-- Helper function to check if cursor is actually inside an indented block
+local function cursor_inside_block(cursor_line, scope_from, scope_to)
+    -- Cursor must be between scope boundaries (inclusive)
+    return cursor_line >= scope_from and cursor_line <= scope_to
+end
+
+-- Helper function to find the closest non-blank line with content
+local function find_closest_content_line(line)
+    local prev_line = vim.fn.prevnonblank(line)
+    local next_line = vim.fn.nextnonblank(line)
+
+    if prev_line == 0 and next_line == 0 then
+        return nil
+    elseif prev_line == 0 then
+        return next_line
+    elseif next_line == 0 then
+        return prev_line
+    else
+        -- Return the closer one
+        local prev_dist = line - prev_line
+        local next_dist = next_line - line
+        return prev_dist <= next_dist and prev_line or next_line
+    end
+end
+
 function IndentScope:find(opts)
     local indent, line = Scope.get_indent(opts.pos[1])
+    local cursor_line = opts.pos[1]
+
+    -- If cursor is on a blank line, we need to be more careful about scope detection
+    if vim.fn.prevnonblank(line) ~= line then
+        local closest_line = find_closest_content_line(line)
+        if not closest_line then
+            return nil -- No content in buffer
+        end
+
+        -- Get the scope for the closest content line
+        local content_indent, content_line = Scope.get_indent(closest_line)
+        if content_line == 0 then
+            return nil
+        end
+
+        -- Check if we can find a scope at the content line
+        local temp_scope = IndentScope:find(vim.tbl_extend("keep", { pos = { content_line, 0 } }, opts))
+        if temp_scope then
+            -- Only return this scope if the cursor is actually within its boundaries
+            if cursor_inside_block(cursor_line, temp_scope.from, temp_scope.to) then
+                return temp_scope
+            else
+                -- Cursor is outside the detected scope, return nil
+                return nil
+            end
+        end
+
+        return nil
+    end
+
     local prev_i, prev_l = Scope.get_indent(vim.fn.prevnonblank(line - 1))
     local next_i, next_l = Scope.get_indent(vim.fn.nextnonblank(line + 1))
-
-    if vim.fn.prevnonblank(line) ~= line then
-        indent, line = Scope.get_indent(prev_i > next_i and prev_l or next_l)
-        prev_i, prev_l = Scope.get_indent(vim.fn.prevnonblank(line - 1))
-        next_i, next_l = Scope.get_indent(vim.fn.nextnonblank(line + 1))
-    end
 
     if line == 0 then
         return
@@ -223,12 +272,19 @@ function IndentScope:find(opts)
         indent = math.min(indent, vim.fn.virtcol(opts.pos) + 1)
     end
 
-    return IndentScope:new({
+    local scope = IndentScope:new({
         buf = opts.buf,
         from = IndentScope._expand(line, indent, true),
         to = IndentScope._expand(line, indent, false),
         indent = indent,
     }, opts)
+
+    -- Final check: ensure cursor is actually within the detected scope
+    if scope and not cursor_inside_block(cursor_line, scope.from, scope.to) then
+        return nil
+    end
+
+    return scope
 end
 
 function IndentScope:parent()
@@ -348,8 +404,29 @@ end
 
 function TSScope:find(opts)
     local lang = vim.treesitter.language.get_lang(vim.bo[opts.buf].filetype)
-    local line = vim.fn.nextnonblank(opts.pos[1])
-    line = line == 0 and vim.fn.prevnonblank(opts.pos[1]) or line
+    local cursor_line = opts.pos[1]
+    local line = vim.fn.nextnonblank(cursor_line)
+    line = line == 0 and vim.fn.prevnonblank(cursor_line) or line
+
+    -- If we're on a blank line, check if we're actually inside a treesitter scope
+    if vim.fn.prevnonblank(cursor_line) ~= cursor_line then
+        local closest_line = find_closest_content_line(cursor_line)
+        if not closest_line then
+            return nil
+        end
+
+        -- Try to find scope at closest content line
+        local temp_scope = TSScope:find(vim.tbl_extend("keep", { pos = { closest_line, 0 } }, opts))
+        if temp_scope then
+            -- Only return if cursor is within the scope boundaries
+            if cursor_inside_block(cursor_line, temp_scope.from, temp_scope.to) then
+                return temp_scope
+            else
+                return nil
+            end
+        end
+        return nil
+    end
 
     local pos = {
         math.max(line - 1, 0),
@@ -381,7 +458,14 @@ function TSScope:find(opts)
         end
     end
 
-    return TSScope:new({ buf = opts.buf, node = node }, opts):root()
+    local scope = TSScope:new({ buf = opts.buf, node = node }, opts):root()
+
+    -- Final check: ensure cursor is actually within the detected scope
+    if scope and not cursor_inside_block(cursor_line, scope.from, scope.to) then
+        return nil
+    end
+
+    return scope
 end
 
 function TSScope:parent()
@@ -460,16 +544,25 @@ local function get_scope(cb, opts)
     local min_size = opts.min_size or 2
     local max_size = opts.max_size or min_size
 
-    -- Expand block with ancestors until min_size is reached or max_size is reached
+    -- Only expand if we actually have a scope and cursor is within it
     if scope then
+        local cursor_line = opts.pos[1]
         local s = scope
         while s do
-            if opts.edge and scope:size_with_edge() >= min_size and s:size_with_edge() > max_size then
-                break
-            elseif not opts.edge and scope:size() >= min_size and s:size() > max_size then
+            local size_check = opts.edge and s:size_with_edge() or s:size()
+            local scope_size_check = opts.edge and scope:size_with_edge() or scope:size()
+
+            if scope_size_check >= min_size and size_check > max_size then
                 break
             end
-            scope, s = s, s:parent()
+
+            -- Make sure we don't expand beyond reasonable bounds when cursor is not in parent
+            local parent = s:parent()
+            if parent and not cursor_inside_block(cursor_line, parent.from, parent.to) then
+                break
+            end
+
+            scope, s = s, parent
         end
         -- Expand with edge
         if opts.edge then
@@ -479,21 +572,30 @@ local function get_scope(cb, opts)
 
     -- Expand single line blocks with single line siblings
     if opts.siblings and scope and scope:size() == 1 then
+        local cursor_line = opts.pos[1]
         while scope and scope:size() < min_size do
             local prev, next = vim.fn.prevnonblank(scope.from - 1), vim.fn.nextnonblank(scope.to + 1)
-            local prev_dist, next_dist = math.abs(opts.pos[1] - prev), math.abs(opts.pos[1] - next)
+            local prev_dist, next_dist = math.abs(cursor_line - prev), math.abs(cursor_line - next)
             local prev_s = prev > 0 and Class:find(vim.tbl_extend("keep", { pos = { prev, 0 } }, opts))
             local next_s = next > 0 and Class:find(vim.tbl_extend("keep", { pos = { next, 0 } }, opts))
             prev_s = prev_s and prev_s:size() == 1 and prev_s
             next_s = next_s and next_s:size() == 1 and next_s
             local s = prev_dist < next_dist and prev_s or next_s or prev_s
             if s and (s.from < scope.from or s.to > scope.to) then
-                scope = Scope.with(scope, { from = math.min(scope.from, s.from), to = math.max(scope.to, s.to) })
+                local new_scope =
+                    Scope.with(scope, { from = math.min(scope.from, s.from), to = math.max(scope.to, s.to) })
+                -- Only expand if cursor is still within the new scope
+                if cursor_inside_block(cursor_line, new_scope.from, new_scope.to) then
+                    scope = new_scope
+                else
+                    break
+                end
             else
                 break
             end
         end
     end
+
     cb(scope)
 end
 

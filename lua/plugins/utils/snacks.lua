@@ -8,6 +8,23 @@ return {
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
+        --- INDENT ---
+        indent = {
+            enabled = false,
+            scope = {
+                enabled = false,
+            },
+            chunk = {
+                enabled = true,
+                only_current = true,
+                char = {
+                    corner_top = "╭",
+                    corner_bottom = "╰",
+                    arrow = "─",
+                },
+            },
+        },
+
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
