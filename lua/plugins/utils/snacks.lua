@@ -5,6 +5,9 @@ return {
     priority = 1000,
     lazy = false,
     opts = {
+        --- BIGFILE ---
+        bigfile = { enabled = true },
+
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
@@ -130,9 +133,9 @@ return {
     -- stylua: ignore
     keys = {
         -- top pickers
-        { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
+        { "<leader><space>", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
-        { "<leader><space>", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
+        { "<leader>,", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
         -- find
