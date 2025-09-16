@@ -6,27 +6,25 @@ return {
     lazy = false,
     opts = {
         --- BIGFILE ---
-        bigfile = { enabled = true },
+        bigfile = {
+            enabled = true,
+            setup = function(ctx)
+                -- Keep all the default optimizations except statuscolumn manipulation
+                if vim.fn.exists(":NoMatchParen") ~= 0 then
+                    vim.cmd([[NoMatchParen]])
+                end
+                Snacks.util.wo(0, { foldmethod = "manual", conceallevel = 0 })
+                vim.b.minianimate_disable = true
+                vim.schedule(function()
+                    if vim.api.nvim_buf_is_valid(ctx.buf) then
+                        vim.bo[ctx.buf].syntax = ctx.ft
+                    end
+                end)
+            end,
+        },
 
         --- BUFDELETE ---
         bufdelete = { enabled = true },
-
-        --- INDENT ---
-        indent = {
-            enabled = false,
-            scope = {
-                enabled = false,
-            },
-            chunk = {
-                enabled = true,
-                only_current = true,
-                char = {
-                    corner_top = "╭",
-                    corner_bottom = "╰",
-                    arrow = "─",
-                },
-            },
-        },
 
         --- LAZYGIT ---
         lazygit = { enabled = true },
@@ -187,6 +185,7 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations
+        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
 
         -- toggles
         -- stylua: ignore start
