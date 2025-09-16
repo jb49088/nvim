@@ -922,12 +922,32 @@ function M.get_filename_display()
         return ""
     end
 
-    local filepath = vim.api.nvim_buf_get_name(0)
     local bufnr = vim.api.nvim_get_current_buf()
+    local win = vim.api.nvim_get_current_win()
+
+    -- Early exit for buffers where breadcrumbs shouldn't be shown
+    local should_enable
+    if type(config.bar.enable) == "function" then
+        should_enable = config.bar.enable(bufnr, win)
+    else
+        should_enable = config.bar.enable
+    end
+
+    if not should_enable then
+        return ""
+    end
+
+    local filepath = vim.api.nvim_buf_get_name(bufnr)
     local context_symbols = get_context_data(bufnr)
 
+    -- Update context if we have symbol tree data (no LSP request, just context update)
+    if buffer_symbol_trees[bufnr] then
+        update_context(bufnr)
+        context_symbols = get_context_data(bufnr)
+    end
+
     local parts = build_breadcrumb_parts(filepath, context_symbols)
-    local available_width = vim.api.nvim_win_get_width(0) - 2
+    local available_width = vim.api.nvim_win_get_width(win) - 2
 
     if config.truncation.enabled then
         parts = apply_truncation(parts, available_width)
@@ -1008,7 +1028,7 @@ local function request_symbols(bufnr, client, retry_count)
     end, bufnr)
 end
 
---- Attach LSP client following navic's approach
+--- Modified attach function with buffer-specific cursor tracking
 function M.attach(client, bufnr)
     if not client.server_capabilities.documentSymbolProvider then
         if not vim.g.navic_silence then
@@ -1058,16 +1078,29 @@ function M.attach(client, bufnr)
         buffer = bufnr,
     })
 
-    -- Update context on cursor movements
-    vim.api.nvim_create_autocmd("CursorHold", {
-        callback = function()
-            update_context(bufnr)
+    -- BUFFER-SPECIFIC cursor movement handling (only for this buffer)
+    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+        callback = function(args)
+            -- Only update context for THIS buffer, no cross-buffer effects
+            if args.buf == bufnr then
+                update_context(bufnr)
+                -- Force immediate winbar refresh for this window only
+                local current_win = vim.api.nvim_get_current_win()
+                if vim.api.nvim_win_get_buf(current_win) == bufnr then
+                    local current_winbar = vim.wo[current_win].winbar
+                    if current_winbar and current_winbar:match("breadcrumbs") then
+                        -- Immediate refresh, no scheduling
+                        vim.wo[current_win].winbar = current_winbar
+                    end
+                end
+            end
         end,
         group = breadcrumbs_augroup,
         buffer = bufnr,
     })
 
-    vim.api.nvim_create_autocmd("CursorMoved", {
+    -- Context updates with debouncing for hold events
+    vim.api.nvim_create_autocmd("CursorHold", {
         callback = function()
             update_context(bufnr)
         end,
@@ -1189,19 +1222,23 @@ end
 local function setup_symbol_refresh_autocmds()
     augroups.symbol_refresh = vim.api.nvim_create_augroup("breadcrumbs_symbol_refresh", { clear = true })
 
-    -- Refresh breadcrumbs display when cursor moves (no need to refetch symbols)
-    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-        group = augroups.symbol_refresh,
-        callback = function()
-            if not M.enabled then
-                return
-            end
+    -- REMOVE the problematic global autocmd entirely
+    -- The issue was this global autocmd causing cross-buffer redraw contamination:
+    --
+    -- vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+    --     group = augroups.symbol_refresh,
+    --     callback = function()
+    --         if not M.enabled then
+    --             return
+    --         end
+    --         vim.schedule(function()
+    --             vim.cmd.redrawstatus()
+    --         end)
+    --     end,
+    -- })
 
-            vim.schedule(function()
-                vim.cmd.redrawstatus()
-            end)
-        end,
-    })
+    -- Instead, handle refreshes through the winbar evaluation itself
+    -- The winbar function already gets called when needed by Neovim's display system
 end
 
 --- Setup autocmds to refresh breadcrumbs on mode changes for color updates

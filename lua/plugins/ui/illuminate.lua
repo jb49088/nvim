@@ -7,6 +7,7 @@ return {
             delay = 200,
             providers = { "lsp", "treesitter", "regex" },
             filetypes_denylist = {
+                "bigfile",
                 "snacks_picker_list",
                 "snacks_picker_preview",
                 "snacks_picker_input",
