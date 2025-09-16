@@ -75,15 +75,6 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
     end,
 })
 
--- Fix flickering line numbers on windows terminal
--- vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
---     group = "ui_enhancements",
---     callback = function()
---         vim.o.cursorline = false
---         vim.o.cursorline = true
---     end,
--- })
-
 --- Terminal settings ---
 vim.api.nvim_create_augroup("terminal_settings", { clear = true })
 

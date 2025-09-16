@@ -65,6 +65,7 @@ local config = {
         separator_only = true,
         fallback_color = "#ffffff",
     },
+    -- Replace the existing config.bar.enable function with this cleaner version
     bar = {
         enable = function(buf, win)
             if not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_win_is_valid(win) then
@@ -80,29 +81,30 @@ local config = {
                 return false
             end
 
-            local bufname = vim.api.nvim_buf_get_name(buf)
-            if bufname ~= "" then
-                local stat = vim.uv.fs_stat(bufname)
-                if stat and stat.size > 1024 * 1024 then
-                    return false
-                end
-            end
+            local filetype = vim.bo[buf].filetype
 
-            local buftype = vim.bo[buf].buftype
-            if buftype == "quickfix" or buftype == "nofile" or buftype == "prompt" or buftype == "terminal" then
+            -- Use bigfile.nvim detection instead of hardcoded file size check
+            if filetype == "bigfile" then
                 return false
             end
 
-            local filetype = vim.bo[buf].filetype
+            local buftype = vim.bo[buf].buftype
+            if buftype == "quickfix" or buftype == "nofile" or buftype == "prompt" or bufetype == "terminal" then
+                return false
+            end
+
+            -- Allow specific filetypes that should have breadcrumbs
             if filetype == "markdown" or filetype == "help" then
                 return true
             end
 
+            -- Check for treesitter parser
             local has_parser = pcall(vim.treesitter.get_parser, buf)
             if has_parser then
                 return true
             end
 
+            -- Check for LSP support
             local lsp_clients = vim.lsp.get_clients({
                 bufnr = buf,
                 method = vim.lsp.protocol.Methods.textDocument_documentSymbol,
@@ -111,6 +113,8 @@ local config = {
                 return true
             end
 
+            -- Default check for regular files
+            local bufname = vim.api.nvim_buf_get_name(buf)
             if buftype == "" and bufname ~= "" then
                 return true
             end
