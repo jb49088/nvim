@@ -19,3 +19,5 @@
 - `:echo len(getbufinfo())` — see buffer count
 - `:set buftype?` — show current buffer type
 - `:set filetype?` — show current file type
+- `:lua vim.lsp.buf.signature_help()` — show function signature and parameter info
+- `:lua vim.lsp.buf.hover()` — show documentation/hover info for symbol under cursor

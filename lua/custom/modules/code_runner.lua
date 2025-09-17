@@ -69,7 +69,7 @@ function M.run_file()
     require("custom.modules.floating_terminal").toggle_terminal()
     vim.defer_fn(function()
         vim.api.nvim_chan_send(vim.b.terminal_job_id, cmd .. "\r")
-    end, 10)
+    end, 15)
 end
 
 -- Run file in background (no terminal)
