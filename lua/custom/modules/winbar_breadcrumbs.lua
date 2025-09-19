@@ -465,6 +465,21 @@ local function update_context(bufnr, cursor_pos)
         buffer_context_data[bufnr] = {}
     end
 
+    -- CHECK FOR EMPTY FILE FIRST - This is the key fix
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    if line_count == 1 then
+        local first_line = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ""
+        if first_line:match("^%s*$") then -- Empty or whitespace-only
+            -- File is empty, clear all context except root
+            if buffer_symbol_trees[bufnr] and buffer_symbol_trees[bufnr].is_root then
+                buffer_context_data[bufnr] = { buffer_symbol_trees[bufnr] }
+            else
+                buffer_context_data[bufnr] = {}
+            end
+            return
+        end
+    end
+
     local old_context_data = buffer_context_data[bufnr]
     local new_context_data = {}
     local curr = buffer_symbol_trees[bufnr]
@@ -480,7 +495,6 @@ local function update_context(bufnr, cursor_pos)
 
     -- Conservative helper function to check if a line was deleted
     local function line_still_exists(line_number)
-        local line_count = vim.api.nvim_buf_line_count(bufnr)
         return line_number <= line_count
     end
 
@@ -976,7 +990,10 @@ local function lsp_callback(bufnr, symbols)
     if symbols and #symbols > 0 then
         buffer_symbol_trees[bufnr] = parse_symbols(symbols)
     else
+        -- Clear the symbol tree when no symbols are returned (empty file case)
         buffer_symbol_trees[bufnr] = nil
+        -- Also clear the context data
+        buffer_context_data[bufnr] = {}
     end
 
     vim.schedule(function()
