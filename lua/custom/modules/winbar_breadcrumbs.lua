@@ -14,6 +14,9 @@ local buffer_symbol_trees = {}
 -- Store context data per buffer (symbols containing cursor)
 local buffer_context_data = {}
 
+-- Store frozen context data per buffer (for insert mode)
+local buffer_frozen_context_data = {}
+
 -- Store augroup IDs for cleanup
 local augroups = {}
 
@@ -89,7 +92,7 @@ local config = {
             end
 
             local buftype = vim.bo[buf].buftype
-            if buftype == "quickfix" or buftype == "nofile" or buftype == "prompt" or bufetype == "terminal" then
+            if buftype == "quickfix" or buftype == "nofile" or buftype == "prompt" or buftype == "terminal" then
                 return false
             end
 
@@ -644,8 +647,17 @@ local function update_context(bufnr, cursor_pos)
     buffer_context_data[bufnr] = new_context_data
 end
 
---- Get context data for buffer
+--- Get context data for buffer (with insert mode freezing)
 local function get_context_data(bufnr)
+    local current_mode = vim.api.nvim_get_mode().mode
+
+    -- If in insert mode, return frozen context if available
+    if current_mode == "i" then
+        if buffer_frozen_context_data[bufnr] then
+            return buffer_frozen_context_data[bufnr]
+        end
+    end
+
     return buffer_context_data[bufnr]
 end
 
@@ -959,7 +971,9 @@ function M.get_filename_display()
     local context_symbols = get_context_data(bufnr)
 
     -- Update context if we have symbol tree data (no LSP request, just context update)
-    if buffer_symbol_trees[bufnr] then
+    -- But only if NOT in insert mode
+    local current_mode = vim.api.nvim_get_mode().mode
+    if buffer_symbol_trees[bufnr] and current_mode ~= "i" then
         update_context(bufnr)
         context_symbols = get_context_data(bufnr)
     end
@@ -994,6 +1008,7 @@ local function lsp_callback(bufnr, symbols)
         buffer_symbol_trees[bufnr] = nil
         -- Also clear the context data
         buffer_context_data[bufnr] = {}
+        buffer_frozen_context_data[bufnr] = nil
     end
 
     vim.schedule(function()
@@ -1099,19 +1114,54 @@ function M.attach(client, bufnr)
         buffer = bufnr,
     })
 
-    -- BUFFER-SPECIFIC cursor movement handling (only for this buffer)
-    vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+    -- Insert mode handling: freeze context on enter, unfreeze and update on leave
+    vim.api.nvim_create_autocmd("InsertEnter", {
         callback = function(args)
-            -- Only update context for THIS buffer, no cross-buffer effects
             if args.buf == bufnr then
+                -- Freeze current context for insert mode
+                buffer_frozen_context_data[bufnr] = vim.deepcopy(buffer_context_data[bufnr] or {})
+            end
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    vim.api.nvim_create_autocmd("InsertLeave", {
+        callback = function(args)
+            if args.buf == bufnr then
+                -- Unfreeze and immediately update context
+                buffer_frozen_context_data[bufnr] = nil
                 update_context(bufnr)
-                -- Force immediate winbar refresh for this window only
+
+                -- Force immediate winbar refresh
                 local current_win = vim.api.nvim_get_current_win()
                 if vim.api.nvim_win_get_buf(current_win) == bufnr then
                     local current_winbar = vim.wo[current_win].winbar
                     if current_winbar and current_winbar:match("breadcrumbs") then
-                        -- Immediate refresh, no scheduling
                         vim.wo[current_win].winbar = current_winbar
+                    end
+                end
+            end
+        end,
+        group = breadcrumbs_augroup,
+        buffer = bufnr,
+    })
+
+    -- BUFFER-SPECIFIC cursor movement handling (only for this buffer, but skip insert mode)
+    vim.api.nvim_create_autocmd({ "CursorMoved" }, {
+        callback = function(args)
+            -- Only update context for THIS buffer, and only if NOT in insert mode
+            if args.buf == bufnr then
+                local current_mode = vim.api.nvim_get_mode().mode
+                if current_mode ~= "i" then
+                    update_context(bufnr)
+                    -- Force immediate winbar refresh for this window only
+                    local current_win = vim.api.nvim_get_current_win()
+                    if vim.api.nvim_win_get_buf(current_win) == bufnr then
+                        local current_winbar = vim.wo[current_win].winbar
+                        if current_winbar and current_winbar:match("breadcrumbs") then
+                            vim.wo[current_win].winbar = current_winbar
+                        end
                     end
                 end
             end
@@ -1123,7 +1173,10 @@ function M.attach(client, bufnr)
     -- Context updates with debouncing for hold events
     vim.api.nvim_create_autocmd("CursorHold", {
         callback = function()
-            update_context(bufnr)
+            local current_mode = vim.api.nvim_get_mode().mode
+            if current_mode ~= "i" then
+                update_context(bufnr)
+            end
         end,
         group = breadcrumbs_augroup,
         buffer = bufnr,
@@ -1134,6 +1187,7 @@ function M.attach(client, bufnr)
         callback = function()
             buffer_symbol_trees[bufnr] = nil
             buffer_context_data[bufnr] = nil
+            buffer_frozen_context_data[bufnr] = nil
             attached_lsp_clients[bufnr] = nil
             awaiting_lsp_response[bufnr] = nil
             cancel_debounce_timer(bufnr)
@@ -1345,6 +1399,7 @@ local function setup_buffer_focus_autocmds()
             if buffer_symbol_trees[bufnr] and not vim.api.nvim_buf_is_valid(bufnr) then
                 buffer_symbol_trees[bufnr] = nil
                 buffer_context_data[bufnr] = nil
+                buffer_frozen_context_data[bufnr] = nil
                 attached_lsp_clients[bufnr] = nil
                 awaiting_lsp_response[bufnr] = nil
             end
@@ -1471,6 +1526,7 @@ function M.disable()
     attached_lsp_clients = {}
     buffer_symbol_trees = {}
     buffer_context_data = {}
+    buffer_frozen_context_data = {}
     awaiting_lsp_response = {}
     current_cached_mode = nil
 

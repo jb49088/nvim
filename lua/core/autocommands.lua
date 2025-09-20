@@ -23,6 +23,18 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
     command = "if mode() != 'c' | checktime | endif",
 })
 
+-- Automatically remove LuaSnip snippet session if you leave insert/snippet mode
+vim.api.nvim_create_autocmd("ModeChanged", {
+    group = "editor_behavior",
+    pattern = { "s:n", "i:*" },
+    callback = function()
+        local luasnip = require("luasnip")
+        if luasnip.session and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()] then
+            luasnip.unlink_current()
+        end
+    end,
+})
+
 --- UI/Visual enhancements ---
 vim.api.nvim_create_augroup("ui_enhancements", { clear = true })
 
