@@ -16,6 +16,17 @@ map({ "n", "v" }, "x", '"_x', { noremap = true })
 
 -- Buffers
 map("n", "<leader>.", "<Cmd>e #<CR>", { desc = "Alternate Buffer" })
+map("n", "<leader>ba", function()
+    local count = #vim.tbl_filter(function(buf)
+        return vim.bo[buf].buflisted
+    end, vim.api.nvim_list_bufs())
+
+    vim.cmd("silent %bd")
+
+    if count > 0 then
+        vim.notify(string.format("Closed %d buffer%s", count, count == 1 and "" or "s"))
+    end
+end, { desc = "Close All Buffers" })
 map("n", "<leader>bn", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
 map("n", "<leader>bp", "<Cmd>bprevious<CR>", { desc = "Previous Buffer" })
 map("n", "<leader>bC", "<Cmd>bd<CR>", { desc = "Close Buffer and Window" })

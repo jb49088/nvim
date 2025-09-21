@@ -20,12 +20,13 @@ return {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
                 "bashls", -- bash lsp
-                "powershell_es", -- powershell lsp
+                "powershell_es", -- powershell lsp (includes formatter and linter)
             },
             automatic_enable = true,
         })
 
         -- Custom tool installation using Mason registry directly
+        -- mason-tool-installer.nvim added too much startup time
         local tools = {
             "luacheck", -- lua linter
             "stylua", -- lua formatter
