@@ -1,5 +1,3 @@
--- Unified Code Runner for Neovim
--- Supports running files in terminal or background
 local M = {}
 
 -- Configuration
@@ -7,6 +5,8 @@ local config = {
     interpreters = {
         py = "python3",
         lua = "lua",
+        sh = "bash",
+        ps1 = "pwsh",
     },
     no_term_runners = {
         py = function(filepath)
@@ -16,6 +16,14 @@ local config = {
         lua = function(filepath)
             return vim.fn.has("win32") == 1 and 'start /B lua.exe "' .. filepath .. '"'
                 or 'nohup lua "' .. filepath .. '" > /dev/null 2>&1 &'
+        end,
+        sh = function(filepath)
+            return vim.fn.has("win32") == 1 and 'start /B bash.exe "' .. filepath .. '"'
+                or 'nohup bash "' .. filepath .. '" > /dev/null 2>&1 &'
+        end,
+        ps1 = function(filepath)
+            return vim.fn.has("win32") == 1 and 'start /B pwsh.exe "' .. filepath .. '"'
+                or 'nohup pwsh "' .. filepath .. '" > /dev/null 2>&1 &'
         end,
     },
 }
@@ -51,11 +59,14 @@ function M.run_file()
     if not is_valid_buffer() then
         return
     end
+
     vim.cmd("write")
+
     local filename = get_current_filename()
     if not filename then
         return
     end
+
     local interpreter = get_interpreter(filename)
     if not interpreter then
         return
@@ -66,10 +77,11 @@ function M.run_file()
     print("Running " .. display_name)
 
     local cmd = interpreter .. " " .. filename
+
     require("custom.modules.floating_terminal").toggle_terminal()
     vim.defer_fn(function()
         vim.api.nvim_chan_send(vim.b.terminal_job_id, cmd .. "\r")
-    end, 20)
+    end, 25)
 end
 
 -- Run file in background (no terminal)
@@ -77,13 +89,17 @@ function M.run_background()
     if not is_valid_buffer() then
         return
     end
+
     vim.cmd("write")
+
     local filename = get_current_filename()
     if not filename then
         return
     end
+
     local extension = vim.fn.fnamemodify(filename, ":e")
     local runner_function = config.no_term_runners[extension]
+
     if runner_function then
         -- Get just the filename without path for display
         local display_name = vim.fn.fnamemodify(filename, ":t")

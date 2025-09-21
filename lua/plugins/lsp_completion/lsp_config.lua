@@ -84,6 +84,7 @@ return {
                 },
             },
             bashls = {},
+            powershell_es = {},
         }
 
         for server_name, config in pairs(servers) do

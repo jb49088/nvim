@@ -20,6 +20,7 @@ return {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
                 "bashls", -- bash lsp
+                "powershell_es", -- powershell lsp
             },
             automatic_enable = true,
         })
