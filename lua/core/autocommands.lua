@@ -102,10 +102,15 @@ vim.api.nvim_create_autocmd("TermOpen", {
 vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter" }, {
     group = "terminal_settings",
     pattern = "*",
-    callback = function()
-        if vim.bo.buftype == "terminal" then
+    callback = function(args)
+        if vim.bo[args.buf].buftype == "terminal" and args.buf == vim.api.nvim_get_current_buf() then
             vim.cmd("normal! G$")
-            vim.cmd("startinsert")
+            -- Use vim.schedule to ensure the insert only happens if we're still in the terminal
+            vim.schedule(function()
+                if vim.api.nvim_get_current_buf() == args.buf and vim.bo[args.buf].buftype == "terminal" then
+                    vim.cmd("startinsert")
+                end
+            end)
         end
     end,
 })
