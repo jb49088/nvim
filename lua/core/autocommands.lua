@@ -104,12 +104,18 @@ vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter" }, {
     pattern = "*",
     callback = function(args)
         if vim.bo[args.buf].buftype == "terminal" and args.buf == vim.api.nvim_get_current_buf() then
-            vim.cmd("normal! G$")
-            -- Use vim.schedule to ensure the insert only happens if we're still in the terminal
+            local original_buf = args.buf
             vim.schedule(function()
-                if vim.api.nvim_get_current_buf() == args.buf and vim.bo[args.buf].buftype == "terminal" then
-                    vim.cmd("startinsert")
-                end
+                -- Double schedule prevents startinsert from "bleeding over" to non-terminal
+                -- buffers during rapid buffer switching (session restoration, splits)
+                vim.schedule(function()
+                    local current_buf = vim.api.nvim_get_current_buf()
+                    -- Only proceed if we're still actually in the intended terminal buffer
+                    if current_buf == original_buf and vim.bo[current_buf].buftype == "terminal" then
+                        vim.cmd("normal! G$")
+                        vim.cmd("startinsert")
+                    end
+                end)
             end)
         end
     end,
