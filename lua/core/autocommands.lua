@@ -11,7 +11,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Restore terminal cursor on exit
-vim.api.nvim_create_autocmd("VimLeave", {
+vim.api.nvim_create_autocmd({ "VimLeave", "ExitPre" }, {
     group = "editor_behavior",
     command = "set guicursor=a:ver25",
 })
@@ -110,8 +110,9 @@ vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter" }, {
                 -- buffers during rapid buffer switching (session restoration, splits)
                 vim.schedule(function()
                     local current_buf = vim.api.nvim_get_current_buf()
-                    -- Only proceed if we're still actually in the intended terminal buffer
-                    if current_buf == original_buf and vim.bo[current_buf].buftype == "terminal" then
+                    local mode = vim.api.nvim_get_mode().mode
+                    -- Only proceed if we're still in the right terminal and not already in insert
+                    if current_buf == original_buf and vim.bo[current_buf].buftype == "terminal" and mode ~= "t" then -- Don't interfere if already in terminal insert mode
                         vim.cmd("normal! G$")
                         vim.cmd("startinsert")
                     end

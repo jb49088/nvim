@@ -1,5 +1,5 @@
 return {
-    "cameronr/which-key.nvim", -- using fork until https://github.com/folke/which-key.nvim/pull/964 / https://github.com/folke/which-key.nvim/pull/974
+    "folke/which-key.nvim",
     event = "VeryLazy",
     opts = {
         preset = "helix",

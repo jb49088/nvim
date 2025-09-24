@@ -162,3 +162,19 @@ end, { desc = "Location List" })
 
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
+
+-- HACK: Override for :wqa to avoid terminal job blocking
+-- Intercepts Enter in command mode to silently replace wqa with wall + qall!
+vim.keymap.set("c", "<CR>", function()
+    local cmd = vim.fn.getcmdline()
+    if cmd == "wqa" then
+        vim.fn.feedkeys("\27", "n") -- Escape current command
+        vim.defer_fn(function()
+            vim.cmd("wall")
+            vim.cmd("qall!")
+        end, 1)
+        return ""
+    else
+        return "\13" -- Return normal Enter
+    end
+end, { expr = true })
