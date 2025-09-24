@@ -21,6 +21,7 @@ return {
                 "basedpyright", -- python lsp
                 "bashls", -- bash lsp
                 "powershell_es", -- powershell lsp (includes formatter and linter)
+                "html", -- html lsp
             },
             automatic_enable = true,
         })
@@ -33,6 +34,8 @@ return {
             "ruff", -- python linter/formatter
             "shellcheck", -- bash linter
             "shfmt", -- bash formatter
+            "htmlhint", -- html linter
+            "prettier", -- js, ts, css, html, md, yaml etc formatter
         }
 
         local registry = require("mason-registry")

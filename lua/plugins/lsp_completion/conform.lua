@@ -28,8 +28,9 @@ return {
             formatters_by_ft = {
                 lua = { "stylua" },
                 python = { "ruff_format", "ruff_organize_imports" },
-                markdown = { "injected" },
+                markdown = { "injected", "prettier" },
                 sh = { "shfmt" },
+                html = { "prettier" },
             },
             -- Custom formatter configurations
             formatters = {

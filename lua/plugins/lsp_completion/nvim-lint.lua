@@ -7,6 +7,7 @@ return {
         -- Configure linters by filetype
         lint.linters_by_ft = {
             lua = { "luacheck" },
+            html = { "htmlhint" },
         }
         lint.linters.luacheck.args = {
             "--globals",
