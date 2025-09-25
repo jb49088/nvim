@@ -163,6 +163,28 @@ end, { desc = "Location List" })
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
 
+-- Reset filetype, and restart any filetype-specific tooling (refresh buffer)
+map("n", "<leader>br", function()
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    -- Clear all diagnostics for this buffer (including nvim-lint)
+    vim.diagnostic.reset(nil, bufnr)
+
+    -- Stop all attached LSPs for this buffer (using new API)
+    for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+        client.stop()
+    end
+
+    -- Reload buffer from disk
+    vim.cmd("e!")
+
+    -- Re-detect filetype
+    vim.cmd("filetype detect")
+
+    -- Re-run FileType autocommands
+    vim.cmd("doautocmd FileType")
+end, { desc = "Refresh Buffer" })
+
 -- HACK: Override for :wqa to avoid terminal job blocking
 -- Intercepts Enter in command mode to silently replace wqa with wall + qall!
 vim.keymap.set("c", "<CR>", function()
