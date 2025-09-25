@@ -258,107 +258,122 @@ return {
         }
 
         local ActiveTooling = {
-            condition = function()
-                local bufnr = 0
-                local ft = vim.bo[bufnr].filetype
+            flexible = 3, -- Higher priority than path component
 
-                -- Quick check for LSP clients first (fastest)
-                if next(vim.lsp.get_clients({ bufnr = bufnr })) then
-                    return true
-                end
+            -- Full version - show the tooling
+            {
+                condition = function()
+                    local bufnr = 0
+                    local ft = vim.bo[bufnr].filetype
 
-                -- Check if we have formatters available
-                if integrations.conform and package.loaded["conform"] then
-                    local ok, conform = pcall(require, "conform")
-                    if ok then
-                        local formatters = conform.list_formatters(bufnr)
-                        if #formatters > 0 then
+                    -- Quick check for LSP clients first (fastest)
+                    if next(vim.lsp.get_clients({ bufnr = bufnr })) then
+                        return true
+                    end
+
+                    -- Check if we have formatters available
+                    if is_available("conform.nvim") and package.loaded["conform"] then
+                        local ok, conform = pcall(require, "conform")
+                        if ok then
+                            local formatters = conform.list_formatters(bufnr)
+                            if #formatters > 0 then
+                                return true
+                            end
+                        end
+                    end
+
+                    -- Check if we have linters available
+                    if is_available("nvim-lint") and package.loaded["lint"] then
+                        local ok, lint = pcall(require, "lint")
+                        if ok and lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0 then
                             return true
                         end
                     end
-                end
 
-                -- Check if we have linters available
-                if integrations.lint and package.loaded["lint"] then
-                    local ok, lint = pcall(require, "lint")
-                    if ok and lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0 then
+                    -- Special case for shellcheck with bash files
+                    if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
                         return true
                     end
-                end
 
-                -- Special case for shellcheck with bash files
-                if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
-                    return true
-                end
+                    return false
+                end,
+                update = {
+                    "LspAttach",
+                    "LspDetach",
+                    "BufEnter",
+                    "FileType",
+                    callback = function()
+                        vim.schedule(vim.cmd.redrawstatus)
+                    end,
+                },
+                provider = function()
+                    local bufnr = 0
+                    local all_tools = {}
+                    local seen_tools = {}
+                    local ft = vim.bo[bufnr].filetype
 
-                return false
-            end,
-            update = {
-                "LspAttach",
-                "LspDetach",
-                "BufEnter",
-                "FileType",
-                callback = function()
-                    vim.schedule(vim.cmd.redrawstatus)
+                    -- Helper to normalize ruff variants
+                    local function normalize_name(name)
+                        return name:match("^ruff") and "ruff" or name
+                    end
+
+                    -- Add LSPs (this is the main thing we're checking for anyway)
+                    for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+                        local normalized = normalize_name(server.name)
+                        if not seen_tools[normalized] then
+                            table.insert(all_tools, normalized)
+                            seen_tools[normalized] = true
+                        end
+                    end
+
+                    -- Add shellcheck for bash files when bashls is active
+                    if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
+                        for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+                            if server.name == "bashls" then
+                                if not seen_tools["shellcheck"] then
+                                    table.insert(all_tools, "shellcheck")
+                                    seen_tools["shellcheck"] = true
+                                end
+                                break
+                            end
+                        end
+                    end
+
+                    -- Only check other tools if they're actually loaded
+                    if is_available("nvim-lint") and package.loaded["lint"] then
+                        local ok, lint = pcall(require, "lint")
+                        if ok and lint.linters_by_ft[ft] then
+                            for _, linter in ipairs(lint.linters_by_ft[ft]) do
+                                local normalized = normalize_name(linter)
+                                if not seen_tools[normalized] then
+                                    table.insert(all_tools, normalized)
+                                    seen_tools[normalized] = true
+                                end
+                            end
+                        end
+                    end
+
+                    if is_available("conform.nvim") and package.loaded["conform"] then
+                        local ok, conform = pcall(require, "conform")
+                        if ok then
+                            local formatters = conform.list_formatters(bufnr)
+                            for _, formatter in ipairs(formatters) do
+                                local normalized = normalize_name(formatter.name)
+                                if not seen_tools[normalized] then
+                                    table.insert(all_tools, normalized)
+                                    seen_tools[normalized] = true
+                                end
+                            end
+                        end
+                    end
+
+                    return #all_tools > 0 and table.concat(all_tools, ", ") or ""
                 end,
             },
-            provider = function()
-                local bufnr = 0
-                local all_tools = {}
-                local seen_tools = {}
-                local ft = vim.bo[bufnr].filetype
-                -- Helper to normalize ruff variants
-                local function normalize_name(name)
-                    return name:match("^ruff") and "ruff" or name
-                end
-                -- Add LSPs (this is the main thing we're checking for anyway)
-                for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
-                    local normalized = normalize_name(server.name)
-                    if not seen_tools[normalized] then
-                        table.insert(all_tools, normalized)
-                        seen_tools[normalized] = true
-                    end
-                end
-                -- Add shellcheck for bash files when bashls is active
-                if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
-                    for _, server in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
-                        if server.name == "bashls" then
-                            if not seen_tools["shellcheck"] then
-                                table.insert(all_tools, "shellcheck")
-                                seen_tools["shellcheck"] = true
-                            end
-                            break
-                        end
-                    end
-                end
-                -- Only check other tools if they're actually loaded (avoid the expensive calls on fresh installs)
-                if integrations.lint and package.loaded["lint"] then
-                    local ok, lint = pcall(require, "lint")
-                    if ok and lint.linters_by_ft[ft] then
-                        for _, linter in ipairs(lint.linters_by_ft[ft]) do
-                            local normalized = normalize_name(linter)
-                            if not seen_tools[normalized] then
-                                table.insert(all_tools, normalized)
-                                seen_tools[normalized] = true
-                            end
-                        end
-                    end
-                end
-                if integrations.conform and package.loaded["conform"] then
-                    local ok, conform = pcall(require, "conform")
-                    if ok then
-                        local formatters = conform.list_formatters(bufnr)
-                        for _, formatter in ipairs(formatters) do
-                            local normalized = normalize_name(formatter.name)
-                            if not seen_tools[normalized] then
-                                table.insert(all_tools, normalized)
-                                seen_tools[normalized] = true
-                            end
-                        end
-                    end
-                end
-                return #all_tools > 0 and table.concat(all_tools, ", ") or ""
-            end,
+            -- Minimal version - completely hide
+            {
+                provider = "",
+            },
         }
 
         local Diagnostics = {

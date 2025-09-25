@@ -20,6 +20,7 @@ return {
             "c",
             "diff",
             "html",
+            "htmldjango",
             "json",
             "lua",
             "luadoc",
@@ -33,7 +34,7 @@ return {
 
         -- Enable highlighting
         vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "python", "json", "lua", "sh", "c", "html", "markdown", "vim", "ruby" },
+            pattern = { "python", "json", "lua", "sh", "c", "html", "htmldjango", "markdown", "vim", "ruby" },
             callback = function()
                 vim.treesitter.start()
             end,

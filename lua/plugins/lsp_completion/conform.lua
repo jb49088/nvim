@@ -31,6 +31,8 @@ return {
                 markdown = { "injected", "prettier" },
                 sh = { "shfmt" },
                 html = { "prettier" },
+                htmldjango = { "djlint" },
+                json = { "prettier" },
             },
             -- Custom formatter configurations
             formatters = {

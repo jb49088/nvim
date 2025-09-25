@@ -1,6 +1,4 @@
--- TODO: add special handling for more filetypes
-
--- A custom component for heirline to display a truncated or special buffer path with icons.
+-- A flexible custom component for heirline to display a truncated or special buffer path with icons.
 local M = {}
 
 -- Configuration
@@ -163,8 +161,6 @@ local function handle_regular_file()
 end
 
 --- Separate path and filename from a full path string
--- This function is designed to handle splitting a combined path string
--- into its directory and filename components.
 local function separate_path_filename(full_path)
     if full_path == "" or full_path == "[No Name]" then
         return "", full_path
@@ -205,7 +201,6 @@ function M.get_path()
     -- Always get icon and base padding initially (can be overridden later for specific types)
     local icon, hl = get_buffer_icon()
     path_data.icon_str, path_data.icon_hl = format_icon_with_padding(icon, hl)
-    -- *** CHANGE 1: Set padding_left to an empty string to remove the space ***
     path_data.padding_left = ""
     path_data.padding_right = " "
 
@@ -232,7 +227,19 @@ function M.get_path()
     return path_data
 end
 
--- The heirline component definition for the statusline
+-- Helper function to get filename highlight
+local function get_filename_hl(path_info)
+    if path_info.type == "oil" then
+        return "HeirlinePathOilCurrent"
+    elseif path_info.type == "terminal" then
+        return "HeirlinePathFile"
+    else -- regular file
+        -- Use HeirlinePathModified if buffer is modified, otherwise use HeirlinePathFile
+        return vim.bo.modified and "HeirlinePathModified" or "HeirlinePathFile"
+    end
+end
+
+-- The flexible heirline component definition for the statusline
 M.component = {
     condition = function()
         local bufname = vim.fn.expand("%")
@@ -255,107 +262,171 @@ M.component = {
         return bufname ~= "" and bufname ~= "[No Name]"
     end,
 
-    -- 1. Icon Component
+    flexible = 2, -- Set priority for this flexible component
+
+    -- Full path version (shown when there's enough space)
     {
-        provider = function()
-            local path_info = M.get_path()
-            -- *** CHANGE 2: Remove path_info.padding_left from the return string ***
-            return path_info.icon_str or ""
-        end,
-        hl = function()
-            local path_info = M.get_path()
-            return path_info.icon_hl
-        end,
-    },
-
-    -- 2. Directory Path / Terminal Name / Checkhealth Text Component
-    {
-        provider = function()
-            local path_info = M.get_path()
-            local display_text = ""
-            if path_info.type == "oil" then
-                -- For oil, this is the directory part
-                display_text = path_info.dir_path or ""
-            elseif path_info.type == "terminal" then
-                -- For terminal, this is now the directory path like regular files
-                display_text = path_info.dir_path or ""
-            elseif path_info.type == "checkhealth" then
-                -- For checkhealth, this is the "Health" text
-                display_text = path_info.checkhealth_text or ""
-            else -- regular file
-                -- For regular files, this is the directory path
-                display_text = path_info.dir_path or ""
-            end
-
-            -- Add leading space only if an icon is present, otherwise use no padding (since padding_left is removed from icon)
-            return (path_info.icon_str and path_info.icon_str ~= "") and " " .. display_text or display_text
-        end,
-        hl = function()
-            local path_info = M.get_path()
-            if path_info.type == "oil" then
-                -- Only apply highlight if there's an actual directory path (e.g., not just "./")
-                return (path_info.dir_path and path_info.dir_path ~= "") and "HeirlinePathOilDir" or nil
-            elseif path_info.type == "terminal" then
-                return "HeirlinePathDir" -- Use same highlight as regular files
-            elseif path_info.type == "checkhealth" then
-                return "HeirlinePathHealth"
-            else -- regular file
-                return "HeirlinePathDir"
-            end
-        end,
-    },
-
-    -- 3. Filename / Current Oil Folder / Terminal PID Component
-    {
-        provider = function()
-            local path_info = M.get_path()
-            if path_info.type == "oil" then
-                -- For oil, this is the current folder name
-                return path_info.filename or ""
-            elseif path_info.type == "terminal" then
-                -- For terminal, this is now the filename like regular files
-                return path_info.filename or ""
-            else -- regular file
-                -- For regular files, this is the filename
-                return path_info.filename or ""
-            end
-        end,
-        hl = function()
-            local path_info = M.get_path()
-            if path_info.type == "oil" then
-                return "HeirlinePathOilCurrent"
-            elseif path_info.type == "terminal" then
-                return "HeirlinePathFile" -- Use same highlight as regular files
-            else -- regular file
-                -- Use HeirlinePathModified if buffer is modified, otherwise use HeirlinePathFile
-                return vim.bo.modified and "HeirlinePathModified" or "HeirlinePathFile"
-            end
-        end,
-    },
-
-    -- 4. Lock Icon Component
-    {
-        provider = function()
-            local buftype = vim.bo.buftype
-            local filetype = vim.bo.filetype
-            local bufname = vim.fn.expand("%")
-
-            -- Don't show lock for oil, terminal, or checkhealth buffers
-            if
-                filetype ~= "oil"
-                and buftype ~= "terminal"
-                and filetype ~= "checkhealth"
-                and not bufname:match("^health://")
-                and not bufname:match("checkhealth")
-                and not vim.bo.modifiable
-            then
+        -- 1. Icon Component
+        {
+            provider = function()
                 local path_info = M.get_path()
-                return lock_icon .. (path_info.padding_right or " ")
-            else
-                return ""
-            end
-        end,
-        hl = "HeirlinePathLock",
+                return path_info.icon_str or ""
+            end,
+            hl = function()
+                local path_info = M.get_path()
+                return path_info.icon_hl
+            end,
+        },
+
+        -- 2. Directory Path / Terminal Name / Checkhealth Text Component
+        {
+            provider = function()
+                local path_info = M.get_path()
+                local display_text = ""
+                if path_info.type == "oil" then
+                    -- For oil, this is the directory part
+                    display_text = path_info.dir_path or ""
+                elseif path_info.type == "terminal" then
+                    -- For terminal, this is now the directory path like regular files
+                    display_text = path_info.dir_path or ""
+                elseif path_info.type == "checkhealth" then
+                    -- For checkhealth, this is the "Health" text
+                    display_text = path_info.checkhealth_text or ""
+                else -- regular file
+                    -- For regular files, this is the directory path
+                    display_text = path_info.dir_path or ""
+                end
+
+                -- Add leading space only if an icon is present, otherwise use no padding
+                return (path_info.icon_str and path_info.icon_str ~= "") and " " .. display_text or display_text
+            end,
+            hl = function()
+                local path_info = M.get_path()
+                if path_info.type == "oil" then
+                    -- Only apply highlight if there's an actual directory path (e.g., not just "./")
+                    return (path_info.dir_path and path_info.dir_path ~= "") and "HeirlinePathOilDir" or nil
+                elseif path_info.type == "terminal" then
+                    return "HeirlinePathDir" -- Use same highlight as regular files
+                elseif path_info.type == "checkhealth" then
+                    return "HeirlinePathHealth"
+                else -- regular file
+                    return "HeirlinePathDir"
+                end
+            end,
+        },
+
+        -- 3. Filename / Current Oil Folder / Terminal PID Component
+        {
+            provider = function()
+                local path_info = M.get_path()
+                if path_info.type == "oil" then
+                    -- For oil, this is the current folder name
+                    return path_info.filename or ""
+                elseif path_info.type == "terminal" then
+                    -- For terminal, this is now the filename like regular files
+                    return path_info.filename or ""
+                else -- regular file
+                    -- For regular files, this is the filename
+                    return path_info.filename or ""
+                end
+            end,
+            hl = function()
+                local path_info = M.get_path()
+                return get_filename_hl(path_info)
+            end,
+        },
+
+        -- 4. Lock Icon Component
+        {
+            provider = function()
+                local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+                local bufname = vim.fn.expand("%")
+
+                -- Don't show lock for oil, terminal, or checkhealth buffers
+                if
+                    filetype ~= "oil"
+                    and buftype ~= "terminal"
+                    and filetype ~= "checkhealth"
+                    and not bufname:match("^health://")
+                    and not bufname:match("checkhealth")
+                    and not vim.bo.modifiable
+                then
+                    local path_info = M.get_path()
+                    return lock_icon .. (path_info.padding_right or " ")
+                else
+                    return ""
+                end
+            end,
+            hl = "HeirlinePathLock",
+        },
+    },
+
+    -- Filename only version (shown when space is limited)
+    {
+        -- 1. Icon Component
+        {
+            provider = function()
+                local path_info = M.get_path()
+                return path_info.icon_str or ""
+            end,
+            hl = function()
+                local path_info = M.get_path()
+                return path_info.icon_hl
+            end,
+        },
+
+        -- 2. Filename Only Component
+        {
+            provider = function()
+                local path_info = M.get_path()
+                local display_text = ""
+
+                if path_info.type == "checkhealth" then
+                    -- For checkhealth, show the "Health" text
+                    display_text = path_info.checkhealth_text or ""
+                else
+                    -- For all other types, show just the filename
+                    display_text = path_info.filename or ""
+                end
+
+                -- Add leading space only if an icon is present
+                return (path_info.icon_str and path_info.icon_str ~= "") and " " .. display_text or display_text
+            end,
+            hl = function()
+                local path_info = M.get_path()
+                if path_info.type == "checkhealth" then
+                    return "HeirlinePathHealth"
+                else
+                    return get_filename_hl(path_info)
+                end
+            end,
+        },
+
+        -- 3. Lock Icon Component (same as full version)
+        {
+            provider = function()
+                local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+                local bufname = vim.fn.expand("%")
+
+                -- Don't show lock for oil, terminal, or checkhealth buffers
+                if
+                    filetype ~= "oil"
+                    and buftype ~= "terminal"
+                    and filetype ~= "checkhealth"
+                    and not bufname:match("^health://")
+                    and not bufname:match("checkhealth")
+                    and not vim.bo.modifiable
+                then
+                    local path_info = M.get_path()
+                    return lock_icon .. (path_info.padding_right or " ")
+                else
+                    return ""
+                end
+            end,
+            hl = "HeirlinePathLock",
+        },
     },
 }
 

@@ -85,7 +85,9 @@ return {
             },
             bashls = {},
             powershell_es = {},
-            html = {},
+            html = {
+                filetypes = { "html", "htmldjango" },
+            },
         }
 
         for server_name, config in pairs(servers) do

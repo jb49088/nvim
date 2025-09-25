@@ -36,6 +36,7 @@ return {
             "shfmt", -- bash formatter
             "htmlhint", -- html linter
             "prettier", -- js, ts, css, html, md, yaml etc formatter
+            "djlint", -- html linter/formatter designed for django
         }
 
         local registry = require("mason-registry")

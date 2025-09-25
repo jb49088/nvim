@@ -8,6 +8,7 @@ return {
         lint.linters_by_ft = {
             lua = { "luacheck" },
             html = { "htmlhint" },
+            htmldjango = { "djlint" },
         }
         lint.linters.luacheck.args = {
             "--globals",
