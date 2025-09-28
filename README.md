@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             57            917            773           6222
+Lua                             53            798            660           5616
 Markdown                         2             19              4            149
 JSON                             1              0              0             37
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            61            936            777           6411
+SUM:                            57            817            664           5805
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -79,7 +79,6 @@ nvim
 │   ├── custom
 │   │   ├── extensions
 │   │   │   ├── heirline_path.lua
-│   │   │   ├── session_picker.lua
 │   │   │   ├── tabs_picker.lua
 │   │   │   └── venv_picker.lua
 │   │   ├── indentation
@@ -90,13 +89,10 @@ nvim
 │   │       ├── code_tester.lua
 │   │       ├── colorscheme.lua
 │   │       ├── eof_padding.lua
-│   │       ├── floating_terminal.lua
 │   │       ├── indent_guides.lua
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
-│   │       ├── session_manager.lua
 │   │       ├── status_column.lua
-│   │       ├── terminal_sync.lua
 │   │       ├── venv_manager.lua
 │   │       ├── winbar_breadcrumbs.lua
 │   │       └── window_swapper.lua
@@ -138,7 +134,7 @@ nvim
 │           └── zellij_nav.lua
 └── README.md
 
-13 directories, 60 files
+13 directories, 56 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

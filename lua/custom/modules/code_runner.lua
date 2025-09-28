@@ -46,7 +46,7 @@ local function in_zellij()
     return os.getenv("ZELLIJ") ~= nil
 end
 
--- Run file in Zellij floating pane
+-- Run file in Zellij floating pane (Fixed Option 3)
 function M.run_file()
     if not is_valid_buffer() then
         return
@@ -71,26 +71,21 @@ function M.run_file()
     local display_name = vim.fn.fnamemodify(filename, ":t")
     print("Running " .. display_name .. " in Zellij")
 
-    -- Build the zellij command to create interactive shell
+    -- Create floating pane and run command in one go
     local opts = config.zellij_opts
-    local shell = os.getenv("SHELL") or "/bin/bash"
+    local run_cmd = string.format('%s "%s"', interpreter, filename)
     local zellij_cmd = string.format(
-        'zellij action new-pane --floating --width "%s" --height "%s" --x "%s" --y "%s"',
+        'zellij run --floating --width "%s" --height "%s" --x "%s" --y "%s" -- %s "%s"',
         opts.width,
         opts.height,
         opts.x,
-        opts.y
+        opts.y,
+        interpreter,
+        filename
     )
 
-    -- Execute the command to create floating pane
+    -- Execute the command
     vim.fn.system(zellij_cmd)
-
-    -- Send the run command to the new pane
-    vim.defer_fn(function()
-        local run_cmd = string.format('%s "%s"', interpreter, filename)
-        vim.fn.system('zellij action write-chars "' .. run_cmd .. '"')
-        vim.fn.system("zellij action write 13") -- Enter key
-    end, 100) -- Small delay to let pane initialize
 end
 
 -- Run in background (unchanged)
@@ -138,7 +133,7 @@ end
 
 -- Setup keymaps
 function M.setup_keymaps()
-    vim.keymap.set("n", "<leader>rt", M.run_file, { desc = "Run in Zellij Terminal" })
+    vim.keymap.set("n", "<leader>rt", M.run_file, { desc = "Run in Terminal" })
     vim.keymap.set("n", "<leader>rd", M.run_background, { desc = "Run Detached" })
 end
 

@@ -1,5 +1,3 @@
-local venv_picker = require("custom.extensions.venv_picker")
-
 local M = {}
 
 local VENV_SEARCH_PATH = "~/venvs" -- Change this to your venvs directory
@@ -14,7 +12,7 @@ local function expand_path(path)
     return vim.fn.expand(path)
 end
 
--- Helper function to extract venv name from python path (simple version for state tracking)
+-- Helper function to extract venv name from python path
 local function extract_venv_name(python_path)
     local parts = {}
     for part in string.gmatch(python_path, "[^/]+") do
@@ -45,7 +43,6 @@ local function update_lsp_servers(python_path)
 
     for _, client in pairs(clients) do
         if client.name == "basedpyright" then
-            -- Update basedpyright
             local settings = client.config.settings or {}
             settings.python = settings.python or {}
             settings.python.pythonPath = python_path
@@ -67,7 +64,6 @@ local function set_env_vars(venv_path, venv_name)
         local original_path = vim.fn.getenv("_NVIM_ORIGINAL_PATH")
         if original_path == vim.NIL or not original_path then
             original_path = vim.fn.getenv("PATH")
-            -- Handle case where PATH might be nil/userdata
             if original_path == vim.NIL then
                 original_path = "/usr/local/bin:/usr/bin:/bin"
             end
@@ -79,11 +75,6 @@ local function set_env_vars(venv_path, venv_name)
         vim.fn.setenv("PATH", new_path)
         vim.fn.setenv("VIRTUAL_ENV", venv_path)
         vim.fn.setenv("CONDA_PREFIX", nil) -- Clear conda prefix
-
-        -- Set PROMPT_COMMAND to dynamically update PS1 based on VIRTUAL_ENV
-        local prompt_cmd =
-            'if [[ -n "$VIRTUAL_ENV" ]]; then venv_name=$(basename "$VIRTUAL_ENV"); if [[ "$PS1" != *"($venv_name)"* ]]; then if [[ -z "$_NVIM_ORIGINAL_PS1" ]]; then export _NVIM_ORIGINAL_PS1="$PS1"; fi; PS1="($venv_name) $_NVIM_ORIGINAL_PS1"; fi; elif [[ -n "$_NVIM_ORIGINAL_PS1" ]]; then PS1="$_NVIM_ORIGINAL_PS1"; fi'
-        vim.fn.setenv("PROMPT_COMMAND", prompt_cmd)
     end
 end
 
@@ -97,54 +88,6 @@ local function clear_env_vars()
     end
 
     vim.fn.setenv("VIRTUAL_ENV", nil)
-    vim.fn.setenv("PROMPT_COMMAND", nil)
-end
-
--- Send activation command to all terminal buffers
-local function activate_in_terminals(venv_path, venv_name)
-    local activation_script = venv_path .. "/bin/activate"
-    local activation_cmd = "source " .. activation_script
-
-    local term_buffers = {}
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-            local ok, buf_type = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
-            if ok and buf_type == "terminal" then
-                table.insert(term_buffers, buf)
-            end
-        end
-    end
-
-    for _, buf in ipairs(term_buffers) do
-        local ok, chan = pcall(vim.api.nvim_buf_get_var, buf, "terminal_job_id")
-        if ok and chan then
-            vim.api.nvim_chan_send(chan, activation_cmd .. "\n")
-        end
-    end
-
-    return #term_buffers
-end
-
--- Send deactivation command to all terminal buffers
-local function deactivate_in_terminals()
-    local term_buffers = {}
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-            local ok, buf_type = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
-            if ok and buf_type == "terminal" then
-                table.insert(term_buffers, buf)
-            end
-        end
-    end
-
-    for _, buf in ipairs(term_buffers) do
-        local ok, chan = pcall(vim.api.nvim_buf_get_var, buf, "terminal_job_id")
-        if ok and chan then
-            vim.api.nvim_chan_send(chan, "deactivate\n")
-        end
-    end
-
-    return #term_buffers
 end
 
 -- Find all Python executables in the venv directory
@@ -185,6 +128,12 @@ function M.find_venvs()
     return results
 end
 
+-- Show venv picker using external picker module
+function M.show_picker()
+    local venv_picker = require("custom.extensions.venv_picker")
+    venv_picker(M)
+end
+
 -- Activate a virtual environment
 function M.activate(venv_info)
     if not venv_info then
@@ -201,66 +150,39 @@ function M.activate(venv_info)
     end
 
     -- Update LSP servers
-    local lsp_count = update_lsp_servers(python_path)
+    update_lsp_servers(python_path)
 
     -- Set environment variables for new terminals
     set_env_vars(venv_path, venv_info.name)
-
-    -- Send activation commands to existing terminals
-    local term_count = activate_in_terminals(venv_path, venv_info.name)
 
     -- Update state
     current_python = python_path
     current_venv = venv_path
 
-    -- Fire custom event for venv activation
-    vim.api.nvim_exec_autocmds("User", {
-        pattern = "VenvActivated",
-        data = { venv_path = venv_path, venv_name = venv_info.name },
-    })
-
-    local message = string.format("Activated venv: %s", venv_info.name)
-
-    vim.notify(message, vim.log.levels.INFO)
+    vim.notify("Activated venv: " .. venv_info.name, vim.log.levels.INFO)
     return true
 end
 
 -- Deactivate current virtual environment
 function M.deactivate()
     if not current_venv then
-        vim.notify("No virtual environment is tracked as active", vim.log.levels.INFO)
+        vim.notify("No virtual environment is active", vim.log.levels.INFO)
         return
     end
 
     local old_name = extract_venv_name(current_python or "")
 
-    -- Clear environment variables for new terminals
+    -- Clear environment variables
     clear_env_vars()
-
-    -- Send deactivation commands to existing terminals
-    local term_count = deactivate_in_terminals()
 
     -- Clear state
     current_python = nil
     current_venv = nil
 
-    -- Fire custom event for venv deactivation
-    vim.api.nvim_exec_autocmds("User", {
-        pattern = "VenvDeactivated",
-        data = {},
-    })
-
-    local message = "Deactivated venv: " .. old_name
-
-    vim.notify(message, vim.log.levels.INFO)
+    vim.notify("Deactivated venv: " .. old_name, vim.log.levels.INFO)
 end
 
--- Show venv picker using external picker module
-function M.show_picker()
-    venv_picker(M)
-end
-
--- Expose current state (these are the key functions for session integration)
+-- Expose current state
 function M.current_python()
     return current_python
 end

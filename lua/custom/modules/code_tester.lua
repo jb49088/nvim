@@ -1,4 +1,4 @@
--- Unified Code Tester for Neovim
+-- Unified Code Tester for Neovim with Zellij
 -- Supports running tests for different languages
 local M = {}
 
@@ -13,6 +13,13 @@ local config = {
             all = "busted",
             file = "busted %",
         },
+    },
+    -- Zellij floating pane options
+    zellij_opts = {
+        width = "80%",
+        height = "80%",
+        x = "10%",
+        y = "10%",
     },
 }
 
@@ -42,9 +49,19 @@ local function get_current_filename()
     return filename
 end
 
+-- Check if we're in a Zellij session
+local function in_zellij()
+    return os.getenv("ZELLIJ") ~= nil
+end
+
 -- Run all tests
 function M.run_all_tests()
     if not is_valid_buffer() then
+        return
+    end
+
+    if not in_zellij() then
+        print("Not in a Zellij session")
         return
     end
 
@@ -59,17 +76,29 @@ function M.run_all_tests()
     end
 
     print("Running all " .. extension .. " tests")
-    local cmd = runner.all
 
-    require("custom.modules.floating_terminal").toggle_terminal()
-    vim.defer_fn(function()
-        vim.api.nvim_chan_send(vim.b.terminal_job_id, cmd .. "\r")
-    end, 10)
+    -- Create floating pane and run all tests
+    local opts = config.zellij_opts
+    local zellij_cmd = string.format(
+        'zellij run --floating --width "%s" --height "%s" --x "%s" --y "%s" -- %s',
+        opts.width,
+        opts.height,
+        opts.x,
+        opts.y,
+        runner.all
+    )
+
+    vim.fn.system(zellij_cmd)
 end
 
 -- Run current file tests
 function M.run_file_tests()
     if not is_valid_buffer() then
+        return
+    end
+
+    if not in_zellij() then
+        print("Not in a Zellij session")
         return
     end
 
@@ -91,16 +120,24 @@ function M.run_file_tests()
     -- Replace % with actual filename in the command
     local cmd = runner.file:gsub("%%", filename)
 
-    require("custom.modules.floating_terminal").toggle_terminal()
-    vim.defer_fn(function()
-        vim.api.nvim_chan_send(vim.b.terminal_job_id, cmd .. "\r")
-    end, 10)
+    -- Create floating pane and run file tests
+    local opts = config.zellij_opts
+    local zellij_cmd = string.format(
+        'zellij run --floating --width "%s" --height "%s" --x "%s" --y "%s" -- %s',
+        opts.width,
+        opts.height,
+        opts.x,
+        opts.y,
+        cmd
+    )
+
+    vim.fn.system(zellij_cmd)
 end
 
 -- Setup keymaps
 function M.setup_keymaps()
-    vim.keymap.set("n", "<leader>ta", M.run_all_tests, { desc = "Test all" })
-    vim.keymap.set("n", "<leader>tf", M.run_file_tests, { desc = "Test current file" })
+    vim.keymap.set("n", "<leader>ta", M.run_all_tests, { desc = "Test All" })
+    vim.keymap.set("n", "<leader>tf", M.run_file_tests, { desc = "Test Current File" })
 end
 
 -- Setup function to configure and initialize
