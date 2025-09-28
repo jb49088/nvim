@@ -81,20 +81,10 @@ end, { desc = "Close Other Buffers" })
 -- map("n", "<C-j>", "<C-w><C-j>", { desc = "Go to Lower Window" })
 -- map("n", "<C-k>", "<C-w><C-k>", { desc = "Go to Upper Window" })
 
--- map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Go to Left Window from Terminal" })
--- map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Go to Right Window from Terminal" })
--- map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Go to Lower Window from Terminal" })
--- map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Go to Upper Window from Terminal" })
-
 map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
 map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
 map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
 map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
-
-map("t", "<A-h>", "<C-\\><C-n><C-w>Hi", { desc = "Move Window to Far Left from Terminal" })
-map("t", "<A-j>", "<C-\\><C-n><C-w>Ji", { desc = "Move Window to Far Bottom from Terminal" })
-map("t", "<A-k>", "<C-\\><C-n><C-w>Ki", { desc = "Move Window to Far Top from Terminal" })
-map("t", "<A-l>", "<C-\\><C-n><C-w>Li", { desc = "Move Window to Far Right from Terminal" })
 
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
@@ -119,11 +109,6 @@ map("n", "<leader><Tab>o", function()
         vim.notify("No tabs to close")
     end
 end, { desc = "Close Other Tabs" })
-
--- Terminal
-map("n", "<leader>TF", "<Cmd>terminal<CR>", { desc = "Fullscreen Terminal" })
-map("n", "<leader>Tv", "<Cmd>vsplit | terminal<CR>", { desc = "Vertical Terminal" })
-map("n", "<leader>Th", "<Cmd>split | terminal<CR>", { desc = "Horizontal Terminal" })
 
 -- Commenting
 map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Below" })
@@ -184,19 +169,3 @@ map("n", "<leader>br", function()
     -- Re-run FileType autocommands
     vim.cmd("doautocmd FileType")
 end, { desc = "Refresh Buffer" })
-
--- HACK: Override for :wqa to avoid terminal job blocking
--- Intercepts Enter in command mode to silently replace wqa with wall + qall!
-vim.keymap.set("c", "<CR>", function()
-    local cmd = vim.fn.getcmdline()
-    if cmd == "wqa" then
-        vim.fn.feedkeys("\27", "n") -- Escape current command
-        vim.defer_fn(function()
-            vim.cmd("wall")
-            vim.cmd("qall!")
-        end, 1)
-        return ""
-    else
-        return "\13" -- Return normal Enter
-    end
-end, { expr = true })
