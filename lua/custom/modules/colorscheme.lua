@@ -73,7 +73,7 @@ local highlights = {
 
     -- Diagnostic groups
     DiagnosticError = { fg = colors.red },
-    DiagnosticWarn = { fg = colors.orange },
+    DiagnosticWarn = { fg = colors.yellow },
     DiagnosticInfo = { fg = colors.blue },
     DiagnosticHint = { fg = colors.cyan },
     DiagnosticOk = { fg = colors.green },
