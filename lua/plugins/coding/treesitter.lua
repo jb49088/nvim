@@ -30,11 +30,12 @@ return {
             "vim",
             "vimdoc",
             "python",
+            "kdl",
         })
 
         -- Enable highlighting
         vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "python", "json", "lua", "sh", "c", "html", "htmldjango", "markdown", "vim", "ruby" },
+            pattern = { "python", "json", "lua", "sh", "c", "html", "htmldjango", "markdown", "vim", "ruby", "kdl" },
             callback = function()
                 vim.treesitter.start()
             end,

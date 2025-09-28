@@ -62,6 +62,14 @@ vim.api.nvim_create_autocmd("InsertLeave", {
     end,
 })
 
+-- Auto-balance windows when terminal is resized
+vim.api.nvim_create_autocmd("VimResized", {
+    group = "ui_enhancements",
+    callback = function()
+        vim.cmd("wincmd =")
+    end,
+})
+
 -- Always open help in vertical split
 vim.api.nvim_create_autocmd("BufWinEnter", {
     group = "ui_enhancements",
@@ -142,3 +150,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
         end
     end,
 })
+
+-- -- Ensures that when exiting NeoVim, Zellij returns to normal mode
+-- vim.api.nvim_create_autocmd("VimLeave", {
+--     pattern = "*",
+--     command = "silent !zellij action switch-mode normal",
+-- })

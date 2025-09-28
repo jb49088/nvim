@@ -76,15 +76,15 @@ map("n", "<leader>bo", function()
 end, { desc = "Close Other Buffers" })
 
 -- Windows
-map("n", "<C-h>", "<C-w><C-h>", { desc = "Go to Left Window" })
-map("n", "<C-l>", "<C-w><C-l>", { desc = "Go to Right Window" })
-map("n", "<C-j>", "<C-w><C-j>", { desc = "Go to Lower Window" })
-map("n", "<C-k>", "<C-w><C-k>", { desc = "Go to Upper Window" })
+-- map("n", "<C-h>", "<C-w><C-h>", { desc = "Go to Left Window" })
+-- map("n", "<C-l>", "<C-w><C-l>", { desc = "Go to Right Window" })
+-- map("n", "<C-j>", "<C-w><C-j>", { desc = "Go to Lower Window" })
+-- map("n", "<C-k>", "<C-w><C-k>", { desc = "Go to Upper Window" })
 
-map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Go to Left Window from Terminal" })
-map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Go to Right Window from Terminal" })
-map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Go to Lower Window from Terminal" })
-map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Go to Upper Window from Terminal" })
+-- map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Go to Left Window from Terminal" })
+-- map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Go to Right Window from Terminal" })
+-- map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Go to Lower Window from Terminal" })
+-- map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Go to Upper Window from Terminal" })
 
 map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
 map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })

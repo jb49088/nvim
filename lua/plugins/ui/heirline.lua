@@ -206,7 +206,7 @@ return {
 
                     return (is_first and "" or " ") .. self.symbols.added .. gs.added
                 end,
-                hl = { fg = utils.get_highlight("GitSignsAdd").fg },
+                hl = "GitSignsAdd",
             },
             {
                 provider = function(self)
@@ -220,7 +220,7 @@ return {
 
                     return (is_first and "" or " ") .. self.symbols.modified .. gs.changed
                 end,
-                hl = { fg = utils.get_highlight("GitSignsChange").fg },
+                hl = "GitSignsChange",
             },
             {
                 provider = function(self)
@@ -234,7 +234,7 @@ return {
 
                     return (is_first and "" or " ") .. self.symbols.removed .. gs.removed
                 end,
-                hl = { fg = utils.get_highlight("GitSignsDelete").fg },
+                hl = "GitSignsDelete",
             },
             update = {
                 "User",

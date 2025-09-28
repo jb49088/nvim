@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             57            885            749           6044
+Lua                             57            917            772           6199
 Markdown                         2             19              4            149
-JSON                             1              0              0             36
+JSON                             1              0              0             37
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            61            904            753           6232
+SUM:                            61            936            776           6388
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -79,7 +79,6 @@ nvim
 │   ├── custom
 │   │   ├── extensions
 │   │   │   ├── heirline_path.lua
-│   │   │   ├── highlights.lua
 │   │   │   ├── session_picker.lua
 │   │   │   ├── tabs_picker.lua
 │   │   │   └── venv_picker.lua
@@ -89,6 +88,7 @@ nvim
 │   │   └── modules
 │   │       ├── code_runner.lua
 │   │       ├── code_tester.lua
+│   │       ├── colorscheme.lua
 │   │       ├── eof_padding.lua
 │   │       ├── floating_terminal.lua
 │   │       ├── indent_guides.lua
@@ -120,11 +120,10 @@ nvim
 │       │   └── snippets
 │       │       └── python.lua
 │       ├── ui
-│       │   ├── colorscheme.lua
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
 │       │   ├── mini_icons.lua
-│       │   ├── nvim-ufo.lua
+│       │   ├── nvim_ufo.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
 │           ├── flash.lua
@@ -135,7 +134,8 @@ nvim
 │           ├── snacks.lua
 │           ├── todo_comments.lua
 │           ├── trouble.lua
-│           └── whichkey.lua
+│           ├── whichkey.lua
+│           └── zellij_nav.lua
 └── README.md
 
 13 directories, 60 files
