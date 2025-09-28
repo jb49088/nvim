@@ -10,7 +10,7 @@ local colors = {
     orange = "#d75f00",
     blue = "#00d7ff",
     gray = "#444444",
-    bright_gray = "#8a8a8a",
+    light_gray = "#8a8a8a",
 }
 
 local highlights = {
@@ -21,12 +21,12 @@ local highlights = {
 
     -- UI Elements
     CursorLine = { bg = colors.bg },
-    LineNr = { fg = colors.bright_gray },
+    LineNr = { fg = colors.light_gray },
     CursorLineNr = { fg = colors.green },
     SignColumn = { bg = colors.bg },
-    NonText = { fg = colors.bright_gray },
-    Folded = { fg = colors.bright_gray, bg = colors.bg },
-    FoldColumn = { fg = colors.bright_gray, bg = colors.bg },
+    NonText = { fg = colors.light_gray },
+    Folded = { fg = colors.light_gray, bg = colors.bg },
+    FoldColumn = { fg = colors.light_gray, bg = colors.bg },
     WinBar = { fg = colors.fg },
 
     -- Search and Visual
@@ -68,7 +68,7 @@ local highlights = {
     SpecialChar = { fg = colors.purple },
     Tag = { fg = colors.cyan },
     Delimiter = { fg = colors.purple },
-    Comment = { fg = colors.bright_gray },
+    Comment = { fg = colors.light_gray },
     Debug = { fg = colors.red },
 
     -- Diagnostic groups
@@ -95,8 +95,8 @@ local highlights = {
 
     -- Completion menu
     Pmenu = { fg = colors.fg, bg = colors.bg },
-    PmenuSel = { fg = colors.bg, bg = colors.bright_gray },
-    PmenuSbar = { bg = colors.bright_gray },
+    PmenuSel = { fg = colors.bg, bg = colors.light_gray },
+    PmenuSbar = { bg = colors.light_gray },
     PmenuThumb = { bg = colors.green },
 
     -- Mode colors
@@ -108,7 +108,7 @@ local highlights = {
     ModeColorReplace = { fg = colors.red },
 
     -- Indent guides
-    IndentGuidesChar = { fg = colors.bright_gray },
+    IndentGuidesChar = { fg = colors.light_gray },
 
     -- Noice
     NoiceCmdline = { fg = colors.orange },
@@ -133,18 +133,18 @@ local highlights = {
     RainbowDelimiters7 = { fg = colors.blue },
 
     -- Heirline path
-    HeirlinePathDir = { fg = colors.bright_gray },
+    HeirlinePathDir = { fg = colors.light_gray },
     HeirlinePathFile = { fg = colors.fg },
     HeirlinePathModified = { fg = colors.orange },
-    HeirlinePathOilDir = { fg = colors.bright_gray },
+    HeirlinePathOilDir = { fg = colors.light_gray },
     HeirlinePathOilCurrent = { fg = colors.fg },
     HeirlinePathTerminal = { fg = colors.fg },
-    HeirlinePathTerminalPID = { fg = colors.bright_gray },
+    HeirlinePathTerminalPID = { fg = colors.light_gray },
     HeirlinePathLock = { fg = colors.orange },
     HeirlinePathHealth = { fg = colors.cyan },
 
     -- Mini icons
-    MiniIconsGrey = { fg = colors.bright_gray },
+    MiniIconsGrey = { fg = colors.light_gray },
     MiniIconsYellow = { fg = colors.yellow },
 
     -- Venv picker
@@ -204,7 +204,7 @@ local highlights = {
     ["@punctuation.bracket"] = { fg = colors.purple },
     ["@punctuation.special"] = { fg = colors.purple },
 
-    ["@comment"] = { fg = colors.bright_gray },
+    ["@comment"] = { fg = colors.light_gray },
     ["@comment.todo"] = { fg = colors.yellow, bold = true },
     ["@comment.note"] = { fg = colors.blue, bold = true },
     ["@comment.warning"] = { fg = colors.orange, bold = true },
@@ -250,11 +250,11 @@ local highlights = {
     ["@lsp.mod.definition"] = {},
     ["@lsp.mod.readonly"] = {},
     ["@lsp.mod.static"] = {},
-    ["@lsp.mod.deprecated"] = { fg = colors.bright_gray },
+    ["@lsp.mod.deprecated"] = { fg = colors.light_gray },
     ["@lsp.mod.abstract"] = {},
     ["@lsp.mod.async"] = {},
     ["@lsp.mod.modification"] = { underline = true },
-    ["@lsp.mod.documentation"] = { fg = colors.bright_gray },
+    ["@lsp.mod.documentation"] = { fg = colors.light_gray },
 
     -- Type-specific modifiers (examples)
     ["@lsp.typemod.function.declaration"] = { fg = colors.cyan },
