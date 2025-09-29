@@ -12,7 +12,6 @@ return {
             { "<leader>ta", icon = { icon = "󰱑", hl = "MiniIconsGreen" } },
             { "<leader>tf", icon = { icon = "󰱑", hl = "MiniIconsGreen" } },
             { "<leader>K", icon = { icon = "󰋽", hl = "MiniIconsBlue" } },
-            { "<leader>v", icon = { icon = "", hl = "MiniIconsYellow" } },
             { "<leader>cm", icon = { icon = "󱁤", hl = "MiniIconsGrey" } },
             -- groups
             { "<leader>b", group = "Buffer" },
