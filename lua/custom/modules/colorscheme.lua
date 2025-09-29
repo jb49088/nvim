@@ -95,8 +95,8 @@ local highlights = {
 
     -- Completion menu
     Pmenu = { fg = colors.fg, bg = colors.bg },
-    PmenuSel = { fg = colors.bg, bg = colors.light_gray },
-    PmenuSbar = { bg = colors.light_gray },
+    PmenuSel = { fg = colors.bg, bg = colors.gray },
+    PmenuSbar = { bg = colors.gray },
     PmenuThumb = { bg = colors.green },
 
     -- Mode colors
@@ -145,7 +145,14 @@ local highlights = {
 
     -- Mini icons
     MiniIconsGrey = { fg = colors.light_gray },
+    MiniIconsRed = { fg = colors.red },
+    MiniIconsOrange = { fg = colors.orange },
     MiniIconsYellow = { fg = colors.yellow },
+    MiniIconsPurple = { fg = colors.purple },
+    MiniIconsBlue = { fg = colors.blue },
+    MiniIconsCyan = { fg = colors.cyan },
+    MiniIconsAzure = { fg = colors.cyan },
+    MiniIconsGreen = { fg = colors.green },
 
     -- Venv picker
     VenvPickerActive = { fg = colors.yellow },
