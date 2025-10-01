@@ -92,8 +92,8 @@ map("n", "<leader>wo", "<C-w>o", { desc = "Close Other Windows" })
 map("n", "<leader>wn", "<C-w>w", { desc = "Next Window" })
 map("n", "<leader>wp", "<C-w>p", { desc = "Previous Window" })
 map("n", "<leader>wt", "<C-w>T", { desc = "Break out into a new tab" })
-map("n", "<leader>wh", ":split<CR>", { desc = "Horizontal Split" })
-map("n", "<leader>wv", ":vsplit<CR>", { desc = "Vertical Split" })
+map("n", "<leader>wh", ":new<CR>", { desc = "Horizontal Split" })
+map("n", "<leader>wv", ":vnew<CR>", { desc = "Vertical Split" })
 
 -- Tabs
 map("n", "<leader><Tab><Tab>", "<Cmd>tabnew<CR>", { desc = "New Tab" })

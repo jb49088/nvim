@@ -662,7 +662,7 @@ local function get_context_data(bufnr)
 end
 
 --- Build breadcrumb parts with icons and highlights
-local function build_breadcrumb_parts(filepath, context_symbols)
+local function build_breadcrumb_parts(filepath, context_symbols, win)
     local parts = {}
 
     if filepath == "" then
@@ -672,9 +672,11 @@ local function build_breadcrumb_parts(filepath, context_symbols)
     local sep = package.config:sub(1, 1)
     local ok, mini_icons = pcall(require, "mini.icons")
 
-    -- Normalize and process file path (keeping your existing logic)
+    -- Normalize and process file path
     filepath = vim.fs.normalize(filepath)
-    local cwd = vim.fs.normalize(vim.fn.getcwd())
+
+    -- Use window-specific cwd
+    local cwd = vim.fs.normalize(vim.fn.getcwd(win))
     local relpath
 
     if filepath:sub(1, #cwd) == cwd then
@@ -978,7 +980,8 @@ function M.get_filename_display()
         context_symbols = get_context_data(bufnr)
     end
 
-    local parts = build_breadcrumb_parts(filepath, context_symbols)
+    -- Pass window ID to build_breadcrumb_parts
+    local parts = build_breadcrumb_parts(filepath, context_symbols, win)
     local available_width = vim.api.nvim_win_get_width(win) - 2
 
     if config.truncation.enabled then
