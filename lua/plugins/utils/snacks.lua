@@ -90,7 +90,7 @@ return {
                 layouts = {
                     default = {
                         layout = {
-                            -- backdrop = false,
+                            backdrop = false,
                         },
                     },
                     select = {},

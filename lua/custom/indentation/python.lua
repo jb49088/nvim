@@ -27,18 +27,51 @@ local function in_string_at_start(lnum)
     return false
 end
 
--- Simplified and more reliable bracket search
+-- Find the nearest unmatched opening bracket, ignoring brackets inside strings
 local function find_opening_bracket(lnum)
-    local bracket_pairs = {
-        [")"] = "(",
-        ["]"] = "[",
-        ["}"] = "{",
-    }
-
     local opening_brackets = { "(", "[", "{" }
     local closing_brackets = { ")", "]", "}" }
 
     local stack = {}
+
+    -- Helper to check if a position is inside a string literal
+    local function is_in_string(line, col)
+        local in_single = false
+        local in_double = false
+        local in_triple_single = false
+        local in_triple_double = false
+        local escape = false
+
+        for i = 1, col do
+            local char = line:sub(i, i)
+            local next_char = line:sub(i + 1, i + 1)
+            local next_next = line:sub(i + 2, i + 2)
+
+            -- Check for triple quotes
+            if not escape and char == '"' and next_char == '"' and next_next == '"' then
+                if not in_single and not in_double and not in_triple_single then
+                    in_triple_double = not in_triple_double
+                end
+            elseif not escape and char == "'" and next_char == "'" and next_next == "'" then
+                if not in_single and not in_double and not in_triple_double then
+                    in_triple_single = not in_triple_single
+                end
+            -- Regular quotes
+            elseif not escape and char == '"' and not in_triple_double then
+                if not in_single and not in_triple_single then
+                    in_double = not in_double
+                end
+            elseif not escape and char == "'" and not in_triple_single then
+                if not in_double and not in_triple_double then
+                    in_single = not in_single
+                end
+            end
+
+            escape = (char == "\\" and not escape)
+        end
+
+        return in_single or in_double or in_triple_single or in_triple_double
+    end
 
     -- Start from the line before the current line and search backwards
     for search_lnum = lnum - 1, 1, -1 do
@@ -48,27 +81,26 @@ local function find_opening_bracket(lnum)
         for col = #line, 1, -1 do
             local char = line:sub(col, col)
 
-            if vim.tbl_contains(closing_brackets, char) then
-                table.insert(stack, char)
-            elseif vim.tbl_contains(opening_brackets, char) then
-                if #stack == 0 then
-                    -- Found unmatched opening bracket
-                    return search_lnum, col
-                else
-                    -- Pop matching closing bracket from stack
-                    local expected_close = nil
-                    if char == "(" then
-                        expected_close = ")"
-                    elseif char == "[" then
-                        expected_close = "]"
-                    elseif char == "{" then
-                        expected_close = "}"
-                    end
+            if not is_in_string(line, col) then
+                if vim.tbl_contains(closing_brackets, char) then
+                    table.insert(stack, char)
+                elseif vim.tbl_contains(opening_brackets, char) then
+                    if #stack == 0 then
+                        return search_lnum, col
+                    else
+                        local expected_close = nil
+                        if char == "(" then
+                            expected_close = ")"
+                        elseif char == "[" then
+                            expected_close = "]"
+                        elseif char == "{" then
+                            expected_close = "}"
+                        end
 
-                    local last_close = table.remove(stack)
-                    if expected_close ~= last_close then
-                        -- Mismatched brackets
-                        return 0, 0
+                        local last_close = table.remove(stack)
+                        if expected_close ~= last_close then
+                            return 0, 0
+                        end
                     end
                 end
             end

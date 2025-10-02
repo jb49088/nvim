@@ -13,7 +13,7 @@ local config = {
         width = "80%",
         height = "80%",
         x = "10%",
-        y = "10%",
+        y = "15%",
     },
 }
 
@@ -73,7 +73,7 @@ function M.run_file()
 
     -- Create floating pane and run command in one go
     local opts = config.zellij_opts
-    local run_cmd = string.format('%s "%s"', interpreter, filename)
+
     local zellij_cmd = string.format(
         'zellij run --floating --width "%s" --height "%s" --x "%s" --y "%s" -- %s "%s"',
         opts.width,
