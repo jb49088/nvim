@@ -30,7 +30,7 @@ return {
         indent = {
             enabled = true,
             scope = {
-                enabled = true,
+                enabled = false,
             },
         },
 
