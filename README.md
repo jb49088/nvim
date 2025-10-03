@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             57            695            587           5113
-Markdown                         3             22              4            158
+Lua                             58            695            587           5124
+Markdown                         2             19              4            153
 JSON                             1              0              0             38
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            62            717            591           5312
+SUM:                            62            714            591           5318
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -106,6 +106,7 @@ nvim
 │   └── plugins
 │       ├── coding
 │       │   ├── autopairs.lua
+│       │   ├── autotag.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── surround.lua
@@ -142,7 +143,7 @@ nvim
 │           └── whichkey.lua
 └── README.md
 
-15 directories, 62 files
+15 directories, 63 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
