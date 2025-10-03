@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             57            681            534           5033
+Lua                             57            621            517           4761
 Markdown                         2             19              4            154
 JSON                             1              0              0             40
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            61            700            538           5230
+SUM:                            61            640            521           4958
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -97,9 +97,9 @@ nvim
 │   │   └── modules
 │   │       ├── code_runner.lua
 │   │       ├── eof_padding.lua
-│   │       ├── indent_guides.lua
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
+│   │       ├── mode_scope_color.lua
 │   │       ├── status_column.lua
 │   │       ├── winbar_breadcrumbs.lua
 │   │       └── window_swapper.lua

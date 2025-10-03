@@ -19,24 +19,24 @@ local modes = {
     r = "ModeColorReplace",
 }
 
-local function update_line_color(mode)
+local function update_indent_scope_color(mode)
     if modes[mode] then
-        vim.api.nvim_set_hl(0, "CursorLineNr", { link = modes[mode] })
+        vim.api.nvim_set_hl(0, "SnacksIndentScope", { link = modes[mode] })
         if mode == "c" then
             vim.cmd.redraw()
         end
     end
 end
 
-update_line_color(vim.api.nvim_get_mode().mode)
+update_indent_scope_color(vim.api.nvim_get_mode().mode)
 
-local group = vim.api.nvim_create_augroup("LineNumberMode", { clear = true })
+local group = vim.api.nvim_create_augroup("IndentScopeMode", { clear = true })
 
 vim.api.nvim_create_autocmd("ModeChanged", {
     group = group,
     callback = function()
         vim.schedule(function()
-            update_line_color(vim.api.nvim_get_mode().mode)
+            update_indent_scope_color(vim.api.nvim_get_mode().mode)
         end)
     end,
 })
@@ -45,7 +45,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
     group = group,
     callback = function()
         vim.schedule(function()
-            update_line_color(vim.api.nvim_get_mode().mode)
+            update_indent_scope_color(vim.api.nvim_get_mode().mode)
         end)
     end,
 })

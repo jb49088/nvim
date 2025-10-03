@@ -1,6 +1,7 @@
 require("custom.modules.mode_number_color")
+require("custom.modules.mode_scope_color")
 require("custom.modules.eof_padding")
 require("custom.modules.code_runner")
-require("custom.modules.indent_guides")
+-- require("custom.modules.indent_guides")
 require("custom.modules.window_swapper")
 require("custom.modules.winbar_breadcrumbs")

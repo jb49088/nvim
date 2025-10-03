@@ -26,6 +26,14 @@ return {
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
+        --- INDENT ---
+        indent = {
+            enabled = true,
+            scope = {
+                enabled = true,
+            },
+        },
+
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
