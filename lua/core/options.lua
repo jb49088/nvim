@@ -9,10 +9,9 @@ opt.number = true -- Show absolute line numbers
 opt.relativenumber = true -- Show relative line numbers
 opt.numberwidth = 4 -- Set line number column width
 opt.mouse = "a" -- Enable mouse in all modes
-opt.guicursor:append("t-c:ver25,a:blinkon0") -- Custom cursor styles
+opt.guicursor:append("c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu
 opt.title = true -- Enable window title
-opt.titlestring = "%t (%{expand('%:~:.:h')}) - Nvim" -- Custom window title format
 opt.laststatus = 3 -- Always show statusline
 opt.statuscolumn = "%!v:lua.require'custom.modules.status_column'.get()" -- Custom status column
 opt.statusline = " " -- Show a blank statusline before heirline loads in
@@ -40,10 +39,6 @@ opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.confirm = true -- Confirm to save changes when closing
 opt.autoread = true -- Enable automatic file reloading (requires checktime triggers to work)
--- opt.whichwrap = "h,l,<,>,[,]" -- Allow cursor wrapping with these keys
--- opt.textwidth = 60 -- Set text width to 60 characters for wrapping operations
--- cmd("set formatoptions-=t") -- Disable automatic text wrapping while typing
--- cmd("set formatoptions+=l") -- Don't break existing long lines when entering insert mode
 
 -- Indentation
 opt.shiftwidth = 4 -- Indent size
