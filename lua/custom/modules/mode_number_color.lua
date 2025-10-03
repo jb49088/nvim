@@ -5,6 +5,9 @@ local modes = {
     v = "ModeColorVisual",
     V = "ModeColorVisual",
     ["\22"] = "ModeColorVisual",
+    s = "ModeColorVisual",
+    S = "ModeColorVisual",
+    ["\19"] = "ModeColorVisual",
     c = "ModeColorCommand",
     t = "ModeColorTerminal",
     R = "ModeColorReplace",
@@ -15,6 +18,7 @@ local modes = {
     Rvx = "ModeColorReplace",
     r = "ModeColorReplace",
 }
+
 local function update_line_color(mode)
     if modes[mode] then
         vim.api.nvim_set_hl(0, "CursorLineNr", { link = modes[mode] })
