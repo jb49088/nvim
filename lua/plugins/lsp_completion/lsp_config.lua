@@ -88,6 +88,7 @@ return {
             html = {
                 filetypes = { "html", "htmldjango" },
             },
+            cssls = {},
         }
 
         for server_name, config in pairs(servers) do

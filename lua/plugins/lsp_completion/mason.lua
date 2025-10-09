@@ -22,6 +22,7 @@ return {
                 "bashls", -- bash lsp
                 "powershell_es", -- powershell lsp (includes formatter and linter)
                 "html", -- html lsp
+                "cssls", -- css lsp
             },
             automatic_enable = true,
         })
