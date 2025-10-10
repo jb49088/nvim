@@ -50,11 +50,11 @@ UIEnter   28.4ms (+5.4ms)
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             56            616            516           4720
-Markdown                         2             19              4            153
+Markdown                         2             19              4            154
 JSON                             1              0              0             38
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            60            635            520           4914
+SUM:                            60            635            520           4915
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -75,7 +75,8 @@ nvim
 │       ├── lua.lua
 │       ├── ps1.lua
 │       ├── python.lua
-│       └── sh.lua
+│       ├── sh.lua
+│       └── sql.lua
 ├── COMMANDS.md
 ├── init.lua
 ├── lazy-lock.json
@@ -143,7 +144,7 @@ nvim
 │           └── zellij_nav.lua
 └── README.md
 
-15 directories, 63 files
+15 directories, 64 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
