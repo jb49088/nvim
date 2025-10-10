@@ -9,6 +9,7 @@ return {
             lua = { "luacheck" },
             html = { "htmlhint" },
             htmldjango = { "djlint" },
+            css = { "stylelint" },
         }
         lint.linters.luacheck.args = {
             "--globals",
