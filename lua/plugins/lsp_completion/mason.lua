@@ -39,6 +39,7 @@ return {
             "prettier", -- js, ts, css, html, md, yaml etc formatter
             "djlint", -- html linter/formatter designed for django
             "stylelint", -- css linter
+            "sqruff", -- sql linter/formatter
         }
 
         local registry = require("mason-registry")

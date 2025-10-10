@@ -34,6 +34,7 @@ return {
                 htmldjango = { "djlint" },
                 json = { "prettier" },
                 css = { "prettier" },
+                sql = { "sqruff" },
             },
             -- Custom formatter configurations
             formatters = {

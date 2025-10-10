@@ -9,6 +9,7 @@ map("n", "<Esc>", "<cmd>nohlsearch<CR>")
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit Terminal Mode" })
 map("n", "<leader>l", "<Cmd>Lazy<CR>", { desc = "Lazy" })
 map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
+map("n", "<leader>ch", vim.diagnostic.open_float, { desc = "Hover Diagnostics" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })
 
 -- Black hole registers
@@ -81,10 +82,10 @@ end, { desc = "Close Other Buffers" })
 -- map("n", "<C-j>", "<C-w><C-j>", { desc = "Go to Lower Window" })
 -- map("n", "<C-k>", "<C-w><C-k>", { desc = "Go to Upper Window" })
 
--- map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
--- map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
--- map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
--- map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
+map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
+map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
+map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
+map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
 
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
