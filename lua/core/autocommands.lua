@@ -6,7 +6,7 @@ vim.api.nvim_create_autocmd("FileType", {
     group = "editor_behavior",
     pattern = "*",
     callback = function()
-        vim.opt_local.formatoptions:remove({ "r", "o" })
+        vim.opt_local.formatoptions:remove({ "c", "o" })
     end,
 })
 

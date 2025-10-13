@@ -23,6 +23,7 @@ return {
                 "powershell_es", -- powershell lsp (includes formatter and linter)
                 "html", -- html lsp
                 "cssls", -- css lsp
+                "vtsls", -- ts/js lsp
             },
             automatic_enable = true,
         })
@@ -38,8 +39,8 @@ return {
             "htmlhint", -- html linter
             "prettier", -- js, ts, css, html, md, yaml etc formatter
             "djlint", -- html linter/formatter designed for django
-            "stylelint", -- css linter
             "sqruff", -- sql linter/formatter
+            "biome", -- js, ts, jsx, json, css linter/formatter
         }
 
         local registry = require("mason-registry")

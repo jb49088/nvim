@@ -32,8 +32,6 @@ return {
                 sh = { "shfmt" },
                 html = { "prettier" },
                 htmldjango = { "djlint" },
-                json = { "prettier" },
-                css = { "prettier" },
                 sql = { "sqruff" },
             },
             -- Custom formatter configurations

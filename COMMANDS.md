@@ -1,4 +1,3 @@
-
 ### Commands
 
 - `:messages` — check recent messages

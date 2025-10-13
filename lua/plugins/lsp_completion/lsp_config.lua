@@ -86,6 +86,9 @@ return {
             html = {
                 filetypes = { "html", "htmldjango" },
             },
+            biome = {
+                root_dir = vim.fn.getcwd(),
+            },
         }
 
         for server_name, config in pairs(servers) do

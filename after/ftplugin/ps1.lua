@@ -1,11 +1,11 @@
 local runner = require("custom.modules.code_runner")
 
 -- Indentation
-vim.bo.tabstop = 4
-vim.bo.softtabstop = 4
-vim.bo.shiftwidth = 4
-vim.bo.expandtab = true
-vim.bo.autoindent = true
+vim.opt_local.tabstop = 4
+vim.opt_local.softtabstop = 4
+vim.opt_local.shiftwidth = 4
+vim.opt_local.expandtab = true
+vim.opt_local.autoindent = true
 
 -- Keymaps
 vim.keymap.set("n", "<leader>rt", function()
