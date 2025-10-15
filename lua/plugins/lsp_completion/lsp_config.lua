@@ -19,6 +19,12 @@ return {
                     client.server_capabilities.hoverProvider = false
                 end
 
+                -- Disable cssls formatting. Biome will handle formatting for css
+                if client and client.name == "cssls" then
+                    client.server_capabilities.documentFormattingProvider = false
+                    client.server_capabilities.documentRangeFormattingProvider = false
+                end
+
                 local map = function(keys, func, desc, mode)
                     mode = mode or "n"
                     vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = desc })

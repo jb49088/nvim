@@ -33,6 +33,8 @@ return {
                 html = { "prettier" },
                 htmldjango = { "djlint" },
                 sql = { "sqruff" },
+                css = { "biome" },
+                json = { "biome" },
             },
             -- Custom formatter configurations
             formatters = {
@@ -51,6 +53,16 @@ return {
                 },
                 djlint = {
                     args = { "--reformat", "--indent", "2", "--ignore-case", "-" },
+                },
+                biome = {
+                    command = "biome",
+                    args = {
+                        "format",
+                        "--indent-style=space",
+                        "--stdin-file-path",
+                        "$FILENAME",
+                    },
+                    stdin = true,
                 },
             },
             format_on_save = function(bufnr)
