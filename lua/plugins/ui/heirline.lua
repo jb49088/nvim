@@ -179,16 +179,12 @@ return {
         }
 
         local GitDiffs = {
-            condition = function()
-                if not vim.b.gitsigns_head or vim.b.gitsigns_git_status then
-                    return false
-                end
-                local gs = vim.b.gitsigns_status_dict
-                if not gs then
-                    return false
-                end
-                -- Only show if there are actual changes
-                return (gs.added and gs.added > 0) or (gs.changed and gs.changed > 0) or (gs.removed and gs.removed > 0)
+            condition = conditions.is_git_repo,
+            init = function(self)
+                self.status_dict = vim.b.gitsigns_status_dict
+                self.has_changes = self.status_dict.added ~= 0
+                    or self.status_dict.removed ~= 0
+                    or self.status_dict.changed ~= 0
             end,
             static = {
                 symbols = {
@@ -199,52 +195,36 @@ return {
             },
             {
                 provider = function(self)
-                    local gs = vim.b.gitsigns_status_dict
-                    if not gs or not gs.added or gs.added == 0 then
+                    if not self.status_dict or not self.status_dict.added or self.status_dict.added == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
                     local is_first = true
-
-                    return (is_first and "" or " ") .. self.symbols.added .. gs.added
+                    return (is_first and "" or " ") .. self.symbols.added .. self.status_dict.added
                 end,
                 hl = "GitSignsAdd",
             },
             {
                 provider = function(self)
-                    local gs = vim.b.gitsigns_status_dict
-                    if not gs or not gs.changed or gs.changed == 0 then
+                    if not self.status_dict or not self.status_dict.changed or self.status_dict.changed == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
-                    local is_first = not (gs.added and gs.added > 0)
-
-                    return (is_first and "" or " ") .. self.symbols.modified .. gs.changed
+                    local is_first = not (self.status_dict.added and self.status_dict.added > 0)
+                    return (is_first and "" or " ") .. self.symbols.modified .. self.status_dict.changed
                 end,
                 hl = "GitSignsChange",
             },
             {
                 provider = function(self)
-                    local gs = vim.b.gitsigns_status_dict
-                    if not gs or not gs.removed or gs.removed == 0 then
+                    if not self.status_dict or not self.status_dict.removed or self.status_dict.removed == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
-                    local is_first = not ((gs.added and gs.added > 0) or (gs.changed and gs.changed > 0))
-
-                    return (is_first and "" or " ") .. self.symbols.removed .. gs.removed
+                    local is_first = not (
+                        (self.status_dict.added and self.status_dict.added > 0)
+                        or (self.status_dict.changed and self.status_dict.changed > 0)
+                    )
+                    return (is_first and "" or " ") .. self.symbols.removed .. self.status_dict.removed
                 end,
                 hl = "GitSignsDelete",
-            },
-            update = {
-                "User",
-                pattern = "GitSignsUpdate",
-                callback = vim.schedule_wrap(function()
-                    vim.cmd("redrawstatus")
-                end),
             },
         }
 
