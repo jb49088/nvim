@@ -50,8 +50,8 @@ UIEnter   28.4ms (+5.4ms)
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             58            615            518           4768
-Markdown                         2             18              4            157
-JSON                             1              0              0             40
+Markdown                         2             18              4            158
+JSON                             1              0              0             39
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
 SUM:                            62            633            522           4968
@@ -131,7 +131,7 @@ nvim
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
 │       │   ├── mini_icons.lua
-│       │   ├── nvim_colorizer.lua
+│       │   ├── nvim_highlight_colors.lua
 │       │   ├── nvim_ufo.lua
 │       │   └── rainbow_delimiters.lua
 │       └── utils
