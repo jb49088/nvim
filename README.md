@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             58            615            518           4768
+Lua                             59            620            520           4793
 Markdown                         2             18              4            158
 JSON                             1              0              0             39
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            62            633            522           4968
+SUM:                            63            638            524           4993
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -100,6 +100,7 @@ nvim
 │   │   │   └── python.lua
 │   │   └── modules
 │   │       ├── code_runner.lua
+│   │       ├── divider_generator.lua
 │   │       ├── eof_padding.lua
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
@@ -147,7 +148,7 @@ nvim
 │           └── zellij_nav.lua
 └── README.md
 
-15 directories, 67 files
+15 directories, 68 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

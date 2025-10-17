@@ -9,6 +9,7 @@ return {
         spec = {
             -- individual keymaps
             { "<leader>K", icon = { icon = "󰋽", hl = "MiniIconsBlue" } },
+            { "<leader>d", icon = { icon = "", hl = "MiniIconsGrey" } },
             { "<leader>cm", icon = { icon = "󱁤", hl = "MiniIconsGrey" } },
             -- groups
             { "<leader>b", group = "Buffer" },
