@@ -179,19 +179,19 @@ return {
         }
 
         local GitDiffs = {
-            condition = conditions.is_git_repo,
+            condition = function()
+                local gs = vim.b.gitsigns_status_dict
+                if not gs then
+                    return false
+                end
+                -- Only show if there are actual changes
+                return (gs.added and gs.added > 0) or (gs.changed and gs.changed > 0) or (gs.removed and gs.removed > 0)
+            end,
             init = function(self)
                 self.status_dict = vim.b.gitsigns_status_dict
-                self.has_changes = self.status_dict.added ~= 0
-                    or self.status_dict.removed ~= 0
-                    or self.status_dict.changed ~= 0
             end,
             static = {
-                symbols = {
-                    added = " ",
-                    modified = " ",
-                    removed = " ",
-                },
+                symbols = { added = " ", modified = " ", removed = " " },
             },
             {
                 provider = function(self)
