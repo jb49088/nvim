@@ -3,6 +3,7 @@ local M = {}
 function M.create_divider()
     local line = vim.api.nvim_get_current_line()
     local text = line:match("^%s*(.-)%s*$") -- trim whitespace
+    text = text:upper() -- capitalize the text
     local width = 80
     local text_len = #text
     local inner_width = width - 2 -- account for the = on each side
@@ -20,6 +21,11 @@ function M.create_divider()
         "",
         "", -- extra line to ensure cursor position exists
     })
+
+    -- Comment the divider lines using the built-in commenting
+    vim.api.nvim_win_set_cursor(0, { row, 0 })
+    vim.cmd("normal! Vjj")
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gc", true, false, true), "x", false)
 
     -- Move cursor to line after divider
     vim.api.nvim_win_set_cursor(0, { row + 4, 0 })
