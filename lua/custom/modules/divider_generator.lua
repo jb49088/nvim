@@ -18,8 +18,6 @@ function M.create_divider()
         border,
         centered,
         border,
-        "",
-        "", -- extra line to ensure cursor position exists
     })
 
     -- Comment the divider lines using the built-in commenting
@@ -27,8 +25,8 @@ function M.create_divider()
     vim.cmd("normal! Vjj")
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gc", true, false, true), "x", false)
 
-    -- Move cursor to line after divider
-    vim.api.nvim_win_set_cursor(0, { row + 4, 0 })
+    -- Move cursor to bottom line of divider, far left
+    vim.api.nvim_win_set_cursor(0, { row + 2, 0 })
 end
 
 vim.keymap.set("n", "<leader>d", M.create_divider, { desc = "Divider" })
