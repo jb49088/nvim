@@ -74,7 +74,7 @@ return {
                 lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
             },
         },
-        snippets = { preset = "luasnip" },
+        snippets = { preset = "default" },
         fuzzy = { implementation = "prefer_rust_with_warning" },
         signature = {
             enabled = true,

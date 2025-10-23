@@ -1,0 +1,176 @@
+{
+  "Fruits List": {
+    "prefix": "fruits",
+    "body": [
+      "fruits: list[str] = [",
+      "    \"apple\",",
+      "    \"banana\",",
+      "    \"orange\",",
+      "    \"grape\",",
+      "    \"strawberry\",",
+      "]"
+    ]
+  },
+  "Colors Tuple": {
+    "prefix": "colors",
+    "body": [
+      "colors: tuple[str, ...] = (",
+      "    \"red\",",
+      "    \"blue\",",
+      "    \"green\",",
+      "    \"yellow\",",
+      "    \"purple\",",
+      ")"
+    ]
+  },
+  "Products Dict": {
+    "prefix": "products",
+    "body": [
+      "products: dict[str, int] = {",
+      "    \"laptop\": 999,",
+      "    \"mouse\": 25,",
+      "    \"keyboard\": 75,",
+      "    \"monitor\": 250,",
+      "    \"headphones\": 150,",
+      "}"
+    ]
+  },
+  "Languages Set": {
+    "prefix": "languages",
+    "body": [
+      "languages: set[str] = {",
+      "    \"python\",",
+      "    \"javascript\",",
+      "    \"rust\",",
+      "    \"go\",",
+      "    \"java\",",
+      "}"
+    ]
+  },
+  "Users List": {
+    "prefix": "users",
+    "body": [
+      "users: list[dict[str, str | int]] = [",
+      "    {\"name\": \"alice\", \"age\": 25},",
+      "    {\"name\": \"bob\", \"age\": 30},",
+      "    {\"name\": \"charlie\", \"age\": 22},",
+      "]"
+    ]
+  },
+  "Numbers List": {
+    "prefix": "numbers",
+    "body": "numbers: list[int] = [1, 5, 3, 9, 2, 8, 4, 7, 6]"
+  },
+  "Cities Dict": {
+    "prefix": "cities",
+    "body": [
+      "cities: dict[str, dict[str, str | int]] = {",
+      "    \"toronto\": {",
+      "        \"country\": \"canada\",",
+      "        \"population\": 3_025_647,",
+      "        \"fact\": \"toronto is canadas largest city\",",
+      "    },",
+      "    \"london\": {",
+      "        \"country\": \"united kingdom\",",
+      "        \"population\": 8_954_146,",
+      "        \"fact\": \"london has the oldest subway in the world\",",
+      "    },",
+      "    \"moscow\": {",
+      "        \"country\": \"russia\",",
+      "        \"population\": 13_456_186,",
+      "        \"fact\": \"most populous city in europe\",",
+      "    },",
+      "}"
+    ]
+  },
+  "Pygame Full Template": {
+    "prefix": "pygame_full",
+    "body": [
+      "import sys",
+      "",
+      "import pygame",
+      "",
+      "",
+      "class Settings:",
+      "    \"\"\"A class to store all settings.\"\"\"",
+      "",
+      "    def __init__(self):",
+      "        \"\"\"Initialize the game's settings.\"\"\"",
+      "        # Frame rate",
+      "        self.framerate = ${1:60}",
+      "        # Screen settings",
+      "        self.screen_width = ${2:800}",
+      "        self.screen_height = ${3:800}",
+      "        self.bg_color = ${4:(0, 0, 0)}",
+      "",
+      "",
+      "class ${5:Game}:",
+      "    \"\"\"Overall class to manage game assets and behavior.\"\"\"",
+      "",
+      "    def __init__(self):",
+      "        \"\"\"Initialize the game, and create game resources.\"\"\"",
+      "        pygame.init()",
+      "        self.settings = Settings()",
+      "        self.screen = pygame.display.set_mode(",
+      "            (self.settings.screen_width, self.settings.screen_height)",
+      "        )",
+      "        self.clock = pygame.time.Clock()",
+      "",
+      "    def run_game(self):",
+      "        \"\"\"Start the main loop for the game.\"\"\"",
+      "        while True:",
+      "            self._event_loop()",
+      "            self._update_screen()",
+      "            self.clock.tick(self.settings.framerate)",
+      "",
+      "    def _event_loop(self):",
+      "        \"\"\"Respond to keypresses and mouse events.\"\"\"",
+      "        for event in pygame.event.get():",
+      "            if event.type == pygame.QUIT:",
+      "                sys.exit()",
+      "            elif event.type == pygame.KEYDOWN:",
+      "                pass",
+      "            elif event.type == pygame.KEYUP:",
+      "                pass",
+      "",
+      "    def _update_screen(self):",
+      "        \"\"\"Update images on the screen, and flip to the new screen.\"\"\"",
+      "        self.screen.fill(self.settings.bg_color)",
+      "        pygame.display.flip()",
+      "",
+      "",
+      "if __name__ == \"__main__\":",
+      "    ${6:game} = ${5:Game}()",
+      "    ${6:game}.run_game()"
+    ]
+  },
+  "Pygame Minimal Template": {
+    "prefix": "pygame_minimal",
+    "body": [
+      "import pygame",
+      "",
+      "",
+      "class ${1:Game}:",
+      "    def __init__(self):",
+      "        pygame.init()",
+      "        self.screen = pygame.display.set_mode((${2:800}, ${3:800}))",
+      "        self.clock = pygame.time.Clock()",
+      "",
+      "    def run(self):",
+      "        running = True",
+      "        while running:",
+      "            for event in pygame.event.get():",
+      "                if event.type == pygame.QUIT:",
+      "                    running = False",
+      "            ",
+      "            self.screen.fill((${4:0, 0, 0}))",
+      "            pygame.display.flip()",
+      "            self.clock.tick(${5:60})",
+      "",
+      "",
+      "if __name__ == \"__main__\":",
+      "    ${6:game} = ${1:Game}()",
+      "    ${6:game}.run()"
+    ]
+  }
+}

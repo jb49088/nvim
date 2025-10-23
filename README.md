@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             59            621            522           4794
+Lua                             58            617            522           4572
+JSON                             2              0              0            215
 Markdown                         2             18              4            159
-JSON                             1              0              0             39
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            63            639            526           4995
+SUM:                            63            635            526           4949
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -124,9 +124,7 @@ nvim
 │       │   ├── luasnip.lua
 │       │   ├── mason.lua
 │       │   ├── nvim-dap.lua
-│       │   ├── nvim-lint.lua
-│       │   └── snippets
-│       │       └── python.lua
+│       │   └── nvim-lint.lua
 │       ├── ui
 │       │   ├── colorscheme.lua
 │       │   ├── heirline.lua
@@ -146,7 +144,9 @@ nvim
 │           ├── trouble.lua
 │           ├── whichkey.lua
 │           └── zellij_nav.lua
-└── README.md
+├── README.md
+└── snippets
+    └── python.json
 
 15 directories, 68 files
 ```
