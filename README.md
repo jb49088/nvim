@@ -49,12 +49,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             57            617            519           4550
+Lua                             55            570            484           4322
 JSON                             2              0              0            215
-Markdown                         2             18              4            159
+Markdown                         2             18              4            158
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            62            635            523           4927
+SUM:                            60            588            488           4698
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -95,9 +95,6 @@ nvim
 │   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
 │   │   │   └── tabs_picker.lua
-│   │   ├── indentation
-│   │   │   ├── init.lua
-│   │   │   └── python.lua
 │   │   └── modules
 │   │       ├── code_runner.lua
 │   │       ├── divider_generator.lua
@@ -147,7 +144,7 @@ nvim
 └── snippets
     └── python.json
 
-15 directories, 67 files
+14 directories, 65 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
