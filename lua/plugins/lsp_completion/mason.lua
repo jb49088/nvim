@@ -41,6 +41,7 @@ return {
             "djlint", -- html linter/formatter designed for django
             "sqruff", -- sql linter/formatter
             "biome", -- js, ts, jsx, json, css linter/formatter
+            "debugpy", -- python debugger
         }
 
         local registry = require("mason-registry")

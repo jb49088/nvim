@@ -7,7 +7,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Lazy loading with [lazy.nvim](https://github.com/folke/lazy.nvim)
 - Extensive use of [snacks.nvim](https://github.com/folke/snacks.nvim) including custom pickers
 - Completions with [blink.cmp](https://github.com/Saghen/blink.cmp)
-- Extensive use of [mini.icons](https://github.com/echasnovski/mini.icons) throughout the config for a cohesive appearance 
+- Extensive use of [mini.icons](https://github.com/echasnovski/mini.icons) throughout the config for a cohesive appearance
 - Enhanced syntax highlighting with [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) and semantic highlighting
 - [oil.nvim](https://github.com/stevearc/oil.nvim) for filesystem manipulation
 - [trouble.nvim](https://github.com/folke/trouble.nvim) for everything wrong with your code
@@ -18,13 +18,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Git integration with [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) and [snacks.nvim](https://github.com/folke/snacks.nvim)'s lazygit
 - LSP/tool management done with [mason.nvim](https://github.com/mason-org/mason.nvim) including a custom auto-installer using mason's registry directly
 - Custom status column enhancements based on [LazyVim](https://github.com/LazyVim/LazyVim)'s status column
-- Custom session manager with built-in session picker
-- Custom floating terminal window module
-- Custom indent guides module improving on current indent plugins within the ecosystem
 - Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
-- Custom virtual environment selector with built-in venv picker
-- Python-specific indentation logic improving on GetPythonIndent()
-- Unified code runner that supports multiple languages
 - And much more
 
 ### Known Issues
@@ -49,12 +43,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             55            570            484           4322
-JSON                             2              0              0            215
-Markdown                         2             18              4            158
+Lua                             55            578            477           4413
+JSON                             2              0              0            241
+Markdown                         2             20              4            149
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            60            588            488           4698
+SUM:                            60            598            481           4806
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -96,6 +90,7 @@ nvim
 │   │   │   ├── highlights.lua
 │   │   │   └── tabs_picker.lua
 │   │   └── modules
+│   │       ├── code_debugger.lua
 │   │       ├── code_runner.lua
 │   │       ├── divider_generator.lua
 │   │       ├── eof_padding.lua
@@ -119,7 +114,6 @@ nvim
 │       │   ├── lazydev.lua
 │       │   ├── lsp_config.lua
 │       │   ├── mason.lua
-│       │   ├── nvim-dap.lua
 │       │   └── nvim-lint.lua
 │       ├── ui
 │       │   ├── colorscheme.lua

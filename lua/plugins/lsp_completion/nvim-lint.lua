@@ -4,7 +4,6 @@ return {
     event = { "BufReadPre", "BufNewFile" },
     config = function()
         local lint = require("lint")
-        -- Configure linters by filetype
         lint.linters_by_ft = {
             lua = { "luacheck" },
             html = { "htmlhint" },
@@ -22,10 +21,21 @@ return {
             "-",
         }
         -- Create autocommand to run linters
-        vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+        local lint_timer = nil
+        vim.api.nvim_create_autocmd({
+            "BufWritePost",
+            "BufReadPost",
+            "InsertLeave",
+            "TextChanged",
+        }, {
             group = vim.api.nvim_create_augroup("nvim_lint", { clear = true }),
             callback = function()
-                require("lint").try_lint(nil, { ignore_errors = true })
+                if lint_timer then
+                    vim.fn.timer_stop(lint_timer)
+                end
+                lint_timer = vim.fn.timer_start(100, function()
+                    require("lint").try_lint(nil, { ignore_errors = true })
+                end)
             end,
         })
     end,

@@ -83,6 +83,33 @@
       "}"
     ]
   },
+  "Logging Console Setup": {
+    "prefix": "logconsole",
+    "body": [
+      "import logging",
+      "",
+      "logging.basicConfig(",
+      "    level=logging.${1:DEBUG},",
+      "    format=\"%(asctime)s - %(levelname)s - %(message)s\",",
+      ")",
+      "",
+      "# logging.disable(logging.CRITICAL)"
+    ]
+  },
+  "Logging File Setup": {
+    "prefix": "logfile",
+    "body": [
+      "import logging",
+      "",
+      "logging.basicConfig(",
+      "    filename=\"${1:app.log}\",",
+      "    level=logging.${2:DEBUG},",
+      "    format=\"%(asctime)s - %(levelname)s - %(message)s\",",
+      ")",
+      "",
+      "# logging.disable(logging.CRITICAL)"
+    ]
+  },
   "Pygame Full Template": {
     "prefix": "pygame_full",
     "body": [

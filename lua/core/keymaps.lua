@@ -6,7 +6,6 @@ vim.g.maplocalleader = " "
 
 -- Basic keymaps
 map("n", "<Esc>", "<cmd>nohlsearch<CR>")
-map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit Terminal Mode" })
 map("n", "<leader>l", "<Cmd>Lazy<CR>", { desc = "Lazy" })
 map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>ch", vim.diagnostic.open_float, { desc = "Hover Diagnostics" })
@@ -77,16 +76,6 @@ map("n", "<leader>bo", function()
 end, { desc = "Close Other Buffers" })
 
 -- Windows
--- map("n", "<C-h>", "<C-w><C-h>", { desc = "Go to Left Window" })
--- map("n", "<C-l>", "<C-w><C-l>", { desc = "Go to Right Window" })
--- map("n", "<C-j>", "<C-w><C-j>", { desc = "Go to Lower Window" })
--- map("n", "<C-k>", "<C-w><C-k>", { desc = "Go to Upper Window" })
-
-map("n", "<A-h>", "<C-w>H", { desc = "Move Window to Far Left" })
-map("n", "<A-j>", "<C-w>J", { desc = "Move Window to Far Bottom" })
-map("n", "<A-k>", "<C-w>K", { desc = "Move Window to Far Top" })
-map("n", "<A-l>", "<C-w>L", { desc = "Move Window to Far Right" })
-
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
 map("n", "<leader>wo", "<C-w>o", { desc = "Close Other Windows" })
@@ -97,11 +86,11 @@ map("n", "<leader>wh", ":new<CR>", { desc = "Horizontal Split" })
 map("n", "<leader>wv", ":vnew<CR>", { desc = "Vertical Split" })
 
 -- Tabs
-map("n", "<leader><Tab><Tab>", "<Cmd>tabnew<CR>", { desc = "New Tab" })
-map("n", "<leader><Tab>n", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
-map("n", "<leader><Tab>c", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
-map("n", "<leader><Tab>p", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
-map("n", "<leader><Tab>o", function()
+map("n", "<leader>TT", "<Cmd>tabnew<CR>", { desc = "New Tab" })
+map("n", "<leader>Tn", "<Cmd>tabnext<CR>", { desc = "Next Tab" })
+map("n", "<leader>Tc", "<Cmd>tabclose<CR>", { desc = "Close Tab" })
+map("n", "<leader>Tp", "<Cmd>tabprevious<CR>", { desc = "Previous Tab" })
+map("n", "<leader>To", function()
     local tab_count = #vim.api.nvim_list_tabpages()
     if tab_count > 1 then
         vim.cmd("tabonly")
