@@ -1,3 +1,7 @@
+-- ================================================================================
+-- =                                HEIRLINE PATH                                 =
+-- ================================================================================
+
 -- A flexible custom component for heirline to display a truncated or special buffer path with icons.
 local M = {}
 

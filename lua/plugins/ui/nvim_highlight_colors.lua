@@ -1,3 +1,7 @@
+-- ================================================================================
+-- =                            NVIM-HIGHLIGHT-COLORS                             =
+-- ================================================================================
+
 return {
     "brenoprata10/nvim-highlight-colors",
     enabled = false, -- https://github.com/brenoprata10/nvim-highlight-colors/issues/170

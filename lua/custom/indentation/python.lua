@@ -1,3 +1,7 @@
+-- ================================================================================
+-- =                              PYTHON INDENTATION                              =
+-- ================================================================================
+
 -- Python indentation in Lua with treesitter-aware bracket detection
 -- Fixes brackets in strings (e.g., regex patterns) breaking indent when using treesitter highlighting
 

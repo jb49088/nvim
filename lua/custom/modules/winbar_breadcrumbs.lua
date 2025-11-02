@@ -1,4 +1,6 @@
--- winbar_breadcrumbs.lua - Enhanced with navic-style symbol handling and tree structure
+-- ================================================================================
+-- =                              WINBAR BREADCRUMBS                              =
+-- ================================================================================
 
 local M = {}
 

@@ -1,3 +1,7 @@
+-- ================================================================================
+-- =                                    PYTHON                                    =
+-- ================================================================================
+
 local runner = require("custom.modules.code_runner")
 local debugger = require("custom.modules.code_debugger")
 

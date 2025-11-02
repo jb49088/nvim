@@ -1,3 +1,7 @@
+-- ================================================================================
+-- =                                  HIGHLIGHTS                                  =
+-- ================================================================================
+
 local c = require("astrotheme.lib.util").set_palettes(require("astrotheme").config)
 local hl = vim.api.nvim_set_hl
 

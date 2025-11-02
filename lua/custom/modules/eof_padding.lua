@@ -1,4 +1,7 @@
--- Simplified EOF padding - current window only
+-- ================================================================================
+-- =                                 EOF PADDING                                  =
+-- ================================================================================
+
 local mode_disabled = false
 local initial_scrolloff = vim.o.scrolloff
 local scrolloff = vim.o.scrolloff
