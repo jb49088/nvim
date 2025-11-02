@@ -19,6 +19,7 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - LSP/tool management done with [mason.nvim](https://github.com/mason-org/mason.nvim) including a custom auto-installer using mason's registry directly
 - Custom status column enhancements based on [LazyVim](https://github.com/LazyVim/LazyVim)'s status column
 - Custom statusline built with [heirline.nvim](https://github.com/rebelot/heirline.nvim) with a pretty path
+- Custom Python indentation with treesitter-aware bracket detection
 - And much more
 
 ### Known Issues
@@ -43,12 +44,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             55            578            477           4413
+Lua                             57            606            479           4617
 JSON                             2              0              0            241
-Markdown                         2             18              4            149
+Markdown                         2             20              4            150
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            60            596            481           4806
+SUM:                            62            626            483           5011
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -89,6 +90,9 @@ nvim
 │   │   │   ├── heirline_path.lua
 │   │   │   ├── highlights.lua
 │   │   │   └── tabs_picker.lua
+│   │   ├── indentation
+│   │   │   ├── init.lua
+│   │   │   └── python.lua
 │   │   └── modules
 │   │       ├── code_debugger.lua
 │   │       ├── code_runner.lua
@@ -138,7 +142,7 @@ nvim
 └── snippets
     └── python.json
 
-14 directories, 65 files
+15 directories, 67 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 
