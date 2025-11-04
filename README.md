@@ -44,12 +44,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             63            672            676           4659
-JSON                             2              0              0            241
+Lua                             64            656            765           4642
+JSON                             2              0              0            242
 Markdown                         2             18              4            153
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            68            690            680           5056
+SUM:                            69            674            769           5040
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -123,6 +123,7 @@ nvim
 │       │   ├── colorscheme.lua
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
+│       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
 │       │   ├── nvim_highlight_colors.lua
 │       │   ├── nvim_ufo.lua
@@ -142,7 +143,7 @@ nvim
 └── snippets
     └── python.json
 
-15 directories, 67 files
+15 directories, 68 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

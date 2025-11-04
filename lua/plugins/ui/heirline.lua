@@ -7,7 +7,6 @@ local path = require("custom.extensions.heirline_path")
 return {
     "rebelot/heirline.nvim",
     event = "VeryLazy",
-    -- enabled = false,
     config = function()
         local heirline = require("heirline")
         local conditions = require("heirline.conditions")
@@ -121,14 +120,9 @@ return {
 
         local FileEncoding = {
             condition = function()
-                -- Check if current window is a floating window
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
-
-                -- Check if buffer has no name
                 local bufname = vim.api.nvim_buf_get_name(0)
-
-                -- Hide component if in a floating window or no name buffer
                 return not is_floating and bufname ~= ""
             end,
             provider = function()
@@ -139,15 +133,10 @@ return {
 
         local FileFormat = {
             condition = function()
-                -- Check if current window is a floating window
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
-
-                -- Check if buffer has no name
                 local bufname = vim.api.nvim_buf_get_name(0)
                 local is_no_name = bufname == ""
-
-                -- Hide component if in a floating window or no name buffer
                 return not is_floating and not is_no_name
             end,
             provider = function()
@@ -188,7 +177,6 @@ return {
                 if not gs then
                     return false
                 end
-                -- Only show if there are actual changes
                 return (gs.added and gs.added > 0) or (gs.changed and gs.changed > 0) or (gs.removed and gs.removed > 0)
             end,
             init = function(self)
@@ -232,17 +220,14 @@ return {
             },
         }
 
-        -- Helper function to check if a plugin is available
         local function is_available(plugin)
             local lazy_config_avail, lazy_config = pcall(require, "lazy.core.config")
             return lazy_config_avail and lazy_config.spec.plugins[plugin] ~= nil
         end
 
-        -- Check plugin availability once during setup
         local has_conform = is_available("conform.nvim")
         local has_lint = is_available("nvim-lint")
 
-        -- Helper to normalize ruff variants
         local function normalize_name(name)
             return name:match("^ruff") and "ruff" or name
         end
@@ -254,12 +239,10 @@ return {
                     local bufnr = self and self.bufnr or 0
                     local ft = vim.bo[bufnr].filetype
 
-                    -- Check LSP first (fastest)
                     if next(vim.lsp.get_clients({ bufnr = bufnr })) then
                         return true
                     end
 
-                    -- Check if conform has formatters
                     if has_conform and package.loaded["conform"] then
                         local ok, conform = pcall(require, "conform")
                         if ok then
@@ -270,7 +253,6 @@ return {
                         end
                     end
 
-                    -- Check if nvim-lint has linters
                     if has_lint and package.loaded["lint"] then
                         local ok, lint = pcall(require, "lint")
                         if ok and lint.linters_by_ft[ft] and #lint.linters_by_ft[ft] > 0 then
@@ -285,12 +267,6 @@ return {
                     "LspAttach",
                     "LspDetach",
                     "BufEnter",
-                    callback = function()
-                        local mode = vim.api.nvim_get_mode().mode
-                        if mode ~= "i" and mode ~= "ic" and mode ~= "ix" then
-                            vim.schedule(vim.cmd.redrawstatus)
-                        end
-                    end,
                 },
 
                 provider = function(self)
@@ -299,7 +275,6 @@ return {
                     local seen_tools = {}
                     local ft = vim.bo[bufnr].filetype
 
-                    -- Add LSP clients
                     for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
                         local normalized = normalize_name(client.name)
                         if not seen_tools[normalized] then
@@ -308,7 +283,6 @@ return {
                         end
                     end
 
-                    -- Add shellcheck for bash files when bashls is active
                     if (ft == "sh" or ft == "bash") and vim.fn.executable("shellcheck") == 1 then
                         for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
                             if client.name == "bashls" then
@@ -321,7 +295,6 @@ return {
                         end
                     end
 
-                    -- Only check conform if it's loaded (not just available)
                     if has_conform and package.loaded["conform"] then
                         local ok, conform = pcall(require, "conform")
                         if ok then
@@ -336,7 +309,6 @@ return {
                         end
                     end
 
-                    -- Only check nvim-lint if it's loaded (not just available)
                     if has_lint and package.loaded["lint"] then
                         local ok, lint = pcall(require, "lint")
                         if ok and lint.linters_by_ft[ft] then
@@ -353,7 +325,6 @@ return {
                     return #all_tools > 0 and table.concat(all_tools, ", ") or ""
                 end,
             },
-            -- Fallback when no LSP clients
             {
                 provider = "",
             },
@@ -361,12 +332,10 @@ return {
 
         local Diagnostics = {
             condition = function()
-                -- Hide diagnostics in insert mode
                 local mode = vim.api.nvim_get_mode().mode
                 if mode == "i" or mode == "ic" or mode == "ix" then
                     return false
                 end
-
                 return conditions.has_diagnostics
             end,
             static = {
@@ -381,24 +350,13 @@ return {
                 self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
                 self.info = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
             end,
-            update = {
-                "DiagnosticChanged",
-                "BufEnter",
-                "ModeChanged", -- Add this to update when mode changes
-                callback = vim.schedule_wrap(function()
-                    vim.cmd("redrawstatus")
-                    vim.cmd("redrawtabline")
-                end),
-            },
+            update = { "DiagnosticChanged", "BufEnter" },
             {
                 provider = function(self)
                     if self.errors == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
                     local is_first = true
-
                     return (is_first and "" or " ") .. self.error_icon .. self.errors
                 end,
                 hl = "DiagnosticError",
@@ -408,10 +366,7 @@ return {
                     if self.warnings == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
                     local is_first = self.errors == 0
-
                     return (is_first and "" or " ") .. self.warn_icon .. self.warnings
                 end,
                 hl = "DiagnosticWarn",
@@ -421,10 +376,7 @@ return {
                     if self.info == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
                     local is_first = self.errors == 0 and self.warnings == 0
-
                     return (is_first and "" or " ") .. self.info_icon .. self.info
                 end,
                 hl = "DiagnosticInfo",
@@ -434,10 +386,7 @@ return {
                     if self.hints == 0 then
                         return ""
                     end
-
-                    -- Check if this is the first non-empty component
                     local is_first = self.errors == 0 and self.warnings == 0 and self.info == 0
-
                     return (is_first and "" or " ") .. self.hint_icon .. self.hints
                 end,
                 hl = "DiagnosticHint",
@@ -448,9 +397,7 @@ return {
             condition = function()
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
-
                 local bufname = vim.api.nvim_buf_get_name(0)
-
                 return not is_floating and bufname ~= ""
             end,
             provider = function()
@@ -460,13 +407,9 @@ return {
 
         local FilePercent = {
             condition = function()
-                -- Check if current window is a floating window
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
-
                 local bufname = vim.api.nvim_buf_get_name(0)
-
-                -- Hide component if in a floating window or no name buffer
                 return not is_floating and bufname ~= ""
             end,
             provider = function()
@@ -504,13 +447,9 @@ return {
                 "ModeChanged",
                 "User",
                 pattern = { "*:*", "HeirlineClockUpdate" },
-                callback = vim.schedule_wrap(function()
-                    vim.cmd("redrawstatus")
-                end),
             },
         }
 
-        -- Setup global timer and autocmd for clock updates (only once)
         local uv = vim.uv or vim.loop
         uv.new_timer():start(
             (60 - tonumber(os.date("%S"))) * 1000,
@@ -520,7 +459,6 @@ return {
             end)
         )
 
-        -- Statusline layout using the helper functions consistently
         local statusline = {
             with_trailing_space(ViMode),
             with_trailing_space(GitBranch),
@@ -540,3 +478,125 @@ return {
         })
     end,
 }
+
+-- -- ================================================================================
+-- -- =                           HEIRLINE STEP 2 (CLEAR)                            =
+-- -- ================================================================================
+
+-- return {
+--     "rebelot/heirline.nvim",
+--     event = "VeryLazy",
+--     config = function()
+--         local heirline = require("heirline")
+--         local utils = require("heirline.utils")
+--
+--         local function get_mode_color()
+--             local mode_code = vim.api.nvim_get_mode().mode
+--             local mode_colors = {
+--                 ["n"] = utils.get_highlight("ModeColorNormal").fg,
+--                 ["i"] = utils.get_highlight("ModeColorInsert").fg,
+--                 ["v"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["V"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["\22"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["c"] = utils.get_highlight("ModeColorCommand").fg,
+--                 ["R"] = utils.get_highlight("ModeColorReplace").fg,
+--                 ["t"] = utils.get_highlight("ModeColorTerminal").fg,
+--             }
+--             return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
+--         end
+--
+--         local statusline = {
+--             -- Mode with color
+--             {
+--                 provider = function()
+--                     return " " .. vim.api.nvim_get_mode().mode .. " "
+--                 end,
+--                 hl = function()
+--                     return {
+--                         bg = get_mode_color(),
+--                         fg = "black",
+--                     }
+--                 end,
+--             },
+--             -- Spacer
+--             { provider = "%=" },
+--             -- Position (right side)
+--             {
+--                 provider = function()
+--                     return string.format("%d:%d ", vim.fn.line("."), vim.fn.col("."))
+--                 end,
+--             },
+--         }
+--
+--         heirline.setup({
+--             statusline = statusline,
+--         })
+--     end,
+-- }
+
+-- ================================================================================
+-- =                        HEIRLINE STEP 3 (PROBLEMATIC)                         =
+-- ================================================================================
+
+-- return {
+--     "rebelot/heirline.nvim",
+--     event = "VeryLazy",
+--     config = function()
+--         local heirline = require("heirline")
+--         local utils = require("heirline.utils")
+--
+--         local function get_mode_color()
+--             local mode_code = vim.api.nvim_get_mode().mode
+--             local mode_colors = {
+--                 ["n"] = utils.get_highlight("ModeColorNormal").fg,
+--                 ["i"] = utils.get_highlight("ModeColorInsert").fg,
+--                 ["v"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["V"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["\22"] = utils.get_highlight("ModeColorVisual").fg,
+--                 ["c"] = utils.get_highlight("ModeColorCommand").fg,
+--                 ["R"] = utils.get_highlight("ModeColorReplace").fg,
+--                 ["t"] = utils.get_highlight("ModeColorTerminal").fg,
+--             }
+--             return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
+--         end
+--
+--         local statusline = {
+--             -- Mode with color AND update callback
+--             {
+--                 provider = function()
+--                     return " " .. vim.api.nvim_get_mode().mode .. " "
+--                 end,
+--                 hl = function()
+--                     return {
+--                         bg = get_mode_color(),
+--                         fg = "black",
+--                     }
+--                 end,
+--                 update = {
+--                     "ModeChanged",
+--                     callback = vim.schedule_wrap(function()
+--                         vim.cmd("redrawstatus")
+--                     end),
+--                 },
+--             },
+--             -- Spacer
+--             { provider = "%=" },
+--             -- Position (right side) with update callback
+--             {
+--                 provider = function()
+--                     return string.format("%d:%d ", vim.fn.line("."), vim.fn.col("."))
+--                 end,
+--                 update = {
+--                     "ModeChanged",
+--                     callback = vim.schedule_wrap(function()
+--                         vim.cmd("redrawstatus")
+--                     end),
+--                 },
+--             },
+--         }
+--
+--         heirline.setup({
+--             statusline = statusline,
+--         })
+--     end,
+-- }

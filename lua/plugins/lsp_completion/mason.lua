@@ -23,6 +23,7 @@ return {
             ensure_installed = {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
+                -- "ty", -- python lsp
                 "bashls", -- bash lsp
                 "powershell_es", -- powershell lsp (includes formatter and linter)
                 "html", -- html lsp
@@ -45,7 +46,6 @@ return {
             "djlint", -- html linter/formatter designed for django
             "sqruff", -- sql linter/formatter
             "biome", -- js, ts, jsx, json, css linter/formatter
-            "debugpy", -- python debugger
         }
 
         local registry = require("mason-registry")

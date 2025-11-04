@@ -1,7 +1,6 @@
 -- ================================================================================
 -- =                                NVIM-AUTOPAIRS                                =
 -- ================================================================================
-
 return {
     "windwp/nvim-autopairs",
     -- enabled = false,
@@ -10,20 +9,12 @@ return {
         local autopairs = require("nvim-autopairs")
         local Rule = require("nvim-autopairs.rule")
         local cond = require("nvim-autopairs.conds")
-
         autopairs.setup({})
 
-        -- Add custom rules for Python f-strings
+        -- Add custom rules for Python quotes inside brackets, braces, and parentheses
         autopairs.add_rules({
-            -- Single quotes in Python, specifically inside brackets
-            Rule("'", "'", "python")
-                :with_pair(cond.before_regex("[%[%{].*")) -- if there's a [ or { before
-                :with_pair(cond.after_regex(".*[%]%}]")), -- and a ] or } after
-
-            -- Double quotes in Python, specifically inside brackets
-            Rule('"', '"', "python")
-                :with_pair(cond.before_regex("[%[%{].*")) -- if there's a [ or { before
-                :with_pair(cond.after_regex(".*[%]%}]")), -- and a ] or } after
+            Rule("'", "'", "python"):with_pair(cond.before_regex("[%[%{%(]")),
+            Rule('"', '"', "python"):with_pair(cond.before_regex("[%[%{%(]")),
         })
 
         -- Create toggle for nvim-autopairs
