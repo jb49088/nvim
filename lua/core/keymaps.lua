@@ -163,3 +163,6 @@ map("n", "<leader>br", function()
     -- Re-run FileType autocommands
     vim.cmd("doautocmd FileType")
 end, { desc = "Refresh Buffer" })
+
+-- map("n", "/", "/\\v", { noremap = true })
+-- map("c", "%s/", "%s/\\v", { noremap = true })

@@ -44,12 +44,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             64            656            765           4642
-JSON                             2              0              0            242
-Markdown                         2             18              4            153
+Lua                             64            658            766           4638
+JSON                             2              0              0            243
+Markdown                         2             18              4            154
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            69            674            769           5040
+SUM:                            69            676            770           5038
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -105,13 +105,13 @@ nvim
 │   │       └── window_swapper.lua
 │   └── plugins
 │       ├── coding
-│       │   ├── autopairs.lua
 │       │   ├── autotag.lua
 │       │   ├── gitsigns.lua
 │       │   ├── mini_ai.lua
 │       │   ├── surround.lua
 │       │   ├── treesitter.lua
-│       │   └── treesj.lua
+│       │   ├── treesj.lua
+│       │   └── ultimate-autopair.lua
 │       ├── lsp_completion
 │       │   ├── blink_cmp.lua
 │       │   ├── conform.lua

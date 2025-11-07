@@ -161,11 +161,11 @@ return {
 
             ret[#ret + 1] = { icon, icon_hl } -- Add the icon (no extra space here, let align handle it)
 
-            local full_path = Snacks.picker.util.path(item) or item.file
+            local full_path = Snacks.picker.util.path(item) or item.file or ""
             local truncated_path = Snacks.picker.util.truncpath(
-                full_path,
-                picker.opts.formatters.file.truncate or 40,
-                { cwd = picker:cwd() }
+                tostring(full_path), -- Force to string
+                40, -- Just use hardcoded number for now
+                { cwd = tostring(picker:cwd() or "") } -- Also force cwd to string
             )
 
             local dir, base = truncated_path:match("^(.*)/(.+)$")

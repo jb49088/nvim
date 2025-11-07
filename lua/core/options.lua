@@ -37,9 +37,6 @@ opt.shortmess:append("I") -- Dont show intro message
 -- Behavior
 opt.swapfile = false -- Disable swap files
 opt.undofile = true -- Enable persistent undo
-opt.ignorecase = true -- Case-insensitive search...
-opt.smartcase = true -- ...unless uppercase letters in query
-opt.inccommand = "split" -- Preview substitute commands live
 opt.updatetime = 200 -- Faster update time for diagnostics, etc.
 opt.timeoutlen = 300 -- Timeout for mapped sequence to complete
 opt.splitright = true -- Vertical splits open to the right
@@ -50,6 +47,13 @@ opt.autoread = true -- Enable automatic file reloading (requires checktime trigg
 opt.infercase = true -- Infer case in built-in completion
 opt.virtualedit = "block" -- Allow going past end of line in blockwise mode
 opt.shada = "'100,<50,s10,:1000,/100,@100,h" -- Limit ShaDa file (for startup)
+
+-- Searching
+opt.ignorecase = true -- Case-insensitive search...
+opt.smartcase = true -- ...unless uppercase letters in query
+opt.incsearch = true -- Show search matches as you type
+opt.hlsearch = true -- Highlight all search matches
+opt.inccommand = "split" -- Preview substitute commands live
 
 -- Indentation
 opt.shiftwidth = 4 -- Indent size
