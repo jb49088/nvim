@@ -30,6 +30,14 @@ return {
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
+        --- INDENT ---
+        indent = {
+            enabled = true,
+            scope = {
+                enabled = true,
+            },
+        },
+
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
@@ -200,6 +208,62 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations
+
+        -- Mode to color mapping
+        local modes = {
+            n = "ModeColorNormal",
+            nt = "ModeColorNormal",
+            i = "ModeColorInsert",
+            v = "ModeColorVisual",
+            V = "ModeColorVisual",
+            ["\22"] = "ModeColorVisual",
+            s = "ModeColorVisual",
+            S = "ModeColorVisual",
+            ["\19"] = "ModeColorVisual",
+            c = "ModeColorCommand",
+            t = "ModeColorTerminal",
+            R = "ModeColorReplace",
+            Rc = "ModeColorReplace",
+            Rx = "ModeColorReplace",
+            Rv = "ModeColorReplace",
+            Rvc = "ModeColorReplace",
+            Rvx = "ModeColorReplace",
+            r = "ModeColorReplace",
+        }
+
+        -- Function to update SnacksIndentScope color based on mode
+        local function update_indent_color(mode)
+            if modes[mode] then
+                vim.api.nvim_set_hl(0, "SnacksIndentScope", { link = modes[mode] })
+                if mode == "c" then
+                    vim.cmd.redraw()
+                end
+            end
+        end
+
+        -- Set initial color
+        update_indent_color(vim.api.nvim_get_mode().mode)
+
+        -- Create autocommands to update on mode change
+        local group = vim.api.nvim_create_augroup("SnacksIndentModeColor", { clear = true })
+
+        vim.api.nvim_create_autocmd("ModeChanged", {
+            group = group,
+            callback = function()
+                vim.schedule(function()
+                    update_indent_color(vim.api.nvim_get_mode().mode)
+                end)
+            end,
+        })
+
+        vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+            group = group,
+            callback = function()
+                vim.schedule(function()
+                    update_indent_color(vim.api.nvim_get_mode().mode)
+                end)
+            end,
+        })
 
         -- toggles
         -- stylua: ignore start
