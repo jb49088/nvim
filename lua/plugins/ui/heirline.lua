@@ -10,77 +10,6 @@ return {
     config = function()
         local heirline = require("heirline")
         local conditions = require("heirline.conditions")
-        local utils = require("heirline.utils")
-
-        -- Mode mapping based on lualine's implementation
-        local mode_map = {
-            ["n"] = "NORMAL",
-            ["no"] = "O-PENDING",
-            ["nov"] = "O-PENDING",
-            ["noV"] = "O-PENDING",
-            ["no\22"] = "O-PENDING",
-            ["niI"] = "NORMAL",
-            ["niR"] = "NORMAL",
-            ["niV"] = "NORMAL",
-            ["nt"] = "NORMAL",
-            ["ntT"] = "NORMAL",
-            ["v"] = "VISUAL",
-            ["vs"] = "VISUAL",
-            ["V"] = "V-LINE",
-            ["Vs"] = "V-LINE",
-            ["\22"] = "V-BLOCK",
-            ["\22s"] = "V-BLOCK",
-            ["s"] = "SELECT",
-            ["S"] = "S-LINE",
-            ["\19"] = "S-BLOCK",
-            ["i"] = "INSERT",
-            ["ic"] = "INSERT",
-            ["ix"] = "INSERT",
-            ["R"] = "REPLACE",
-            ["Rc"] = "REPLACE",
-            ["Rx"] = "REPLACE",
-            ["Rv"] = "V-REPLACE",
-            ["Rvc"] = "V-REPLACE",
-            ["Rvx"] = "V-REPLACE",
-            ["c"] = "COMMAND",
-            ["cv"] = "EX",
-            ["ce"] = "EX",
-            ["r"] = "REPLACE",
-            ["rm"] = "MORE",
-            ["r?"] = "CONFIRM",
-            ["!"] = "SHELL",
-            ["t"] = "TERMINAL",
-        }
-
-        -- Helper functions
-        local function get_mode_name()
-            local mode_code = vim.api.nvim_get_mode().mode
-            return mode_map[mode_code] or mode_code:upper()
-        end
-
-        local function get_mode_color()
-            local mode_code = vim.api.nvim_get_mode().mode
-            local mode_colors = {
-                ["n"] = utils.get_highlight("ModeColorNormal").fg,
-                ["i"] = utils.get_highlight("ModeColorInsert").fg,
-                ["v"] = utils.get_highlight("ModeColorVisual").fg,
-                ["V"] = utils.get_highlight("ModeColorVisual").fg,
-                ["\22"] = utils.get_highlight("ModeColorVisual").fg,
-                ["s"] = utils.get_highlight("ModeColorVisual").fg,
-                ["S"] = utils.get_highlight("ModeColorVisual").fg,
-                ["\19"] = utils.get_highlight("ModeColorVisual").fg,
-                ["c"] = utils.get_highlight("ModeColorCommand").fg,
-                ["R"] = utils.get_highlight("ModeColorReplace").fg,
-                ["Rc"] = utils.get_highlight("ModeColorReplace").fg,
-                ["Rx"] = utils.get_highlight("ModeColorReplace").fg,
-                ["Rv"] = utils.get_highlight("ModeColorReplace").fg,
-                ["Rvc"] = utils.get_highlight("ModeColorReplace").fg,
-                ["Rvx"] = utils.get_highlight("ModeColorReplace").fg,
-                ["r"] = utils.get_highlight("ModeColorReplace").fg,
-                ["t"] = utils.get_highlight("ModeColorTerminal").fg,
-            }
-            return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
-        end
 
         -- Helper functions to create conditional components with space
         local function with_trailing_space(component)
@@ -96,27 +25,6 @@ return {
                 component,
             }
         end
-
-        local ViMode = {
-            {
-                provider = function()
-                    return " " .. get_mode_name() .. " "
-                end,
-                hl = function()
-                    return {
-                        bg = get_mode_color(),
-                        fg = "black",
-                        bold = false,
-                    }
-                end,
-            },
-            {
-                provider = "",
-                hl = function()
-                    return { fg = get_mode_color() }
-                end,
-            },
-        }
 
         local FileEncoding = {
             condition = function()
@@ -424,43 +332,8 @@ return {
             end,
         }
 
-        local Clock = {
-            {
-                provider = "",
-                hl = function()
-                    return { fg = get_mode_color() }
-                end,
-            },
-            {
-                provider = function()
-                    return "  " .. os.date("%H:%M") .. " "
-                end,
-                hl = function()
-                    return {
-                        bg = get_mode_color(),
-                        fg = "black",
-                        bold = false,
-                    }
-                end,
-            },
-            update = {
-                "ModeChanged",
-                "User",
-                pattern = { "*:*", "HeirlineClockUpdate" },
-            },
-        }
-
-        local uv = vim.uv or vim.loop
-        uv.new_timer():start(
-            (60 - tonumber(os.date("%S"))) * 1000,
-            60000,
-            vim.schedule_wrap(function()
-                vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineClockUpdate", modeline = false })
-            end)
-        )
-
         local statusline = {
-            with_trailing_space(ViMode),
+            { provider = " " },
             with_trailing_space(GitBranch),
             with_trailing_space(GitDiffs),
             with_trailing_space(path.component),
@@ -471,132 +344,10 @@ return {
             with_leading_space(FileFormat),
             with_leading_space(LineColumn),
             with_leading_space(FilePercent),
-            with_leading_space(Clock),
+            { provider = " " },
         }
         heirline.setup({
             statusline = statusline,
         })
     end,
 }
-
--- -- ================================================================================
--- -- =                           HEIRLINE STEP 2 (CLEAR)                            =
--- -- ================================================================================
-
--- return {
---     "rebelot/heirline.nvim",
---     event = "VeryLazy",
---     config = function()
---         local heirline = require("heirline")
---         local utils = require("heirline.utils")
---
---         local function get_mode_color()
---             local mode_code = vim.api.nvim_get_mode().mode
---             local mode_colors = {
---                 ["n"] = utils.get_highlight("ModeColorNormal").fg,
---                 ["i"] = utils.get_highlight("ModeColorInsert").fg,
---                 ["v"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["V"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["\22"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["c"] = utils.get_highlight("ModeColorCommand").fg,
---                 ["R"] = utils.get_highlight("ModeColorReplace").fg,
---                 ["t"] = utils.get_highlight("ModeColorTerminal").fg,
---             }
---             return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
---         end
---
---         local statusline = {
---             -- Mode with color
---             {
---                 provider = function()
---                     return " " .. vim.api.nvim_get_mode().mode .. " "
---                 end,
---                 hl = function()
---                     return {
---                         bg = get_mode_color(),
---                         fg = "black",
---                     }
---                 end,
---             },
---             -- Spacer
---             { provider = "%=" },
---             -- Position (right side)
---             {
---                 provider = function()
---                     return string.format("%d:%d ", vim.fn.line("."), vim.fn.col("."))
---                 end,
---             },
---         }
---
---         heirline.setup({
---             statusline = statusline,
---         })
---     end,
--- }
-
--- ================================================================================
--- =                        HEIRLINE STEP 3 (PROBLEMATIC)                         =
--- ================================================================================
-
--- return {
---     "rebelot/heirline.nvim",
---     event = "VeryLazy",
---     config = function()
---         local heirline = require("heirline")
---         local utils = require("heirline.utils")
---
---         local function get_mode_color()
---             local mode_code = vim.api.nvim_get_mode().mode
---             local mode_colors = {
---                 ["n"] = utils.get_highlight("ModeColorNormal").fg,
---                 ["i"] = utils.get_highlight("ModeColorInsert").fg,
---                 ["v"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["V"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["\22"] = utils.get_highlight("ModeColorVisual").fg,
---                 ["c"] = utils.get_highlight("ModeColorCommand").fg,
---                 ["R"] = utils.get_highlight("ModeColorReplace").fg,
---                 ["t"] = utils.get_highlight("ModeColorTerminal").fg,
---             }
---             return mode_colors[mode_code] or utils.get_highlight("ModeColorNormal").fg
---         end
---
---         local statusline = {
---             -- Mode with color AND update callback
---             {
---                 provider = function()
---                     return " " .. vim.api.nvim_get_mode().mode .. " "
---                 end,
---                 hl = function()
---                     return {
---                         bg = get_mode_color(),
---                         fg = "black",
---                     }
---                 end,
---                 update = {
---                     "ModeChanged",
---                     callback = vim.schedule_wrap(function()
---                         vim.cmd("redrawstatus")
---                     end),
---                 },
---             },
---             -- Spacer
---             { provider = "%=" },
---             -- Position (right side) with update callback
---             {
---                 provider = function()
---                     return string.format("%d:%d ", vim.fn.line("."), vim.fn.col("."))
---                 end,
---                 update = {
---                     "ModeChanged",
---                     callback = vim.schedule_wrap(function()
---                         vim.cmd("redrawstatus")
---                     end),
---                 },
---             },
---         }
---
---         heirline.setup({
---             statusline = statusline,
---         })
---     end,
--- }
