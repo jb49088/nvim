@@ -30,14 +30,6 @@ return {
         --- BUFDELETE ---
         bufdelete = { enabled = true },
 
-        --- INDENT ---
-        indent = {
-            enabled = true,
-            scope = {
-                enabled = false,
-            },
-        },
-
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
@@ -136,14 +128,25 @@ return {
                         layout = { preset = "select" },
                     },
                     tabs = tabs_picker,
+                    explorer = {
+                        win = {
+                            list = {
+                                keys = {
+                                    ["<Left>"] = "explorer_close",
+                                    ["<Right>"] = "confirm",
+                                },
+                            },
+                        },
+                    },
                 },
             }
         end)(),
     },
     -- stylua: ignore
     keys = {
-        -- top pickers
+        -- top pickers & explorer
         { "<leader><space>", function() Snacks.picker.buffers() end, desc = "Buffers" },
+        { "<leader>e", function() Snacks.picker.explorer() end, desc = "File Explorer" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
         { "<leader>,", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
         -- buffer
@@ -197,7 +200,6 @@ return {
         require("snacks").setup(opts)
 
         vim.g.snacks_animate = false -- Disable snacks animations
-        -- vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]] -- Custom status column
 
         -- toggles
         -- stylua: ignore start
