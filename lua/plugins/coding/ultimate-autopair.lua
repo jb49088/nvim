@@ -14,6 +14,9 @@ return {
             bs = {
                 delete_from_end = false,
             },
+            space = {
+                enable = false,
+            },
             extensions = {
                 cmdtype = {
                     skip = { "@", "-" }, -- removed '/' and '?' to enable search autopair
