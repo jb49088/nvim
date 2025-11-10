@@ -29,6 +29,16 @@ return {
                     all = true,
                 },
             },
+            config_internal_pairs = {
+                -- Enable surround capability for brackets
+                { "(", ")", dosuround = true },
+                { "[", "]", dosuround = true },
+                { "{", "}", dosuround = true },
+                -- Mark quotes as surroundable
+                { '"', '"', suround = true },
+                { "'", "'", suround = true },
+                { "`", "`", suround = true },
+            },
             -- Add cmdline-specific quote pairs with high priority
             { '"', '"', imap = false, cmap = true, p = 200 },
             { "'", "'", imap = false, cmap = true, p = 200 },
