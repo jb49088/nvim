@@ -14,7 +14,7 @@ vim.opt_local.autoindent = true
 -- Run keymaps
 vim.keymap.set("n", "<leader>rv", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    runner.run_in_zellij("pwsh", filename)
+    runner.run_in_zellij_vertical("pwsh", filename)
 end, { buffer = true, desc = "Run PowerShell in Vertical Pane" })
 
 vim.keymap.set("n", "<leader>rh", function()

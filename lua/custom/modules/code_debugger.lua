@@ -4,7 +4,7 @@
 
 local M = {}
 
-function M.debug_in_zellij(debugger_cmd, filename)
+function M.debug_in_zellij_vertical(debugger_cmd, filename)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return

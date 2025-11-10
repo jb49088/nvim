@@ -47,8 +47,8 @@ function M.create_line_divider()
     vim.api.nvim_win_set_cursor(0, { row, 0 })
     vim.cmd("normal! V")
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gc", true, false, true), "x", false)
-    -- Move cursor to end of line
-    vim.api.nvim_win_set_cursor(0, { row, #centered })
+    -- Move cursor to start of line
+    vim.api.nvim_win_set_cursor(0, { row, 0 })
 end
 
 vim.keymap.set("n", "<leader>Db", M.create_box_divider, { desc = "Box Divider" })

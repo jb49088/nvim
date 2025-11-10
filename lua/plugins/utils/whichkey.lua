@@ -7,7 +7,7 @@ return {
     event = "VeryLazy",
     opts = {
         preset = "helix",
-        delay = 0,
+        delay = 200,
         icons = { mappings = false, breadcrumb = "", group = "" },
         defaults = {},
         show_help = true,

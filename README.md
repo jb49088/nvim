@@ -22,10 +22,6 @@ Inspired by [LazyVim](https://github.com/LazyVim/LazyVim) and [AstroNvim](https:
 - Custom Python indentation with treesitter-aware bracket detection
 - And much more
 
-### Known Issues
-
-- gitsigns.nvim's conditional keymaps are causing a whichkey delay (fixes itself upon certain actions)
-
 ### Startup Time
 
 ```
@@ -44,12 +40,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             65            659            659           4640
+Lua                             66            668            672           4680
 JSON                             2              0              0            243
-Markdown                         2             18              4            155
+Markdown                         2             18              4            153
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            70            677            663           5041
+SUM:                            71            686            676           5079
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -96,6 +92,7 @@ nvim
 │   │   └── modules
 │   │       ├── code_debugger.lua
 │   │       ├── code_runner.lua
+│   │       ├── comment_aligner.lua
 │   │       ├── divider_generator.lua
 │   │       ├── eof_padding.lua
 │   │       ├── init.lua
@@ -144,7 +141,7 @@ nvim
 └── snippets
     └── python.json
 
-15 directories, 69 files
+15 directories, 70 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

@@ -14,7 +14,7 @@ vim.opt_local.autoindent = true
 -- Run keymaps
 vim.keymap.set("n", "<leader>rv", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    runner.run_in_zellij("lua", filename)
+    runner.run_in_zellij_vertical("lua", filename)
 end, { buffer = true, desc = "Run Lua in Vertical Pane" })
 
 vim.keymap.set("n", "<leader>rh", function()
