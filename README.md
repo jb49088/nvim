@@ -145,6 +145,6 @@ nvim
 
 ### Screenshots
 
-<img width="1568" height="888" alt="Screenshot 2025-11-11 065437" src="https://github.com/user-attachments/assets/d7d24da4-c0a6-4a3e-a620-9af25cf257f4" />
+<img width="1568" height="888" alt="Screenshot 2025-11-11 070410" src="https://github.com/user-attachments/assets/d72689b3-0bba-46b0-9736-0ad070111b98" />
 <img width="1568" height="888" alt="Screenshot 2025-11-11 065729" src="https://github.com/user-attachments/assets/b2bd1511-0895-413e-9aae-2e512818474f" />
 <img width="1568" height="888" alt="Screenshot 2025-11-11 065954" src="https://github.com/user-attachments/assets/f3a846b0-aeab-493a-9c79-f8e72dc906ee" />
