@@ -154,7 +154,6 @@ return {
     keys = {
         -- top pickers & explorer
         { "<leader><space>", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>e", function() Snacks.picker.explorer() end, desc = "File Explorer" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
         { "<leader>,", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
         -- buffer

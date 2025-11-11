@@ -16,7 +16,7 @@ return {
             { "<leader>b", group = " Buffer" },
             { "<leader>c", group = " Code" },
             { "<leader>d", group = " Debug" },
-            { "<leader>D", group = " Divider" },
+            { "<leader>C", group = " Comment" },
             { "<leader>f", group = " File/Find" },
             { "<leader>g", group = "󰊢 Git" },
             { "<leader>gh", group = "󰊢 Hunks" },

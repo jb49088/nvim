@@ -40,12 +40,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             64            656            651           4623
-JSON                             2              0              0            243
-Markdown                         2             18              4            153
+Lua                             64            668            654           4649
+JSON                             2              0              0            241
+Markdown                         2             16              4            152
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            69            674            655           5022
+SUM:                            69            684            658           5045
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -97,6 +97,7 @@ nvim
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
 │   │       ├── status_column.lua
+│   │       ├── todo_commentor.lua
 │   │       ├── winbar_breadcrumbs.lua
 │   │       └── window_swapper.lua
 │   └── plugins
@@ -119,7 +120,6 @@ nvim
 │       │   ├── colorscheme.lua
 │       │   ├── heirline.lua
 │       │   ├── illuminate.lua
-│       │   ├── lualine.lua
 │       │   ├── mini_icons.lua
 │       │   ├── nvim_highlight_colors.lua
 │       │   ├── nvim_ufo.lua
