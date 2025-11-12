@@ -5,26 +5,33 @@
 local mode_disabled = false
 local initial_scrolloff = vim.o.scrolloff
 local scrolloff = vim.o.scrolloff
+
 local opts = {
     pattern = "*",
     insert_mode = true,
     floating = true,
-    disabled_filetypes = { "snipe-menu" },
+    disabled_filetypes = {},
     disabled_modes = { "t", "nt" },
 }
 
--- Check and apply EOF scrolloff for the current window only
-local function check_eof_scrolloff(ev)
-    -- Always sync scrolloff with current vim setting first
-    scrolloff = vim.o.scrolloff
-
-    -- Early exit checks (cheapest operations first)
-    if mode_disabled then
-        return
+-- Get the next visual line start (handles folds)
+local function next_visual_line(lnum)
+    local fold_start = vim.fn.foldclosed(lnum)
+    if fold_start == -1 then
+        return lnum + 1
+    elseif fold_start == lnum then
+        return vim.fn.foldclosedend(lnum) + 1
+    else
+        return vim.fn.foldclosedend(lnum) + 1
     end
+end
 
-    local filetype = vim.o.filetype
-    if opts.disabled_filetypes[filetype] then
+local function is_disabled()
+    return mode_disabled or opts.disabled_filetypes[vim.o.filetype] == true
+end
+
+local function check_eof_scrolloff(ev)
+    if is_disabled() then
         return
     end
 
@@ -43,39 +50,41 @@ local function check_eof_scrolloff(ev)
         end
     end
 
-    -- Fast path: check if we're near EOF before expensive visual operations
-    local cursor_line = vim.fn.line(".")
-    local total_lines = vim.fn.line("$")
-    local lines_from_eof = total_lines - cursor_line
-
-    -- If we're far from EOF, no need for expensive winline() call
-    if lines_from_eof > scrolloff + 3 then -- Small buffer to reduce edge case checks
-        return
-    end
-
-    -- Only do expensive visual calculations when actually near EOF
     local win_height = vim.fn.winheight(0)
     local win_cur_line = vim.fn.winline()
     local visual_distance_to_eof = win_height - win_cur_line
 
     if visual_distance_to_eof < scrolloff then
-        -- Cache current view to avoid redundant winsaveview calls
+        local delta = scrolloff - visual_distance_to_eof
         local win_view = vim.fn.winsaveview()
-        local new_topline = win_view.topline + scrolloff - visual_distance_to_eof
+        local new_top = win_view.topline
+        local total_lines = vim.fn.line("$")
 
-        -- Only update if topline actually needs to change
-        if new_topline ~= win_view.topline then
+        -- Use fold-aware line traversal
+        for _ = 1, delta do
+            new_top = next_visual_line(new_top)
+            if new_top > total_lines then
+                break
+            end
+        end
+
+        if new_top ~= win_view.topline then
             vim.fn.winrestview({
                 skipcol = 0,
-                topline = new_topline,
+                topline = new_top,
             })
         end
     end
 end
 
-local vim_resized_cb = function()
+local function vim_resized_cb()
+    if is_disabled() then
+        return
+    end
+
     local win_height = vim.fn.winheight(0)
     local half_win_height = math.floor(win_height / 2)
+
     if initial_scrolloff < half_win_height then
         if vim.o.scrolloff < initial_scrolloff then
             vim.o.scrolloff = initial_scrolloff
@@ -83,8 +92,9 @@ local vim_resized_cb = function()
         end
         return
     end
+
     scrolloff = half_win_height
-    vim.o.scrolloff = win_height % 2 == 0 and scrolloff - 1 or scrolloff
+    vim.o.scrolloff = (win_height % 2 == 0 and scrolloff > 0) and scrolloff - 1 or scrolloff
 end
 
 -- Convert disabled arrays to hashmaps for O(1) lookup
@@ -113,8 +123,7 @@ vim.api.nvim_create_autocmd("ModeChanged", {
     group = eof_padding,
     pattern = opts.pattern,
     callback = function()
-        local current_mode = vim.api.nvim_get_mode().mode
-        mode_disabled = opts.disabled_modes[current_mode] == true
+        mode_disabled = opts.disabled_modes[vim.api.nvim_get_mode().mode] == true
     end,
 })
 
@@ -125,32 +134,6 @@ vim.api.nvim_create_autocmd({ "VimResized", "BufEnter" }, {
     callback = vim_resized_cb,
 })
 
--- Buffer window enter with early exits for non-file buffers
-vim.api.nvim_create_autocmd("BufWinEnter", {
-    group = eof_padding,
-    pattern = opts.pattern,
-    callback = function()
-        local buf_ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
-        local buf_type = vim.api.nvim_get_option_value("buftype", { buf = 0 })
-
-        -- Early exit for non-file buffers
-        if
-            buf_type == "terminal"
-            or buf_type == "nofile"
-            or buf_type == "prompt"
-            or buf_ft == "terminal"
-            or buf_ft == "noice"
-            or buf_ft == "snacks_notif"
-            or vim.api.nvim_buf_get_name(0) == ""
-        then
-            return
-        end
-
-        -- Just trigger EOF check for current window
-        check_eof_scrolloff()
-    end,
-})
-
 -- Main cursor movement and scrolling handler
 vim.api.nvim_create_autocmd(autocmds, {
     group = eof_padding,
@@ -158,42 +141,6 @@ vim.api.nvim_create_autocmd(autocmds, {
     callback = check_eof_scrolloff,
 })
 
--- Window switching - recalculate scrolloff for new window
-vim.api.nvim_create_autocmd("WinEnter", {
-    group = eof_padding,
-    pattern = opts.pattern,
-    callback = function()
-        local buf_type = vim.api.nvim_get_option_value("buftype", { buf = 0 })
-        local buf_ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
-
-        -- Early exit for non-file buffers
-        if
-            buf_type == "terminal"
-            or buf_type == "nofile"
-            or buf_type == "prompt"
-            or buf_ft == "terminal"
-            or buf_ft == "noice"
-            or buf_ft == "snacks_notif"
-        then
-            return
-        end
-
-        -- Recalculate scrolloff for the new window and apply EOF padding
-        vim_resized_cb()
-        check_eof_scrolloff()
-    end,
-})
-
--- Session loading - recalculate and apply immediately
-vim.api.nvim_create_autocmd("SessionLoadPost", {
-    group = eof_padding,
-    callback = function()
-        vim.defer_fn(function()
-            vim_resized_cb()
-            check_eof_scrolloff()
-        end, 0)
-    end,
-})
-
--- Initialize system
+-- Initialize
 vim_resized_cb()
+vim.defer_fn(vim_resized_cb, 0)
