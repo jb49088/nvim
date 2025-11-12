@@ -2,52 +2,82 @@
 -- =                                 AUTOCOMMANDS                                 =
 -- ================================================================================
 
---- Editor behavior ---
-vim.api.nvim_create_augroup("editor_behavior", { clear = true })
+local autocmd = vim.api.nvim_create_autocmd
+local augroup = vim.api.nvim_create_augroup
+
+-- =============================== EDITOR BEHAVIOR ================================
+
+augroup("editor_behavior", { clear = true })
 
 -- Disable commenting next line
-vim.api.nvim_create_autocmd("FileType", {
+autocmd("FileType", {
     group = "editor_behavior",
-    pattern = "*",
     callback = function()
         vim.opt_local.formatoptions:remove({ "c", "o" })
     end,
 })
 
 -- Restore terminal cursor on exit
-vim.api.nvim_create_autocmd({ "VimLeave", "ExitPre" }, {
+autocmd({ "VimLeave", "ExitPre" }, {
     group = "editor_behavior",
     command = "set guicursor=a:ver25",
 })
 
 -- Automatically check for external file changes and reload buffers
-vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
     group = "editor_behavior",
-    pattern = "*",
     command = "if mode() != 'c' | checktime | endif",
 })
 
---- UI/Visual enhancements ---
-vim.api.nvim_create_augroup("ui_enhancements", { clear = true })
+-- Save view when leaving buffer or writing (cursor position, folds, etc.)
+autocmd({ "BufWinLeave", "BufWritePost", "WinLeave" }, {
+    group = "editor_behavior",
+    callback = function(args)
+        if vim.b[args.buf].view_activated then
+            vim.cmd.mkview({ mods = { emsg_silent = true } })
+        end
+    end,
+})
+
+-- Restore view when entering buffer
+autocmd("BufWinEnter", {
+    group = "editor_behavior",
+    callback = function(args)
+        if not vim.b[args.buf].view_activated then
+            local buftype = vim.bo[args.buf].buftype
+            local filetype = vim.bo[args.buf].filetype
+            local ignore_filetypes = { "gitcommit", "gitrebase", "svg", "hgcommit" }
+
+            if buftype == "" and filetype ~= "" and not vim.tbl_contains(ignore_filetypes, filetype) then
+                vim.b[args.buf].view_activated = true
+                vim.cmd.loadview({ mods = { emsg_silent = true } })
+            end
+        end
+    end,
+})
+
+-- ============================ UI/VISUAL ENHANCEMENTS ============================
+
+augroup("ui_enhancements", { clear = true })
 
 -- Highlight text on yank
-vim.api.nvim_create_autocmd("TextYankPost", {
+autocmd("TextYankPost", {
     group = "ui_enhancements",
     callback = function()
         vim.hl.on_yank()
     end,
 })
 
--- Hide diagnostics in insert mode for current buffer only
-vim.api.nvim_create_autocmd("InsertEnter", {
+-- Hide diagnostics in insert mode
+autocmd("InsertEnter", {
     group = "ui_enhancements",
     callback = function()
         vim.diagnostic.hide(nil, vim.api.nvim_get_current_buf())
     end,
 })
 
--- Show diagnostics when leaving insert mode for current buffer only
-vim.api.nvim_create_autocmd("InsertLeave", {
+-- Show diagnostics when leaving insert mode
+autocmd("InsertLeave", {
     group = "ui_enhancements",
     callback = function()
         vim.diagnostic.show(nil, vim.api.nvim_get_current_buf())
@@ -55,7 +85,7 @@ vim.api.nvim_create_autocmd("InsertLeave", {
 })
 
 -- Auto-balance windows when terminal is resized
-vim.api.nvim_create_autocmd("VimResized", {
+autocmd("VimResized", {
     group = "ui_enhancements",
     callback = function()
         vim.cmd("wincmd =")
@@ -63,25 +93,21 @@ vim.api.nvim_create_autocmd("VimResized", {
 })
 
 -- Always open help in vertical split
-vim.api.nvim_create_autocmd("BufWinEnter", {
+autocmd("BufWinEnter", {
     group = "ui_enhancements",
     callback = function()
         if vim.bo.filetype == "help" then
-            -- Check if we're in a picker/preview window
             local win_config = vim.api.nvim_win_get_config(0)
             if win_config.relative ~= "" then
-                -- This is a floating window (likely a picker preview), skip the repositioning
                 return
             end
 
-            -- Check if the current window is part of a picker by looking at buffer name or other indicators
             local buf_name = vim.api.nvim_buf_get_name(0)
             if buf_name:match("snacks://") or buf_name:match("picker://") then
                 return
             end
 
             vim.cmd("wincmd L")
-            -- Recalculate scrolloff based on the new window size
             vim.opt_local.scrolloff = 10
         end
     end,
