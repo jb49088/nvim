@@ -6,7 +6,8 @@ local opt = vim.opt
 local g = vim.g
 local cmd = vim.cmd
 
--- Interface / UI
+-- ================================ INTERFACE / UI ================================
+
 g.loaded_matchparen = 1 -- Disable matchparen (using rainbow-delimiters)
 g.have_nerd_font = true -- Enable nerd font
 opt.number = true -- Show absolute line numbers
@@ -34,7 +35,8 @@ opt.winborder = "rounded" -- Rounded borders for floating windows
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
 opt.shortmess:append("I") -- Dont show intro message
 
--- Behavior
+-- =================================== BEHAVIOR ===================================
+
 opt.swapfile = false -- Disable swap files
 opt.undofile = true -- Enable persistent undo
 opt.updatetime = 200 -- Faster update time for diagnostics, etc.
@@ -48,35 +50,64 @@ opt.infercase = true -- Infer case in built-in completion
 opt.virtualedit = "block" -- Allow going past end of line in blockwise mode
 opt.shada = "'100,<50,s10,:1000,/100,@100,h" -- Limit ShaDa file (for startup)
 
--- Searching
+-- ================================== SEARCHING ===================================
+
 opt.ignorecase = true -- Case-insensitive search...
 opt.smartcase = true -- ...unless uppercase letters in query
 opt.incsearch = true -- Show search matches as you type
 opt.hlsearch = true -- Highlight all search matches
 opt.inccommand = "split" -- Preview substitute commands live
 
--- Indentation
+-- ================================= INDENTATION ==================================
+
 opt.shiftwidth = 4 -- Indent size
 opt.tabstop = 4 -- Tab width
 opt.expandtab = true -- Convert tabs to spaces
 opt.autoindent = true -- Copy indent from current line when starting new one
 
--- Formatting
-opt.formatoptions = "qnl1j" -- Improve comment editing
-opt.formatlistpat = [[^\s*[0-9\-\+\*]\+[\.\)]*\s\+]] -- Pattern for numbered list start
+-- ================================== FORMATTING ==================================
 
--- Spelling
+opt.formatoptions = "qnl1j" -- Improve comment editing
+opt.formatlistpat = [[^\s*[0-9\-\+\*]\+[\.\)]*\s\+]] -- Regex for numbered list start
+
+-- =================================== SPELLING ===================================
+
 opt.spelloptions = "camel" -- Treat camelCase word parts as separate words
 
--- Providers
+-- ================================== PROVIDERS ===================================
+
+g.loaded_python_provider = 0
 g.loaded_python3_provider = 0
 g.loaded_node_provider = 0
 g.loaded_perl_provider = 0
 g.loaded_ruby_provider = 0
 
--- Clipboard (from https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim)
+-- =============================== BUILT-IN PLUGINS ===============================
+
+g.loaded_getscript = 1
+g.loaded_getscriptPlugin = 1
+g.loaded_vimball = 1
+g.loaded_vimballPlugin = 1
+g.loaded_2html_plugin = 1
+g.loaded_logiPat = 1
+g.loaded_rrhelper = 1
+g.loaded_netrw = 1
+g.loaded_netrwPlugin = 1
+g.loaded_netrwSettings = 1
+g.loaded_netrwFileHandlers = 1
+g.loaded_matchit = 1
+g.loaded_matchparen = 1
+
+-- =================================== SECURITY ===================================
+
+opt.modeline = false -- Disable modelines to prevent arbitrary code execution
+opt.exrc = false -- Don't auto-load project .vimrc/.nvimrc files
+
+-- ================================== CLIPBOARD ===================================
+
 opt.clipboard = "unnamedplus"
 
+-- https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim
 if vim.fn.has("wsl") == 1 then
     local win32yank = "win32yank.exe"
     if vim.fn.getftype(vim.fn.exepath(win32yank)) == "link" then
