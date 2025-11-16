@@ -4,6 +4,7 @@
 
 return {
     "stevearc/oil.nvim",
+    -- enabled = false,
     cmd = "Oil",
     opts = {
         keymaps = {
@@ -14,14 +15,25 @@ return {
         view_options = {
             show_hidden = true,
         },
-        -- float = {
-        --     -- Use percentage-based sizing (87% width, 75% height)
-        --     max_width = math.floor(vim.o.columns * 0.87),
-        --     max_height = math.floor(vim.o.lines * 0.75),
-        -- },
+        win_options = {
+            winbar = "",
+        },
     },
     -- stylua: ignore
-    keys = { { "<leader>o", function() vim.cmd("Oil --float") end, desc = "Oil", mode = "n" } },
+    keys = {
+        {
+            "<leader>o",
+            function()
+                vim.cmd("vsplit")
+                vim.cmd("wincmd H")
+                vim.cmd("vertical resize 30")
+                vim.wo.winfixwidth = true
+                require("oil").open()
+            end,
+            desc = "Oil",
+            mode = "n"
+        }
+    },
     config = function(_, opts)
         require("oil").setup(opts)
     end,

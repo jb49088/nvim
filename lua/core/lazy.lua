@@ -17,13 +17,13 @@ rtp:prepend(lazypath)
 -- Setup lazy.nvim
 require("lazy").setup({
     spec = {
-        -- import your plugins
+        -- Import plugins
         { import = "plugins.ui" },
         { import = "plugins.coding" },
         { import = "plugins.utils" },
         { import = "plugins.lsp_completion" },
     },
-    -- ui config
+    -- UI config
     ui = {
         border = "rounded",
         backdrop = 100,
