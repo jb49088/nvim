@@ -15,7 +15,7 @@ opt.relativenumber = true -- Show relative line numbers
 opt.mouse = "a" -- Enable mouse in all modes
 opt.guicursor:append("c:ver25,a:blinkon0") -- Custom cursor styles
 cmd("aunmenu PopUp") -- Disable right click menu
-opt.title = true -- Enable window title
+opt.title = false -- Disable window title
 opt.laststatus = 3 -- Always show statusline
 opt.statuscolumn = "%!v:lua.require'custom.modules.status_column'.get()" -- Custom status column
 opt.numberwidth = 4 -- Set line number column width
