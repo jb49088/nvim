@@ -74,11 +74,36 @@ return {
         {
             "<leader>o",
             function()
-                vim.cmd("vsplit")
-                vim.cmd("wincmd H")
-                vim.cmd("vertical resize 30")
-                vim.wo.winfixwidth = true
-                require("oil").open()
+                local oil = require("oil")
+                local current_buf = vim.api.nvim_get_current_buf()
+                local current_file = vim.api.nvim_buf_get_name(current_buf)
+
+                -- Find existing oil window
+                local oil_winid = nil
+                for _, winid in ipairs(vim.api.nvim_list_wins()) do
+                    local bufnr = vim.api.nvim_win_get_buf(winid)
+                    local bufname = vim.api.nvim_buf_get_name(bufnr)
+                    if bufname:match("^oil://") then
+                        oil_winid = winid
+                        break
+                    end
+                end
+
+                if oil_winid then
+                    -- Oil window exists, switch back to original buffer, then open oil
+                    -- This ensures oil.open() can find the file to position cursor on
+                    local original_win = vim.api.nvim_get_current_win()
+                    vim.api.nvim_set_current_win(oil_winid)
+                    vim.api.nvim_set_current_buf(current_buf)
+                    oil.open()
+                else
+                    -- Create new oil sidebar
+                    vim.cmd("vsplit")
+                    vim.cmd("wincmd H")
+                    vim.cmd("vertical resize 30")
+                    vim.wo.winfixwidth = true
+                    oil.open()
+                end
             end,
             desc = "Oil",
             mode = "n",
