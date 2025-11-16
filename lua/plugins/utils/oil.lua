@@ -60,6 +60,7 @@ return {
                 ["<C-h>"] = { callback = open_in_split_below },
             },
             delete_to_trash = true,
+            watch_for_changes = true,
             skip_confirm_for_simple_edits = true,
             view_options = {
                 show_hidden = true,
