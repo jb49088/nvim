@@ -6,6 +6,7 @@ local path = require("custom.extensions.heirline_path")
 
 return {
     "rebelot/heirline.nvim",
+    -- enabled = false,
     event = "VeryLazy",
     config = function()
         local heirline = require("heirline")

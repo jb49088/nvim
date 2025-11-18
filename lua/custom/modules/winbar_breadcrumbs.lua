@@ -666,7 +666,7 @@ local function get_context_data(bufnr)
     return buffer_context_data[bufnr]
 end
 
---- Build breadcrumb parts with icons and highlights
+-- Build breadcrumb parts with icons and highlights
 local function build_breadcrumb_parts(filepath, context_symbols, win)
     local parts = {}
 
@@ -684,28 +684,38 @@ local function build_breadcrumb_parts(filepath, context_symbols, win)
     local cwd = vim.fs.normalize(vim.fn.getcwd(win))
     local relpath
 
-    if filepath:sub(1, #cwd) == cwd then
-        relpath = filepath:sub(#cwd + 1)
-        if relpath:sub(1, 1) == sep then
-            relpath = relpath:sub(2)
-        end
-        if relpath == "" then
-            relpath = vim.fn.fnamemodify(filepath, ":t")
-        end
+    -- Ensure cwd ends with separator for proper matching
+    local cwd_with_sep = cwd
+    if cwd_with_sep:sub(-1) ~= sep then
+        cwd_with_sep = cwd_with_sep .. sep
+    end
+
+    if filepath:sub(1, #cwd_with_sep) == cwd_with_sep then
+        -- File is within cwd
+        relpath = filepath:sub(#cwd_with_sep + 1)
+    elseif filepath == cwd then
+        -- File path equals cwd (edge case)
+        relpath = vim.fn.fnamemodify(filepath, ":t")
     else
+        -- File is outside cwd - try home directory
         local home = vim.fs.normalize(vim.env.HOME or vim.fn.expand("$HOME"))
-        if filepath:sub(1, #home) == home then
-            relpath = filepath:sub(#home + 1)
-            if relpath:sub(1, 1) == sep then
-                relpath = relpath:sub(2)
-            end
+        local home_with_sep = home
+        if home_with_sep:sub(-1) ~= sep then
+            home_with_sep = home_with_sep .. sep
+        end
+
+        if filepath:sub(1, #home_with_sep) == home_with_sep then
+            relpath = filepath:sub(#home_with_sep + 1)
         else
+            -- Absolute path outside both cwd and home
             relpath = filepath
             if relpath:sub(1, 1) == sep then
                 relpath = relpath:sub(2)
             end
         end
     end
+
+    -- Rest of the function remains the same...
 
     -- Split path and add path parts
     local path_parts = vim.split(relpath, sep, { plain = true })

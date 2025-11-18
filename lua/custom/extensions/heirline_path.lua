@@ -145,12 +145,37 @@ end
 
 --- Handles display for regular files.
 local function handle_regular_file()
-    local path = vim.fn.expand("%:~:.")
-    if path == "" then
+    local bufname = vim.api.nvim_buf_get_name(0)
+    if bufname == "" then
         return ""
     end
-    local parts = vim.split(path, path_sep, { trimempty = true })
+
+    local filepath = vim.fs.normalize(bufname)
+    local home = vim.fs.normalize(vim.env.HOME or vim.fn.expand("$HOME"))
+    local path_sep_pattern = path_sep == "\\" and "\\\\" or path_sep
+
+    -- Ensure home ends with separator for proper matching
+    local home_with_sep = home
+    if home_with_sep:sub(-1) ~= path_sep then
+        home_with_sep = home_with_sep .. path_sep
+    end
+
+    local display_path
+    if filepath:sub(1, #home_with_sep) == home_with_sep then
+        -- File is in home directory - just strip home prefix (NO ~)
+        display_path = filepath:sub(#home_with_sep + 1)
+    else
+        -- File is outside home - show absolute path
+        display_path = filepath
+        -- Remove leading separator for consistency
+        if display_path:sub(1, 1) == path_sep then
+            display_path = display_path:sub(2)
+        end
+    end
+
+    local parts = vim.split(display_path, path_sep_pattern, { trimempty = true })
     local shortened_parts = shorten_path(parts, max_depth)
+
     if #shortened_parts <= 1 then
         return #shortened_parts == 1 and shortened_parts[1] or ""
     else
