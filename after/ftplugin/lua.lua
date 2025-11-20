@@ -29,9 +29,7 @@ end, { buffer = true, desc = "Run Lua in Floating Pane" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    local cmd = vim.fn.has("win32") == 1 and 'start /B lua.exe "' .. filename .. '"'
-        or 'nohup lua "' .. filename .. '" > /dev/null 2>&1 &'
-    runner.run_background(cmd, filename)
+    runner.run_detached("lua", filename)
 end, { buffer = true, desc = "Run Lua Detached" })
 
 -- Cleanup on filetype change

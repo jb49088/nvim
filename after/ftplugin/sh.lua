@@ -29,9 +29,7 @@ end, { buffer = true, desc = "Run Bash in Floating Pane" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    local cmd = vim.fn.has("win32") == 1 and 'start /B bash.exe "' .. filename .. '"'
-        or 'nohup bash "' .. filename .. '" > /dev/null 2>&1 &'
-    runner.run_background(cmd, filename)
+    runner.run_detached("bash", filename)
 end, { buffer = true, desc = "Run Bash Detached" })
 
 -- Cleanup on filetype change

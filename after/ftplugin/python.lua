@@ -30,9 +30,7 @@ end, { buffer = true, desc = "Run Python in Floating Pane" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    local cmd = vim.fn.has("win32") == 1 and 'start /B pythonw.exe "' .. filename .. '"'
-        or 'nohup python3 "' .. filename .. '" > /dev/null 2>&1 &'
-    runner.run_background(cmd, filename)
+    runner.run_detached("python3", filename)
 end, { buffer = true, desc = "Run Python Detached" })
 
 -- Debug keymaps

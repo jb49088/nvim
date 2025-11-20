@@ -29,9 +29,7 @@ end, { buffer = true, desc = "Run PowerShell in Floating Pane" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    local cmd = vim.fn.has("win32") == 1 and 'start /B pwsh.exe "' .. filename .. '"'
-        or 'nohup pwsh "' .. filename .. '" > /dev/null 2>&1 &'
-    runner.run_background(cmd, filename)
+    runner.run_detached("pwsh", filename)
 end, { buffer = true, desc = "Run PowerShell Detached" })
 
 -- Cleanup on filetype change
