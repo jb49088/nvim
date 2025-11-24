@@ -11,11 +11,11 @@ Personal dotfiles and configuration management for my linux machines
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             64            713            653           4787
-Markdown                         3             26              8            260
+Markdown                         3             24              8            260
 JSON                             2              0              0            241
-TOML                             1              0              0              3
+TOML                             2              0              0              5
 -------------------------------------------------------------------------------
-SUM:                            70            739            661           5291
+SUM:                            71            737            661           5293
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -26,6 +26,8 @@ SUM:                            70            739            661           5291
 
 ```
 dotfiles
+├── direnv
+│   └── direnv.toml
 ├── nvim
 │   ├── after
 │   │   └── ftplugin
@@ -115,6 +117,6 @@ dotfiles
     └── themes
         └── astrodark.kdl
 
-18 directories, 71 files
+19 directories, 72 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
