@@ -1,6 +1,6 @@
 ### dotfiles
 
-Placeholder
+Personal dotfiles and configuration management for my linux machines
 
 <!-- CODE_STATISTICS_START -->
 
@@ -11,11 +11,11 @@ Placeholder
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             64            713            653           4787
+Markdown                         3             26              8            260
 JSON                             2              0              0            241
-Markdown                         3             23              8            156
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            70            736            661           5187
+SUM:                            70            739            661           5291
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
