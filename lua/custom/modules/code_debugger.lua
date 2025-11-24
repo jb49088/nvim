@@ -12,7 +12,7 @@ local function get_debugger_path(debugger_cmd)
     return debugger_cmd
 end
 
-function M.debug_in_zellij_vertical(debugger_cmd, filename)
+function M.debug_in_zellij_vertical(debugger_cmd, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -21,11 +21,12 @@ function M.debug_in_zellij_vertical(debugger_cmd, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Debugging " .. display_name .. " in Zellij")
     local actual_debugger = get_debugger_path(debugger_cmd)
-    local zellij_cmd = string.format('zellij run -- %s "%s"', actual_debugger, filename)
+    local args_str = args and (" " .. args) or ""
+    local zellij_cmd = string.format('zellij run -- %s "%s"%s', actual_debugger, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 
-function M.debug_in_zellij_horizontal(debugger_cmd, filename)
+function M.debug_in_zellij_horizontal(debugger_cmd, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -34,11 +35,12 @@ function M.debug_in_zellij_horizontal(debugger_cmd, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Debugging " .. display_name .. " in Zellij (horizontal)")
     local actual_debugger = get_debugger_path(debugger_cmd)
-    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"', actual_debugger, filename)
+    local args_str = args and (" " .. args) or ""
+    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"%s', actual_debugger, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 
-function M.debug_in_zellij_floating(debugger_cmd, filename)
+function M.debug_in_zellij_floating(debugger_cmd, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -47,12 +49,25 @@ function M.debug_in_zellij_floating(debugger_cmd, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Debugging " .. display_name .. " in Zellij (floating)")
     local actual_debugger = get_debugger_path(debugger_cmd)
+    local args_str = args and (" " .. args) or ""
     local zellij_cmd = string.format(
-        'zellij run --floating --width "80%%" --height "80%%" --x "10%%" --y "15%%" -- %s "%s"',
+        'zellij run --floating --width "80%%" --height "80%%" --x "10%%" --y "15%%" -- %s "%s"%s',
         actual_debugger,
-        filename
+        filename,
+        args_str
     )
     vim.fn.system(zellij_cmd)
+end
+
+function M.with_args_prompt(debug_func, debugger_cmd, filename)
+    vim.ui.input({
+        prompt = "Arguments: ",
+        default = "",
+    }, function(input)
+        if input ~= nil then
+            debug_func(debugger_cmd, filename, input ~= "" and input or nil)
+        end
+    end)
 end
 
 return M

@@ -12,7 +12,7 @@ local function get_interpreter_path(interpreter)
     return interpreter
 end
 
-function M.run_in_zellij_vertical(interpreter, filename)
+function M.run_in_zellij_vertical(interpreter, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -21,11 +21,12 @@ function M.run_in_zellij_vertical(interpreter, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Running " .. display_name .. " in Zellij")
     local actual_interpreter = get_interpreter_path(interpreter)
-    local zellij_cmd = string.format('zellij run -- %s "%s"', actual_interpreter, filename)
+    local args_str = args and (" " .. args) or ""
+    local zellij_cmd = string.format('zellij run -- %s "%s"%s', actual_interpreter, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 
-function M.run_in_zellij_horizontal(interpreter, filename)
+function M.run_in_zellij_horizontal(interpreter, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -34,11 +35,12 @@ function M.run_in_zellij_horizontal(interpreter, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Running " .. display_name .. " in Zellij")
     local actual_interpreter = get_interpreter_path(interpreter)
-    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"', actual_interpreter, filename)
+    local args_str = args and (" " .. args) or ""
+    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"%s', actual_interpreter, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 
-function M.run_in_zellij_floating(interpreter, filename)
+function M.run_in_zellij_floating(interpreter, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -47,20 +49,34 @@ function M.run_in_zellij_floating(interpreter, filename)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Running " .. display_name .. " in Zellij")
     local actual_interpreter = get_interpreter_path(interpreter)
+    local args_str = args and (" " .. args) or ""
     local zellij_cmd = string.format(
-        'zellij run --floating --width "80%%" --height "80%%" --x "10%%" --y "15%%" -- %s "%s"',
+        'zellij run --floating --width "80%%" --height "80%%" --x "10%%" --y "15%%" -- %s "%s"%s',
         actual_interpreter,
-        filename
+        filename,
+        args_str
     )
     vim.fn.system(zellij_cmd)
 end
 
-function M.run_detached(interpreter, filename)
+function M.run_detached(interpreter, filename, args)
     vim.cmd("update")
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Running " .. display_name .. " detached")
     local actual_interpreter = get_interpreter_path(interpreter)
-    vim.cmd("silent !" .. actual_interpreter .. ' "' .. filename .. '"')
+    local args_str = args and (" " .. args) or ""
+    vim.cmd("silent !" .. actual_interpreter .. ' "' .. filename .. '"' .. args_str)
+end
+
+function M.with_args_prompt(run_func, interpreter, filename)
+    vim.ui.input({
+        prompt = "Arguments: ",
+        default = "",
+    }, function(input)
+        if input ~= nil then
+            run_func(interpreter, filename, input ~= "" and input or nil)
+        end
+    end)
 end
 
 return M

@@ -12,42 +12,79 @@ vim.opt_local.shiftwidth = 4
 vim.opt_local.expandtab = true
 vim.opt_local.autoindent = true
 
--- Run keymaps
+-- Run keymaps (without args)
 vim.keymap.set("n", "<leader>rv", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_vertical("python3", filename)
-end, { buffer = true, desc = "Run Python in Vertical Pane" })
+end, { buffer = true, desc = "Run Python (Vertical Pane)" })
 
 vim.keymap.set("n", "<leader>rh", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_horizontal("python3", filename)
-end, { buffer = true, desc = "Run Python in Horizontal Pane" })
+end, { buffer = true, desc = "Run Python (Horizontal Pane" })
 
 vim.keymap.set("n", "<leader>rf", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_floating("python3", filename)
-end, { buffer = true, desc = "Run Python in Floating Pane" })
+end, { buffer = true, desc = "Run Python (Floating Pane)" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_detached("python3", filename)
-end, { buffer = true, desc = "Run Python Detached" })
+end, { buffer = true, desc = "Run Python (Detached)" })
 
--- Debug keymaps
+-- Run keymaps (with args)
+vim.keymap.set("n", "<leader>rV", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_vertical, "python3", filename)
+end, { buffer = true, desc = "Run Python With Args (Vertical Pane)" })
+
+vim.keymap.set("n", "<leader>rH", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_horizontal, "python3", filename)
+end, { buffer = true, desc = "Run Python With Args (Horizontal Pane)" })
+
+vim.keymap.set("n", "<leader>rF", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_floating, "python3", filename)
+end, { buffer = true, desc = "Run Python With Args (Floating Pane)" })
+
+vim.keymap.set("n", "<leader>rD", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_detached, "python3", filename)
+end, { buffer = true, desc = "Run Python With Args (Detached)" })
+
+-- Debug keymaps (without args)
 vim.keymap.set("n", "<leader>dv", function()
     local filename = vim.api.nvim_buf_get_name(0)
     debugger.debug_in_zellij_vertical("python3 -m ipdb", filename)
-end, { buffer = true, desc = "Debug Python in Vertical Pane" })
+end, { buffer = true, desc = "Debug Python (Vertical Pane)" })
 
 vim.keymap.set("n", "<leader>dh", function()
     local filename = vim.api.nvim_buf_get_name(0)
     debugger.debug_in_zellij_horizontal("python3 -m ipdb", filename)
-end, { buffer = true, desc = "Debug Python in Horizontal Pane" })
+end, { buffer = true, desc = "Debug Python (Horizontal Pane)" })
 
 vim.keymap.set("n", "<leader>df", function()
     local filename = vim.api.nvim_buf_get_name(0)
     debugger.debug_in_zellij_floating("python3 -m ipdb", filename)
-end, { buffer = true, desc = "Debug Python in Floating Pane" })
+end, { buffer = true, desc = "Debug Python (Floating Pane)" })
+
+-- Debug keymaps (with args)
+vim.keymap.set("n", "<leader>dV", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    debugger.with_args_prompt(debugger.debug_in_zellij_vertical, "python3 -m ipdb", filename)
+end, { buffer = true, desc = "Debug Python With Args (Vertical Pane)" })
+
+vim.keymap.set("n", "<leader>dH", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    debugger.with_args_prompt(debugger.debug_in_zellij_horizontal, "python3 -m ipdb", filename)
+end, { buffer = true, desc = "Debug Python With Args (Horizontal Pane)" })
+
+vim.keymap.set("n", "<leader>dF", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    debugger.with_args_prompt(debugger.debug_in_zellij_floating, "python3 -m ipdb", filename)
+end, { buffer = true, desc = "Debug Python With Args (Floating Pane)" })
 
 -- Cleanup on filetype change
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or "")

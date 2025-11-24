@@ -11,26 +11,47 @@ vim.opt_local.shiftwidth = 4
 vim.opt_local.expandtab = true
 vim.opt_local.autoindent = true
 
--- Run keymaps
+-- Run keymaps (without args)
 vim.keymap.set("n", "<leader>rv", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_vertical("lua", filename)
-end, { buffer = true, desc = "Run Lua in Vertical Pane" })
+end, { buffer = true, desc = "Run Lua (Vertical Pane)" })
 
 vim.keymap.set("n", "<leader>rh", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_horizontal("lua", filename)
-end, { buffer = true, desc = "Run Lua in Horizontal Pane" })
+end, { buffer = true, desc = "Run Lua (Horizontal Pane)" })
 
 vim.keymap.set("n", "<leader>rf", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_floating("lua", filename)
-end, { buffer = true, desc = "Run Lua in Floating Pane" })
+end, { buffer = true, desc = "Run Lua (Floating Pane)" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_detached("lua", filename)
-end, { buffer = true, desc = "Run Lua Detached" })
+end, { buffer = true, desc = "Run Lua (Detached)" })
+
+-- Run keymaps (with args)
+vim.keymap.set("n", "<leader>rV", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_vertical, "lua", filename)
+end, { buffer = true, desc = "Run Lua With Args (Vertical Pane)" })
+
+vim.keymap.set("n", "<leader>rH", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_horizontal, "lua", filename)
+end, { buffer = true, desc = "Run Lua With Args (Horizontal Pane)" })
+
+vim.keymap.set("n", "<leader>rF", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_in_zellij_floating, "lua", filename)
+end, { buffer = true, desc = "Run Lua With Args (Floating Pane)" })
+
+vim.keymap.set("n", "<leader>rD", function()
+    local filename = vim.api.nvim_buf_get_name(0)
+    runner.with_args_prompt(runner.run_detached, "lua", filename)
+end, { buffer = true, desc = "Run Lua With Args (Detached)" })
 
 -- Cleanup on filetype change
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or "")
