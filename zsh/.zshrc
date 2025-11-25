@@ -55,6 +55,7 @@ zstyle ':completion:*' list-colors 'di=38;5;12:fi=38;5;12:ln=38;5;12:ex=38;5;12'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias weather='curl wttr.in'
+alias pi="ssh master@10.0.0.181"
 
 # nvim
 alias lvim='NVIM_APPNAME=nvim.lazy nvim'
@@ -92,7 +93,8 @@ export EDITOR=nvim
 
 # Path
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/python/tools/:$PATH"
+export PATH="$HOME/python/scripts/:$PATH"
+export PATH="$HOME/bash/scripts/backup/:$PATH"
 
 # Python
 export PYTHONPATH="$HOME/python/modules:$PYTHONPATH"
