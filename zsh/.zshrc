@@ -95,7 +95,7 @@ export EDITOR=nvim
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/python/scripts/:$PATH"
 export PATH="$HOME/bash/scripts/:$PATH"
-export PATH="$HOME/bash/backup/:$PATH"
+export PATH="$HOME/bash/backup/scripts/:$PATH"
 
 # Python
 export PYTHONPATH="$HOME/python/modules:$PYTHONPATH"
