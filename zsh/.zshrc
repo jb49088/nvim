@@ -90,6 +90,7 @@ projects() {
 
 # General
 export EDITOR=nvim
+export BROWSER="/mnt/c/Program Files/Mozilla Firefox/firefox.exe" # Use windows browser
 
 # Path
 export PATH="$HOME/.local/bin:$PATH"
