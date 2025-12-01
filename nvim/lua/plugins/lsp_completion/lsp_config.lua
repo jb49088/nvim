@@ -98,6 +98,8 @@ return {
             },
             biome = {
                 root_dir = vim.fn.getcwd(),
+                -- Removed html
+                filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "css" },
             },
         }
 

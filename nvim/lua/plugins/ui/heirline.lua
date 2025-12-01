@@ -246,6 +246,7 @@ return {
                 provider = "",
             },
         }
+
         local MacroRec = {
             condition = function()
                 return vim.fn.reg_recording() ~= ""
