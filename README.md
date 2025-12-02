@@ -113,12 +113,13 @@ dotfiles
 │   └── snippets
 │       └── python.json
 ├── README.md
+├── sqlite
 ├── zellij
 │   ├── config.kdl
 │   └── themes
 │       └── astrodark.kdl
 └── zsh
 
-20 directories, 73 files
+21 directories, 73 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
