@@ -77,7 +77,7 @@ alias rocket_game='cd ~/python/learning/demos/pygame/rocket_game/'
 alias target_practice='cd ~/python/learning/demos/pygame/target_practice/'
 alias watermelon_shooter='cd ~/python/learning/demos/pygame/watermelon_shooter/'
 alias fish_tank='cd ~/python/projects/fish_tank/'
-alias riven_market_analyzer='cd ~/python/projects/riven_market_analyzer/'
+alias riven_sniper='cd ~/python/projects/riven_sniper/'
 
 # Show project aliases
 projects() {
