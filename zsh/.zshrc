@@ -89,6 +89,9 @@ projects() {
 # =                            ENVIRONMENT VARIABLES                             =
 # ================================================================================
 
+# Load secrets
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
 # General
 export EDITOR=nvim
 export BROWSER="/mnt/c/Program Files/Mozilla Firefox/firefox.exe" # Use windows browser
@@ -102,9 +105,6 @@ export PATH="$HOME/bash/backup/scripts/:$PATH"
 # Python
 export PYTHONPATH="$HOME/python/modules:$PYTHONPATH"
 export PYTHONBREAKPOINT=ipdb.set_trace
-
-# Restic (credentials loaded from .zshrc.local)
-[ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # VcXsrv
 export DISPLAY=$(ip route show default | awk '{print $3}'):0.0
