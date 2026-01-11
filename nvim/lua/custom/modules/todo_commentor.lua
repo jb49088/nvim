@@ -8,7 +8,7 @@ local function insert_todo_comment(tag)
     local line = vim.api.nvim_get_current_line()
     local text = line:match("^%s*(.-)%s*$") -- trim whitespace
     local row = vim.api.nvim_win_get_cursor(0)[1]
-    local comment = "#  " .. tag .. ": "
+    local comment = "# " .. tag .. ": "
 
     if text == "" then
         -- No text on line, insert comment and enter insert mode
