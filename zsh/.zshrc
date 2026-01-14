@@ -78,7 +78,7 @@ alias target_practice='cd ~/python/learning/demos/pygame/target_practice/'
 alias watermelon_shooter='cd ~/python/learning/demos/pygame/watermelon_shooter/'
 alias fish_tank='cd ~/python/projects/fish_tank/'
 alias riven_sniper='cd ~/python/projects/riven_sniper/'
-alias wfm_cli='cd ~/python/projects/wfm_cli/'
+alias wfm='cd ~/python/projects/wfm/'
 
 # Show project aliases
 projects() {
