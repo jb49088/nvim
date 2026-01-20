@@ -272,6 +272,7 @@ return {
         Snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>uL")
         Snacks.toggle.option("wrap", { name = "Line Wrapping" }):map("<leader>uw")
         Snacks.toggle.dim():map("<leader>uD")
+        Snacks.toggle.indent():map("<leader>ug")
         Snacks.toggle.option("spell", { name = "Spell Check" }):map("<leader>us")
         Snacks.toggle.treesitter({ name = "Treesitter Highlighting" }):map("<leader>uT")
         Snacks.toggle.inlay_hints():map("<leader>uh")
