@@ -1571,9 +1571,9 @@ function M.setup(opts)
     end
 end
 
--- Auto-setup and enable when the module is required
+-- Auto-setup module is required
 M.setup()
-M.enable()
+-- M.enable()
 
 -- Snacks toggle integration
 if Snacks and Snacks.toggle then
