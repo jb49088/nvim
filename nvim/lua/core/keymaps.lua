@@ -108,6 +108,10 @@ end, { desc = "Close Other Tabs" })
 map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Below" })
 map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
 
+-- Indenting
+map("v", "<Tab>", ">gv")
+map("v", "<S-Tab>", "<gv")
+
 -- Quickfix list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
