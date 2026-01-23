@@ -64,8 +64,18 @@ function M.run_detached(interpreter, filename, args)
     local display_name = vim.fn.fnamemodify(filename, ":t")
     vim.notify("Running " .. display_name .. " detached")
     local actual_interpreter = get_interpreter_path(interpreter)
-    local args_str = args and (" " .. args) or ""
-    vim.cmd("silent !" .. actual_interpreter .. ' "' .. filename .. '"' .. args_str)
+
+    local cmd = { actual_interpreter, filename }
+    if args then
+        vim.list_extend(cmd, vim.split(args, " "))
+    end
+
+    vim.fn.jobstart(cmd, {
+        detach = true,
+        on_exit = function()
+            vim.notify(display_name .. " finished")
+        end,
+    })
 end
 
 function M.with_args_prompt(run_func, interpreter, filename)
