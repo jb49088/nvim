@@ -107,37 +107,14 @@ map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Commen
 map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
 
 -- Quickfix list
-map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
+map("n", "<leader>q", "<cmd>copen<cr>", { desc = "Quickfix List" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
-map("n", "[Q", vim.cmd.cfirst, { desc = "First Quickfix" })
-map("n", "]Q", vim.cmd.clast, { desc = "Last Quickfix" })
-
-map("n", "<leader>q", function()
-    local success, err = pcall(function()
-        if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
-            vim.cmd.cclose()
-        else
-            vim.cmd.copen()
-        end
-    end)
-    if not success and err then
-        vim.notify(err, vim.log.levels.ERROR)
-    end
-end, { desc = "Quickfix list" })
+map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 
 -- Location list
-map("n", "<leader>l", function()
-    local success, err = pcall(function()
-        if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-            vim.cmd.lclose()
-        else
-            vim.cmd.lopen()
-        end
-    end)
-    if not success and err then
-        vim.notify(err, vim.log.levels.ERROR)
-    end
-end, { desc = "Location List" })
+map("n", "<leader>l", "<cmd>lopen<cr>", { desc = "Location List" })
+map("n", "]l", vim.cmd.lnext, { desc = "Next Location" })
+map("n", "[l", vim.cmd.lprev, { desc = "Previous Location" })
 
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
