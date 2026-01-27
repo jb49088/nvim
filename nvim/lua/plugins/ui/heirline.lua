@@ -40,6 +40,13 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
+                local buftype = vim.bo.buftype
+
+                -- Show for quickfix even though bufname is empty
+                if buftype == "quickfix" then
+                    return true
+                end
+
                 return not is_floating and bufname ~= ""
             end,
             provider = function()
@@ -53,8 +60,14 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
-                local is_no_name = bufname == ""
-                return not is_floating and not is_no_name
+                local buftype = vim.bo.buftype
+
+                -- Show for quickfix even though bufname is empty
+                if buftype == "quickfix" then
+                    return true
+                end
+
+                return not is_floating and bufname ~= ""
             end,
             provider = function()
                 local fileformat_symbols = {
@@ -328,6 +341,13 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
+                local buftype = vim.bo.buftype
+
+                -- Show for quickfix even though bufname is empty
+                if buftype == "quickfix" then
+                    return true
+                end
+
                 return not is_floating and bufname ~= ""
             end,
             provider = function()
@@ -340,6 +360,13 @@ return {
                 local win_config = vim.api.nvim_win_get_config(0)
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
+                local buftype = vim.bo.buftype
+
+                -- Show for quickfix even though bufname is empty
+                if buftype == "quickfix" then
+                    return true
+                end
+
                 return not is_floating and bufname ~= ""
             end,
             provider = function()

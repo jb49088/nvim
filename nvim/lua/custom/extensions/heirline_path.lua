@@ -3,6 +3,7 @@
 -- ================================================================================
 
 -- A flexible custom component for heirline to display a truncated or special buffer path with icons.
+
 local M = {}
 
 -- Configuration
@@ -10,7 +11,7 @@ local ellipsis = "…"
 local max_depth = 3
 local path_sep = package.config:sub(1, 1)
 local icon_padding = { [""] = 1 }
-local lock_icon = " "
+local lock_icon = " "
 
 --- Get icon using mini.icons
 local function get_icon(filename, filetype)
@@ -72,6 +73,15 @@ end
 --- Handles display for checkhealth buffers.
 local function handle_checkhealth()
     return "Health"
+end
+
+--- Handles display for quickfix/location list buffers.
+local function handle_qf_loclist()
+    if vim.fn.win_gettype() == "loclist" then
+        return "Location List"
+    else
+        return "Quickfix List"
+    end
 end
 
 --- Handles display for regular files.
@@ -162,7 +172,12 @@ function M.get_path()
     path_data.padding_left = ""
     path_data.padding_right = " "
 
-    if filetype == "checkhealth" or bufname:match("^health://") or bufname:match("checkhealth") then
+    if vim.bo.buftype == "quickfix" then
+        path_data.type = "qflist"
+        path_data.qf_text = handle_qf_loclist()
+        local qf_icon, qf_hl = get_icon(nil, "qf")
+        path_data.icon_str, path_data.icon_hl = format_icon_with_padding(qf_icon, qf_hl)
+    elseif filetype == "checkhealth" or bufname:match("^health://") or bufname:match("checkhealth") then
         path_data.type = "checkhealth"
         path_data.checkhealth_text = handle_checkhealth()
         -- Directly override icon for checkhealth
@@ -194,6 +209,11 @@ M.component = {
             return false
         end
 
+        -- Show for quickfix/loclist
+        if vim.bo.buftype == "quickfix" then
+            return true
+        end
+
         -- Show for checkhealth
         if filetype == "checkhealth" or bufname:match("^health://") or bufname:match("checkhealth") then
             return true
@@ -219,12 +239,14 @@ M.component = {
             end,
         },
 
-        -- 2. Directory Path / Checkhealth Text Component
+        -- 2. Directory Path / Checkhealth Text / QF Text Component
         {
             provider = function()
                 local path_info = M.get_path()
                 local display_text = ""
-                if path_info.type == "checkhealth" then
+                if path_info.type == "qflist" then
+                    display_text = path_info.qf_text or ""
+                elseif path_info.type == "checkhealth" then
                     display_text = path_info.checkhealth_text or ""
                 else
                     display_text = path_info.dir_path or ""
@@ -234,7 +256,9 @@ M.component = {
             end,
             hl = function()
                 local path_info = M.get_path()
-                if path_info.type == "checkhealth" then
+                if path_info.type == "qflist" then
+                    return "HeirlinePathHealth"
+                elseif path_info.type == "checkhealth" then
                     return "HeirlinePathHealth"
                 else
                     return "HeirlinePathDir"
@@ -246,6 +270,9 @@ M.component = {
         {
             provider = function()
                 local path_info = M.get_path()
+                if path_info.type == "qflist" then
+                    return ""
+                end
                 return path_info.filename or ""
             end,
             hl = function()
@@ -265,7 +292,8 @@ M.component = {
                 local bufname = vim.fn.expand("%")
 
                 if
-                    filetype ~= "checkhealth"
+                    vim.bo.buftype ~= "quickfix"
+                    and filetype ~= "checkhealth"
                     and not bufname:match("^health://")
                     and not bufname:match("checkhealth")
                     and not vim.bo.modifiable
@@ -294,13 +322,15 @@ M.component = {
             end,
         },
 
-        -- 2. Filename Only Component
+        -- 2. Filename Only / Checkhealth / QF Component
         {
             provider = function()
                 local path_info = M.get_path()
                 local display_text = ""
 
-                if path_info.type == "checkhealth" then
+                if path_info.type == "qflist" then
+                    display_text = path_info.qf_text or ""
+                elseif path_info.type == "checkhealth" then
                     display_text = path_info.checkhealth_text or ""
                 else
                     display_text = path_info.filename or ""
@@ -310,7 +340,9 @@ M.component = {
             end,
             hl = function()
                 local path_info = M.get_path()
-                if path_info.type == "checkhealth" then
+                if path_info.type == "qflist" then
+                    return "HeirlinePathHealth"
+                elseif path_info.type == "checkhealth" then
                     return "HeirlinePathHealth"
                 else
                     return get_filename_hl()
@@ -325,7 +357,8 @@ M.component = {
                 local bufname = vim.fn.expand("%")
 
                 if
-                    filetype ~= "checkhealth"
+                    vim.bo.buftype ~= "quickfix"
+                    and filetype ~= "checkhealth"
                     and not bufname:match("^health://")
                     and not bufname:match("checkhealth")
                     and not vim.bo.modifiable
