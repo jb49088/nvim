@@ -10,8 +10,6 @@ vim.g.maplocalleader = " "
 
 -- Basic keymaps
 map("n", "<Esc>", "<cmd>nohlsearch<CR>")
-map("n", "<leader>l", "<Cmd>Lazy<CR>", { desc = "Lazy" })
-map("n", "<leader>cm", "<Cmd>Mason<CR>", { desc = "Mason" })
 map("n", "<leader>ch", vim.diagnostic.open_float, { desc = "Hover Diagnostics" })
 map("n", "<leader>K", "<Cmd>norm! K<CR>", { desc = "Keywordprg" })
 
