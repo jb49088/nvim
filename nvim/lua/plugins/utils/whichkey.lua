@@ -20,7 +20,6 @@ return {
             { "<leader>f", group = " File/Find" },
             { "<leader>g", group = "󰊢 Git" },
             { "<leader>gh", group = "󰊢 Hunks" },
-            { "<leader>n", group = "󰈸 Noice" },
             { "<leader>r", group = " Run" },
             { "<leader>s", group = " Search" },
             { "<leader>t", group = " Test" },
