@@ -12,7 +12,6 @@ return {
             ["devcontainer.json"] = { glyph = "", hl = "MiniIconsAzure" },
         },
         filetype = {
-            terminal = { glyph = "", hl = "MiniIconsRed" },
             dotenv = { glyph = "", hl = "MiniIconsYellow" },
         },
         lsp = {},

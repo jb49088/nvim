@@ -45,7 +45,7 @@ end
 --- Get icon for current buffer (general purpose)
 local function get_buffer_icon()
     local name = vim.fn.expand("%:t")
-    local ft = vim.bo.buftype == "terminal" and "terminal" or vim.bo.filetype
+    local ft = vim.bo.filetype
     return get_icon(name, ft)
 end
 
