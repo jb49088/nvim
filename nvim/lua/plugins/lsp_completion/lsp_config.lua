@@ -44,13 +44,13 @@ return {
                 map("<leader>cc", vim.lsp.codelens.run, "Run Codelens", { "n", "v" })
                 map("<leader>cC", vim.lsp.codelens.refresh, "Refresh & Display Codelens", { "n" })
                 map("<leader>cI", function() Snacks.picker.lsp_config() end, "LSP Info")
-                map("<leader>cr", function() Snacks.picker.lsp_references() end, "Goto References")
-                map("<leader>ci", function() Snacks.picker.lsp_implementations() end, "Goto Implementation")
-                map("<leader>cd", function() Snacks.picker.lsp_definitions() end, "Goto Definition")
-                map("<leader>cD", function() Snacks.picker.lsp_declarations() end, "Goto Declaration")
+                map("<leader>cr", function() Snacks.picker.lsp_references({auto_confirm = false }) end, "Goto References")
+                map("<leader>ci", function() Snacks.picker.lsp_implementations({auto_confirm = false }) end, "Goto Implementation")
+                map("<leader>cd", function() Snacks.picker.lsp_definitions({auto_confirm = false }) end, "Goto Definition")
+                map("<leader>cD", function() Snacks.picker.lsp_declarations({auto_confirm = false }) end, "Goto Declaration")
                 map("<leader>cs", function() Snacks.picker.lsp_symbols() end, "Document Symbols")
                 map("<leader>cS", function() Snacks.picker.lsp_workspace_symbols() end, "Workspace Symbols")
-                map("<leader>ct", function() Snacks.picker.lsp_type_definitions() end, "Goto Type Definition")
+                map("<leader>ct", function() Snacks.picker.lsp_type_definitions({auto_confirm = false }) end, "Goto Type Definition")
                 -- stylua: ignore end
             end,
         })
