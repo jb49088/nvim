@@ -26,7 +26,6 @@ return {
             { "<leader>t", group = " Test" },
             { "<leader>u", group = "󱕷 UI/UX" },
             { "<leader>w", group = "󰕰 Window" },
-            { "<leader>x", group = " Diagnostics/Quickfix" },
             { "<leader>T", group = "󰓩 Tab" },
         },
     },

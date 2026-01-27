@@ -112,7 +112,7 @@ map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
 map("n", "[Q", vim.cmd.cfirst, { desc = "First Quickfix" })
 map("n", "]Q", vim.cmd.clast, { desc = "Last Quickfix" })
 
-map("n", "<leader>xq", function()
+map("n", "<leader>q", function()
     local success, err = pcall(function()
         if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
             vim.cmd.cclose()
@@ -126,7 +126,7 @@ map("n", "<leader>xq", function()
 end, { desc = "Quickfix list" })
 
 -- Location list
-map("n", "<leader>xl", function()
+map("n", "<leader>l", function()
     local success, err = pcall(function()
         if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
             vim.cmd.lclose()
