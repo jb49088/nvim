@@ -156,6 +156,8 @@ return {
         { "<leader><space>", function() Snacks.picker.buffers() end, desc = "Buffers" },
         { "<leader>/", function() Snacks.picker.lines({ layout = "select", on_show = function() end, title = "Current Buffer Fuzzy" }) end, desc = "Fuzzy Current Buffer" },
         { "<leader>,", function() Snacks.picker.pick("tabs") end, desc = "Tabs" },
+        { "<leader>q", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
+        { "<leader>l", function() Snacks.picker.loclist() end, desc = "Location List" },
         -- buffer
         { "<leader>bc", function() Snacks.bufdelete() end, desc = "Close Buffer" },
         -- find
@@ -192,13 +194,11 @@ return {
         { "<leader>si", function() Snacks.picker.icons() end, desc = "Icons" },
         { "<leader>sj", function() Snacks.picker.jumps() end, desc = "Jumps" },
         { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
-        { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
         { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
         { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
         { "<leader>sn", function() Snacks.notifier.show_history() end, desc = "Notification History" },
         { "<leader>sp", function() Snacks.picker.pickers() end, desc = "Pickers" },
-        { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
-        { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
+        { "<leader>sr", function() Snacks.picker.resume() end, desc = "Resume" },
         { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
         -- other
         { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },

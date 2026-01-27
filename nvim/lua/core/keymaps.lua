@@ -107,12 +107,12 @@ map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Commen
 map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
 
 -- Quickfix list
-map("n", "<leader>q", "<cmd>copen<cr>", { desc = "Quickfix List" })
+-- map("n", "<leader>q", "<cmd>copen<cr>", { desc = "Quickfix List" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 
 -- Location list
-map("n", "<leader>l", "<cmd>lopen<cr>", { desc = "Location List" })
+-- map("n", "<leader>l", "<cmd>lopen<cr>", { desc = "Location List" })
 map("n", "]l", vim.cmd.lnext, { desc = "Next Location" })
 map("n", "[l", vim.cmd.lprev, { desc = "Previous Location" })
 
