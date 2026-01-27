@@ -40,12 +40,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             62            712            628           4610
+Lua                             61            701            623           4569
 JSON                             2              0              0            245
 Markdown                         2             16              4            150
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            67            728            632           5008
+SUM:                            66            717            627           4967
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -97,7 +97,6 @@ nvim
 │   │       ├── init.lua
 │   │       ├── mode_number_color.lua
 │   │       ├── status_column.lua
-│   │       ├── todo_commentor.lua
 │   │       ├── winbar_breadcrumbs.lua
 │   │       └── window_swapper.lua
 │   └── plugins
@@ -137,7 +136,7 @@ nvim
 └── snippets
     └── python.json
 
-15 directories, 66 files
+15 directories, 65 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

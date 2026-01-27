@@ -51,7 +51,7 @@ function M.create_line_divider()
     vim.api.nvim_win_set_cursor(0, { row, 0 })
 end
 
-vim.keymap.set("n", "<leader>Cb", M.create_box_divider, { desc = "Box Divider" })
-vim.keymap.set("n", "<leader>Cl", M.create_line_divider, { desc = "Line Divider" })
+vim.keymap.set("n", "<leader>Db", M.create_box_divider, { desc = "Box Divider" })
+vim.keymap.set("n", "<leader>Dl", M.create_line_divider, { desc = "Line Divider" })
 
 return M
