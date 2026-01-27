@@ -40,7 +40,7 @@ opt.shortmess:append("I") -- Dont show intro message
 opt.swapfile = false -- Disable swap files
 opt.undofile = true -- Enable persistent undo
 opt.updatetime = 200 -- Faster update time for diagnostics, etc.
-opt.timeoutlen = 300 -- Timeout for mapped sequence to complete
+opt.timeoutlen = 400 -- Timeout for mapped sequence to complete
 opt.splitright = true -- Vertical splits open to the right
 opt.splitbelow = true -- Horizontal splits open below
 opt.splitkeep = "screen" -- Reduce scroll during window split

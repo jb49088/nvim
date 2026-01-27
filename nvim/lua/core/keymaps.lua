@@ -111,6 +111,8 @@ map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Commen
 -- Quickfix list
 map("n", "[q", vim.cmd.cprev, { desc = "Previous Quickfix" })
 map("n", "]q", vim.cmd.cnext, { desc = "Next Quickfix" })
+map("n", "[Q", vim.cmd.cfirst, { desc = "First Quickfix" })
+map("n", "]Q", vim.cmd.clast, { desc = "Last Quickfix" })
 
 map("n", "<leader>xq", function()
     local success, err = pcall(function()
