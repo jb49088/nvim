@@ -118,18 +118,3 @@ map("n", "[l", vim.cmd.lprev, { desc = "Previous Location" })
 
 -- Clear search, diff update and redraw (refresh ui)
 map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Refresh UI" })
-
--- Reset filetype, and restart any filetype-specific tooling (refresh buffer)
-map("n", "<leader>br", function()
-    local bufnr = vim.api.nvim_get_current_buf()
-    -- Clear all diagnostics for this buffer
-    vim.diagnostic.reset(nil, bufnr)
-    -- Reload buffer from disk
-    vim.cmd("e!")
-    -- Re-detect filetype
-    vim.cmd("filetype detect")
-    -- Re-run FileType autocommands
-    vim.cmd("doautocmd FileType")
-    -- Restart LSP
-    pcall(vim.cmd("LspRestart"))
-end, { desc = "Refresh Buffer" })
