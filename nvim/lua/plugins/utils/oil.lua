@@ -15,6 +15,10 @@ return {
         view_options = {
             show_hidden = true,
         },
+        float = {
+            max_width = 0.8,
+            max_height = 0.8,
+        },
     },
     -- stylua: ignore
     keys = { { "<leader>o", function() vim.cmd("Oil --float") end, desc = "Oil", mode = "n" } },
