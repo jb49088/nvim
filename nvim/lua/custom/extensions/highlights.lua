@@ -13,10 +13,6 @@ hl(0, "NormalFloat", { fg = c.ui.text_active })
 hl(0, "FloatBorder", { fg = c.ui.border })
 hl(0, "Pmenu", { fg = c.ui.text_active })
 
--- Highlighting
-hl(0, "Search", { bg = c.ui.base })
-hl(0, "Visual", { bg = c.ui.base })
-
 -- Cursorline
 hl(0, "CursorLine", { bg = nil })
 
