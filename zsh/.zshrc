@@ -14,7 +14,7 @@ precmd() {
 }
 
 # Automatically start zellij
-# eval "$(zellij setup --generate-auto-start zsh)"
+eval "$(zellij setup --generate-auto-start zsh)"
 
 # cd into dirs without typing cd
 setopt autocd
