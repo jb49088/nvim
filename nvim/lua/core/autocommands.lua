@@ -26,7 +26,11 @@ autocmd({ "VimLeave", "ExitPre" }, {
 -- Automatically check for external file changes and reload buffers
 autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
     group = "editor_behavior",
-    command = "if mode() != 'c' | checktime | endif",
+    callback = function()
+        if vim.fn.mode() ~= "c" and vim.fn.getcmdwintype() == "" then
+            vim.cmd("checktime")
+        end
+    end,
 })
 
 -- Save view when leaving buffer or writing (cursor position, folds, etc.)
