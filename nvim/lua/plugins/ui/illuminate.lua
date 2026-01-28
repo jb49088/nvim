@@ -23,7 +23,7 @@ return {
         illuminate.configure(opts)
 
         Snacks.toggle({
-            name = "Illuminate",
+            name = "Underlines",
             get = function()
                 return not require("illuminate.engine").is_paused()
             end,
@@ -34,7 +34,7 @@ return {
                     illuminate.pause()
                 end
             end,
-        }):map("<leader>ui")
+        }):map("<leader>uu")
 
         -- turn off in inactive windows
         vim.api.nvim_create_autocmd("WinLeave", {
