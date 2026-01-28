@@ -12,20 +12,15 @@ vim.opt_local.expandtab = true
 vim.opt_local.autoindent = true
 
 -- Run keymaps (without agrs)
-vim.keymap.set("n", "<leader>rv", function()
+vim.keymap.set("n", "<leader>rr", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    runner.run_in_zellij_vertical("pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell (Vertical Pane)" })
-
-vim.keymap.set("n", "<leader>rh", function()
-    local filename = vim.api.nvim_buf_get_name(0)
-    runner.run_in_zellij_horizontal("pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell (Horizontal Pane)" })
+    runner.run_in_zellij("pwsh", filename)
+end, { buffer = true, desc = "Run PowerShell" })
 
 vim.keymap.set("n", "<leader>rf", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.run_in_zellij_floating("pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell (Floating Pane)" })
+end, { buffer = true, desc = "Run PowerShell (Floating)" })
 
 vim.keymap.set("n", "<leader>rd", function()
     local filename = vim.api.nvim_buf_get_name(0)
@@ -33,20 +28,15 @@ vim.keymap.set("n", "<leader>rd", function()
 end, { buffer = true, desc = "Run PowerShell (Detached)" })
 
 -- Run keymaps (with args)
-vim.keymap.set("n", "<leader>rV", function()
+vim.keymap.set("n", "<leader>rR", function()
     local filename = vim.api.nvim_buf_get_name(0)
-    runner.with_args_prompt(runner.run_in_zellij_vertical, "pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell With Args (Vertical Pane)" })
-
-vim.keymap.set("n", "<leader>rH", function()
-    local filename = vim.api.nvim_buf_get_name(0)
-    runner.with_args_prompt(runner.run_in_zellij_horizontal, "pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell With Args (Horizontal Pane)" })
+    runner.with_args_prompt(runner.run_in_zellij, "pwsh", filename)
+end, { buffer = true, desc = "Run PowerShell With Args" })
 
 vim.keymap.set("n", "<leader>rF", function()
     local filename = vim.api.nvim_buf_get_name(0)
     runner.with_args_prompt(runner.run_in_zellij_floating, "pwsh", filename)
-end, { buffer = true, desc = "Run PowerShell With Args (Floating Pane)" })
+end, { buffer = true, desc = "Run PowerShell With Args (Floating)" })
 
 vim.keymap.set("n", "<leader>rD", function()
     local filename = vim.api.nvim_buf_get_name(0)

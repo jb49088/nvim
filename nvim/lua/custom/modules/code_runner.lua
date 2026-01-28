@@ -12,7 +12,7 @@ local function get_interpreter_path(interpreter)
     return interpreter
 end
 
-function M.run_in_zellij_vertical(interpreter, filename, args)
+function M.run_in_zellij(interpreter, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -23,20 +23,6 @@ function M.run_in_zellij_vertical(interpreter, filename, args)
     local actual_interpreter = get_interpreter_path(interpreter)
     local args_str = args and (" " .. args) or ""
     local zellij_cmd = string.format('zellij run -- %s "%s"%s', actual_interpreter, filename, args_str)
-    vim.fn.system(zellij_cmd)
-end
-
-function M.run_in_zellij_horizontal(interpreter, filename, args)
-    if os.getenv("ZELLIJ") == nil then
-        vim.notify("Not in a Zellij session", vim.log.levels.WARN)
-        return
-    end
-    vim.cmd("update")
-    local display_name = vim.fn.fnamemodify(filename, ":t")
-    vim.notify("Running " .. display_name .. " in Zellij")
-    local actual_interpreter = get_interpreter_path(interpreter)
-    local args_str = args and (" " .. args) or ""
-    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"%s', actual_interpreter, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 

@@ -12,7 +12,7 @@ local function get_debugger_path(debugger_cmd)
     return debugger_cmd
 end
 
-function M.debug_in_zellij_vertical(debugger_cmd, filename, args)
+function M.debug_in_zellij(debugger_cmd, filename, args)
     if os.getenv("ZELLIJ") == nil then
         vim.notify("Not in a Zellij session", vim.log.levels.WARN)
         return
@@ -23,20 +23,6 @@ function M.debug_in_zellij_vertical(debugger_cmd, filename, args)
     local actual_debugger = get_debugger_path(debugger_cmd)
     local args_str = args and (" " .. args) or ""
     local zellij_cmd = string.format('zellij run -- %s "%s"%s', actual_debugger, filename, args_str)
-    vim.fn.system(zellij_cmd)
-end
-
-function M.debug_in_zellij_horizontal(debugger_cmd, filename, args)
-    if os.getenv("ZELLIJ") == nil then
-        vim.notify("Not in a Zellij session", vim.log.levels.WARN)
-        return
-    end
-    vim.cmd("update")
-    local display_name = vim.fn.fnamemodify(filename, ":t")
-    vim.notify("Debugging " .. display_name .. " in Zellij (horizontal)")
-    local actual_debugger = get_debugger_path(debugger_cmd)
-    local args_str = args and (" " .. args) or ""
-    local zellij_cmd = string.format('zellij run --direction down -- %s "%s"%s', actual_debugger, filename, args_str)
     vim.fn.system(zellij_cmd)
 end
 
