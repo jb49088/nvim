@@ -1,7 +1,7 @@
 themes {
     AstroDark {
         fg "#ADB0BB"
-        bg "#1A1D23"
+        bg "#26343F"
         black "#000000"
         red "#FF838B"
         green "#87C05F"
