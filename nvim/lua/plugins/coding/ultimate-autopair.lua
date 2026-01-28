@@ -33,6 +33,9 @@ return {
             { "'", "'", imap = false, cmap = true, p = 200 },
         })
 
+        -- Disable by default
+        ua.disable()
+
         -- Create toggle for ultimate-autopair
         Snacks.toggle({
             name = "Auto Pairing",
