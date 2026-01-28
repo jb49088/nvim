@@ -48,8 +48,8 @@ return {
                 map("<leader>ci", function() Snacks.picker.lsp_implementations({auto_confirm = false }) end, "Goto Implementation")
                 map("<leader>cd", function() Snacks.picker.lsp_definitions({auto_confirm = false }) end, "Goto Definition")
                 map("<leader>cD", function() Snacks.picker.lsp_declarations({auto_confirm = false }) end, "Goto Declaration")
-                map("<leader>cs", function() Snacks.picker.lsp_symbols() end, "Document Symbols")
-                map("<leader>cS", function() Snacks.picker.lsp_workspace_symbols() end, "Workspace Symbols")
+                map("<leader>cs", function() Snacks.picker.lsp_symbols({filter = {default = true}}) end, "Document Symbols")
+                map("<leader>cS", function() Snacks.picker.lsp_workspace_symbols({filter = {default = true}}) end, "Workspace Symbols")
                 map("<leader>ct", function() Snacks.picker.lsp_type_definitions({auto_confirm = false }) end, "Goto Type Definition")
                 -- stylua: ignore end
             end,

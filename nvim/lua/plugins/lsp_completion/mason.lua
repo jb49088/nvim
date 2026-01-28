@@ -24,6 +24,7 @@ return {
                 "lua_ls", -- lua lsp
                 "basedpyright", -- python lsp
                 -- "ty", -- python lsp
+                -- "pyrefly", -- python lsp
                 "bashls", -- bash lsp
                 "powershell_es", -- powershell lsp (includes formatter and linter)
                 "html", -- html lsp
