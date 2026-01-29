@@ -275,6 +275,11 @@ return {
 
         local Diagnostics = {
             condition = function()
+                -- Check if diagnostics are disabled
+                if not vim.diagnostic.is_enabled() then
+                    return false
+                end
+
                 local mode = vim.api.nvim_get_mode().mode
                 if mode == "i" or mode == "ic" or mode == "ix" then
                     return false
