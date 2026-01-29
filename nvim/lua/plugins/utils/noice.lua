@@ -29,7 +29,7 @@ return {
             },
         },
         cmdline = {
-            -- view = "cmdline",
+            view = "cmdline",
             format = {
                 lua = false,
                 filter = false,
