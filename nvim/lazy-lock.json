@@ -31,7 +31,6 @@
   "treesj": { "branch": "main", "commit": "186084dee5e9c8eec40f6e39481c723dd567cb05" },
   "ultimate-autopair.nvim": { "branch": "v0.6", "commit": "72e160cb1ce8c0db2ac4315f77d97420a2f4223d" },
   "vim-illuminate": { "branch": "master", "commit": "0d1e93684da00ab7c057410fecfc24f434698898" },
-  "vim-tmux-navigator": { "branch": "master", "commit": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432" },
   "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" },
   "zellij-nav.nvim": { "branch": "main", "commit": "91cc2a642d8927ebde50ced5bf71ba470a0fc116" }
 }

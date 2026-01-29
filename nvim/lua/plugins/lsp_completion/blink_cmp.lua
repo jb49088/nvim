@@ -15,6 +15,8 @@ return {
         keymap = {
             preset = "enter",
             ["<C-y>"] = { "select_and_accept" },
+            ["<Tab>"] = { "snippet_forward", "fallback" },
+            ["<S-Tab>"] = { "snippet_backward", "fallback" },
         },
         appearance = {
             nerd_font_variant = "mono",
@@ -78,7 +80,7 @@ return {
                 lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
             },
         },
-        snippets = { preset = "mini_snippets" },
+        snippets = { preset = "default" },
         fuzzy = { implementation = "prefer_rust_with_warning" },
         signature = {
             enabled = true,

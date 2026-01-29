@@ -33,7 +33,7 @@ opt.scrolloff = 10 -- Vertical scroll offset
 opt.sidescrolloff = 10 -- Horizontal scroll offset
 opt.winborder = "rounded" -- Rounded borders for floating windows
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
-opt.shortmess:append("I") -- Dont show intro message
+-- opt.shortmess:append("I") -- Dont show intro message
 
 -- =================================== BEHAVIOR ===================================
 

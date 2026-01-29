@@ -274,7 +274,7 @@ return {
         Snacks.toggle.dim():map("<leader>uD")
         Snacks.toggle.indent():map("<leader>ui")
         Snacks.toggle.option("spell", { name = "Spell Check" }):map("<leader>us")
-        Snacks.toggle.treesitter({ name = "Treesitter Highlighting" }):map("<leader>uT")
+        Snacks.toggle.treesitter({ name = "Treesitter Highlighting" }):map("<leader>ut")
         Snacks.toggle.inlay_hints():map("<leader>uh")
         -- stylua: ignore end
     end,

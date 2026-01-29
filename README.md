@@ -10,12 +10,12 @@ Personal dotfiles and configuration management for my linux machines
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             61            689            619           4504
+Lua                             60            684            613           4472
 Markdown                         3             24              8            258
-JSON                             2              0              0            246
+JSON                             2              0              0            245
 TOML                             2              0              0              5
 -------------------------------------------------------------------------------
-SUM:                            68            713            627           5013
+SUM:                            67            708            621           4980
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -77,7 +77,6 @@ dotfiles
 │   │       │   ├── autotag.lua
 │   │       │   ├── gitsigns.lua
 │   │       │   ├── mini_ai.lua
-│   │       │   ├── mini_snippets.lua
 │   │       │   ├── surround.lua
 │   │       │   ├── treesitter.lua
 │   │       │   ├── treesj.lua
@@ -116,6 +115,6 @@ dotfiles
 │       └── astrodark.kdl
 └── zsh
 
-21 directories, 69 files
+21 directories, 68 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
