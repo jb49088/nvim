@@ -78,6 +78,10 @@ map("n", "<leader>bo", function()
 end, { desc = "Close Other Buffers" })
 
 -- Windows
+map("n", "<C-h>", "<C-w>H", { desc = "Move Window to Far Left" })
+map("n", "<C-j>", "<C-w>J", { desc = "Move Window to Bottom" })
+map("n", "<C-k>", "<C-w>K", { desc = "Move Window to Top" })
+map("n", "<C-l>", "<C-w>L", { desc = "Move Window to Far Right" })
 map("n", "<leader>wx", "<C-w>x", { desc = "Swap Window with Next" })
 map("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
 map("n", "<leader>wo", "<C-w>o", { desc = "Close Other Windows" })
