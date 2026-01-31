@@ -18,7 +18,7 @@ return {
                     require("gitsigns").refresh()
                 end
             end,
-        }):map("<leader>uG")
+        }):map("<leader>ug")
 
         return {
             signs = {
