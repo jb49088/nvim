@@ -21,15 +21,15 @@ return {
         -- Mason lsp config
         require("mason-lspconfig").setup({
             ensure_installed = {
-                "lua_ls", -- lua lsp
-                "basedpyright", -- python lsp
-                -- "ty", -- python lsp
-                -- "pyrefly", -- python lsp
+                "lua_ls", -- lua ls
+                -- "basedpyright", -- python ls
+                "ty", -- python lsp
+                -- "pyrefly", -- python ls
                 "bashls", -- bash lsp
-                "powershell_es", -- powershell lsp (includes formatter and linter)
-                "html", -- html lsp
-                "cssls", -- css lsp
-                "vtsls", -- ts/js lsp
+                "powershell_es", -- powershell ls (includes formatter and linter)
+                "html", -- html ls
+                "cssls", -- css ls
+                "vtsls", -- ts/js ls
             },
             automatic_enable = true,
         })
