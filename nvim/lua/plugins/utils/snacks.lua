@@ -41,9 +41,6 @@ return {
         --- LAZYGIT ---
         lazygit = { enabled = true },
 
-        --- NOTIFIER ---
-        notifier = { enabled = true },
-
         --- PICKER ---
         picker = (function()
             -- Get MiniIcons LSP configuration if available
