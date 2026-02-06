@@ -162,6 +162,9 @@ keybinds clear-defaults=true {
     shared_except "locked"{
         bind "q" { Quit; }
     }
+    shared_except "locked"{
+        bind "esc" { SwitchToMode "locked"; }
+    }
     shared_except "locked" "move" {
         bind "m" { SwitchToMode "move"; }
     }
