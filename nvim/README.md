@@ -40,12 +40,12 @@ UIEnter   28.4ms (+5.4ms)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             61            674            601           4454
+Lua                             60            673            593           4395
 JSON                             2              0              0            244
 Markdown                         2             16              4            149
 TOML                             1              0              0              3
 -------------------------------------------------------------------------------
-SUM:                            66            690            605           4850
+SUM:                            65            689            597           4791
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -126,7 +126,6 @@ nvim
 │       └── utils
 │           ├── flash.lua
 │           ├── guess_indent.lua
-│           ├── noice.lua
 │           ├── oil.lua
 │           ├── snacks.lua
 │           ├── todo_comments.lua
@@ -136,7 +135,7 @@ nvim
 └── snippets
     └── python.json
 
-15 directories, 65 files
+15 directories, 64 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
 

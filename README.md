@@ -10,12 +10,12 @@ Personal dotfiles and configuration management for my linux machines
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Lua                             61            674            601           4454
+Lua                             60            673            593           4395
 Markdown                         3             24              8            264
 JSON                             2              0              0            244
 TOML                             5              9              0            207
 -------------------------------------------------------------------------------
-SUM:                            71            707            609           5169
+SUM:                            70            706            601           5110
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -104,7 +104,6 @@ dotfiles
 │   │       └── utils
 │   │           ├── flash.lua
 │   │           ├── guess_indent.lua
-│   │           ├── noice.lua
 │   │           ├── oil.lua
 │   │           ├── snacks.lua
 │   │           ├── todo_comments.lua
@@ -122,6 +121,6 @@ dotfiles
 │       └── astrodark.kdl
 └── zsh
 
-23 directories, 73 files
+23 directories, 72 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
