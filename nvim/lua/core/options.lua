@@ -35,6 +35,7 @@ opt.sidescrolloff = 10 -- Horizontal scroll offset
 opt.winborder = "rounded" -- Rounded borders for floating windows
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
 -- opt.shortmess:append("I") -- Dont show intro message
+opt.clipboard = "unnamedplus"
 
 -- =================================== BEHAVIOR ===================================
 
@@ -103,28 +104,3 @@ g.loaded_matchparen = 1
 
 opt.modeline = false -- Disable modelines to prevent arbitrary code execution
 opt.exrc = false -- Don't auto-load project .vimrc/.nvimrc files
-
--- ================================== CLIPBOARD ===================================
-
-opt.clipboard = "unnamedplus"
-
--- https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim
-if vim.fn.has("wsl") == 1 then
-    local win32yank = "win32yank.exe"
-    if vim.fn.getftype(vim.fn.exepath(win32yank)) == "link" then
-        win32yank = vim.fn.resolve(vim.fn.exepath(win32yank))
-    end
-
-    vim.g.clipboard = {
-        name = "win32yank",
-        copy = {
-            ["+"] = { win32yank, "-i", "--crlf" },
-            ["*"] = { win32yank, "-i", "--crlf" },
-        },
-        paste = {
-            ["+"] = { win32yank, "-o", "--lf" },
-            ["*"] = { win32yank, "-o", "--lf" },
-        },
-        cache_enabled = 1, -- cache fixes del lag
-    }
-end
