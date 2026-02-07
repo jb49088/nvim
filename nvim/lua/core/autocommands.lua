@@ -60,6 +60,17 @@ autocmd("BufWinEnter", {
     end,
 })
 
+-- Open Oil when opening nvim to a directory
+vim.api.nvim_create_autocmd("VimEnter", {
+    group = "editor_behavior",
+    callback = function()
+        local arg = vim.fn.argv(0)
+        if arg ~= "" and vim.fn.isdirectory(arg) == 1 then
+            require("oil").open(arg)
+        end
+    end,
+})
+
 -- ============================ UI/VISUAL ENHANCEMENTS ============================
 
 augroup("ui_enhancements", { clear = true })
