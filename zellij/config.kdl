@@ -283,6 +283,12 @@ keybinds clear-defaults=true {
     }
 }
 
+ui {
+  pane_frames {
+    rounded_corners true
+  }
+}
+
 // Plugin aliases - can be used to change the implementation of Zellij
 // changing these requires a restart to take effect
 plugins {
@@ -422,7 +428,7 @@ theme_dir "/home/master/.config/zellij/themes"
 
 // Path to the default editor to use to edit pane scrollbuffer
 // Default: $EDITOR or $VISUAL
-scrollback_editor "/usr/local/bin/hx"
+scrollback_editor "/usr/local/bin/nvim"
 
 // A fixed name to always give the Zellij session.
 // Consider also setting `attach_to_session true,`
