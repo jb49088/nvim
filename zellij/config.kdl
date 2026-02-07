@@ -283,6 +283,12 @@ keybinds clear-defaults=true {
     }
 }
 
+env {
+    PYTHONPATH "/home/master/python/modules"
+    PYTHONBREAKPOINT "ipdb.set_trace"
+    BROWSER "/mnt/c/Program Files/Mozilla Firefox/firefox.exe"
+}
+
 ui {
   pane_frames {
     rounded_corners true
