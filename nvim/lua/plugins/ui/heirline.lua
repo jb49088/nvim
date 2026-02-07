@@ -41,6 +41,12 @@ return {
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
                 local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+
+                -- Hide for Oil buffers
+                if filetype == "oil" then
+                    return false
+                end
 
                 -- Show for quickfix even though bufname is empty
                 if buftype == "quickfix" then
@@ -61,6 +67,12 @@ return {
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
                 local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+
+                -- Hide for Oil buffers
+                if filetype == "oil" then
+                    return false
+                end
 
                 -- Show for quickfix even though bufname is empty
                 if buftype == "quickfix" then
@@ -347,6 +359,12 @@ return {
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
                 local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+
+                -- Hide for Oil buffers
+                if filetype == "oil" then
+                    return false
+                end
 
                 -- Show for quickfix even though bufname is empty
                 if buftype == "quickfix" then
@@ -366,6 +384,12 @@ return {
                 local is_floating = win_config.relative ~= ""
                 local bufname = vim.api.nvim_buf_get_name(0)
                 local buftype = vim.bo.buftype
+                local filetype = vim.bo.filetype
+
+                -- Hide for Oil buffers
+                if filetype == "oil" then
+                    return false
+                end
 
                 -- Show for quickfix even though bufname is empty
                 if buftype == "quickfix" then
