@@ -35,10 +35,10 @@ opt.sidescrolloff = 10 -- Horizontal scroll offset
 opt.winborder = "rounded" -- Rounded borders for floating windows
 opt.fillchars:append({ eob = " " }) -- Hide "~" at EOF
 -- opt.shortmess:append("I") -- Dont show intro message
-opt.clipboard = "unnamedplus"
 
 -- =================================== BEHAVIOR ===================================
 
+opt.clipboard = "unnamedplus"
 opt.swapfile = false -- Disable swap files
 opt.undofile = true -- Enable persistent undo
 opt.updatetime = 200 -- Faster update time for diagnostics, etc.
