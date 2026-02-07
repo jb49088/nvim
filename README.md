@@ -13,9 +13,9 @@ Language                     files          blank        comment           code
 Lua                             61            673            599           4448
 Markdown                         3             24              8            258
 JSON                             2              0              0            245
-TOML                             2              0              0              5
+TOML                             5              9              0            207
 -------------------------------------------------------------------------------
-SUM:                            68            697            607           4956
+SUM:                            71            706            607           5158
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -28,6 +28,11 @@ SUM:                            68            697            607           4956
 dotfiles
 ├── direnv
 │   └── direnv.toml
+├── helix
+│   ├── config.toml
+│   ├── languages.toml
+│   └── themes
+│       └── astrodark.toml
 ├── nvim
 │   ├── after
 │   │   └── ftplugin
@@ -116,6 +121,6 @@ dotfiles
 │       └── astrodark.kdl
 └── zsh
 
-21 directories, 69 files
+23 directories, 72 files
 ```
 <!-- PROJECT_STRUCTURE_END -->

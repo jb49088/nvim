@@ -1,0 +1,27 @@
+theme = "astrodark"
+
+[editor]
+line-number = "relative"
+true-color = true
+clipboard-provider = "wayland"
+popup-border = "all"
+mouse = false
+
+[editor.cursor-shape]
+insert = "bar"
+
+[editor.file-picker]
+hidden = false
+
+[editor.statusline]
+left = ["mode", "spinner", "version-control", "file-name", "read-only-indicator", "file-modification-indicator"]
+right = ["diagnostics", "file-encoding", "file-line-ending", "position", "position-percentage"]
+diagnostics = ["warning", "error"]
+workspace-diagnostics = ["warning", "error"]
+
+
+[keys.normal]
+C-h = "jump_view_left"
+C-j = "jump_view_down"
+C-k = "jump_view_up"
+C-l = "jump_view_right"
