@@ -94,7 +94,7 @@ projects() {
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # General
-export EDITOR=nvim
+export EDITOR=hx
 export BROWSER="/mnt/c/Program Files/Mozilla Firefox/firefox.exe" # Use windows browser
 
 # Path
