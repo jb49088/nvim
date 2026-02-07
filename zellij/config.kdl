@@ -160,10 +160,8 @@ keybinds clear-defaults=true {
         bind "Alt Shift p" { ToggleGroupMarking; }
     }
     shared_except "locked"{
+        bind "Ctrl g" { SwitchToMode "locked"; }
         bind "q" { Quit; }
-    }
-    shared_except "locked"{
-        bind "esc" { SwitchToMode "locked"; }
     }
     shared_except "locked" "move" {
         bind "m" { SwitchToMode "move"; }
@@ -190,7 +188,7 @@ keybinds clear-defaults=true {
         bind "enter" { SwitchToMode "normal"; }
     }
     shared_except "normal" "locked" "entersearch" "renametab" "renamepane" {
-        bind "esc" { SwitchToMode "normal"; }
+        bind "esc" { SwitchToMode "locked"; }
     }
     shared_among "pane" "tmux" {
         bind "x" { CloseFocus; SwitchToMode "normal"; }

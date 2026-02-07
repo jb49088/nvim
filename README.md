@@ -11,11 +11,11 @@ Personal dotfiles and configuration management for my linux machines
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Lua                             61            673            599           4448
-Markdown                         3             24              8            258
+Markdown                         3             24              8            263
 JSON                             2              0              0            245
 TOML                             5              9              0            207
 -------------------------------------------------------------------------------
-SUM:                            71            706            607           5158
+SUM:                            71            706            607           5163
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
@@ -117,10 +117,11 @@ dotfiles
 ├── sqlite
 ├── zellij
 │   ├── config.kdl
+│   ├── config.kdl.bak
 │   └── themes
 │       └── astrodark.kdl
 └── zsh
 
-23 directories, 72 files
+23 directories, 73 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
