@@ -72,6 +72,14 @@ autocmd("TextYankPost", {
     end,
 })
 
+-- Clear messages on cursor movement
+autocmd("CursorMoved", {
+    group = "ui_enhancements",
+    callback = function()
+        vim.cmd("echon ''")
+    end,
+})
+
 -- Hide diagnostics in insert mode
 autocmd("InsertEnter", {
     group = "ui_enhancements",
