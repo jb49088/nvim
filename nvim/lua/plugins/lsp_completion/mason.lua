@@ -22,8 +22,8 @@ return {
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls", -- lua ls
-                -- "basedpyright", -- python ls
-                "ty", -- python lsp
+                "basedpyright", -- python ls
+                -- "ty", -- python lsp
                 -- "pyrefly", -- python ls
                 "bashls", -- bash lsp
                 "powershell_es", -- powershell ls (includes formatter and linter)
